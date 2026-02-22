@@ -2517,6 +2517,7 @@ document.addEventListener('click', function(e) {
 
   // 2. Step observer — highlight current step
   var activeSteps = new Set();
+  var scrollLock = null; // suppress observer during click-scroll
   var stepObs = new IntersectionObserver(function(entries) {
     entries.forEach(function(entry) {
       var id = entry.target.getAttribute('data-step');
@@ -2526,27 +2527,40 @@ document.addEventListener('click', function(e) {
         activeSteps.delete(id);
       }
     });
-    // Highlight the last visible step (furthest down the page)
+    if (scrollLock) return; // click-scroll in progress, don't override
+    // Highlight the step closest to viewport center
     items.forEach(function(item) { item.classList.remove('active'); });
-    var lastActive = null;
+    var vpCenter = window.innerHeight / 2;
+    var bestId = null;
+    var bestDist = Infinity;
     steps.forEach(function(step) {
       var id = step.getAttribute('data-step');
-      if (activeSteps.has(id)) lastActive = id;
+      if (!activeSteps.has(id)) return;
+      var rect = step.getBoundingClientRect();
+      var stepCenter = rect.top + rect.height / 2;
+      var dist = Math.abs(stepCenter - vpCenter);
+      if (dist < bestDist) { bestDist = dist; bestId = id; }
     });
-    if (lastActive && itemMap[lastActive]) {
-      itemMap[lastActive].classList.add('active');
+    if (bestId && itemMap[bestId]) {
+      itemMap[bestId].classList.add('active');
     }
   }, { rootMargin: '-30% 0px -30% 0px', threshold: 0 });
 
   steps.forEach(function(step) { stepObs.observe(step); });
 
-  // 3. Click handler — smooth scroll
+  // 3. Click handler — smooth scroll + immediate highlight
   items.forEach(function(item) {
     item.addEventListener('click', function(e) {
       e.preventDefault();
       var target = item.getAttribute('data-target');
       var stepEl = document.querySelector('.pipeline-step[data-step="' + target + '"]');
       if (stepEl) {
+        // Immediately highlight clicked item
+        items.forEach(function(i) { i.classList.remove('active'); });
+        item.classList.add('active');
+        // Suppress observer during smooth scroll
+        clearTimeout(scrollLock);
+        scrollLock = setTimeout(function() { scrollLock = null; }, 800);
         stepEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
     });
