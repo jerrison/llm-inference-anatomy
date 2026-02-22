@@ -1,0 +1,1965 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Anatomy of LLM Inference</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=DM+Mono:wght@300;400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+/* ─── RESET & BASE ─── */
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+:root {
+  --bg: #0a0a0c;
+  --bg-card: #111115;
+  --bg-card-hover: #18181e;
+  --border: #1e1e28;
+  --border-active: #3a3a50;
+  --text: #e8e6e3;
+  --text-dim: #9a98a0;
+  --text-muted: #4a4850;
+  --accent: #56B4E9;
+  --accent-dim: #3a8dc4;
+  --accent-glow: rgba(86,180,233,0.08);
+  --compute: #D55E00;
+  --memory: #0090D6;
+  --io: #E69F00;
+  --logic: #CC79A7;
+  --network: #56B4E9;
+  --font-display: 'Instrument Serif', serif;
+  --font-body: 'Atkinson Hyperlegible', sans-serif;
+  --font-mono: 'DM Mono', monospace;
+}
+
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-weight: 400;
+  line-height: 1.8;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection { background: var(--accent); color: var(--bg); }
+
+/* ─── HERO ─── */
+.hero {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 2rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 80% 50% at 50% 0%, rgba(86,180,233,0.04) 0%, transparent 50%),
+    radial-gradient(ellipse 60% 40% at 20% 80%, rgba(0,144,214,0.03) 0%, transparent 50%),
+    radial-gradient(ellipse 60% 40% at 80% 80%, rgba(204,121,167,0.03) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+.hero-label {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 2rem;
+  opacity: 0;
+  animation: fadeUp 0.8s ease forwards 0.2s;
+}
+
+.hero h1 {
+  font-family: var(--font-display);
+  font-size: clamp(3rem, 8vw, 7rem);
+  font-weight: 400;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  max-width: 900px;
+  opacity: 0;
+  animation: fadeUp 0.8s ease forwards 0.4s;
+}
+
+.hero h1 em {
+  font-style: italic;
+  color: var(--accent);
+}
+
+.hero-sub {
+  font-size: clamp(1rem, 2vw, 1.2rem);
+  color: var(--text-dim);
+  max-width: 600px;
+  margin-top: 1.5rem;
+  opacity: 0;
+  animation: fadeUp 0.8s ease forwards 0.6s;
+}
+
+.hero-cta {
+  margin-top: 3rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  opacity: 0;
+  animation: fadeUp 0.8s ease forwards 0.8s;
+}
+
+.hero-cta .arrow {
+  display: inline-block;
+  animation: bounce 2s ease infinite;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(6px); }
+}
+
+/* ─── PHASE OVERVIEW ─── */
+.phase-overview {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 2rem 4rem;
+}
+
+.phase-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.5rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.phase-card:hover {
+  border-color: var(--border-active);
+  background: var(--bg-card-hover);
+}
+
+.phase-letter {
+  font-family: var(--font-display);
+  font-size: 2.5rem;
+  color: var(--accent);
+  line-height: 1;
+  margin-bottom: 0.5rem;
+}
+
+.phase-name {
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  margin-bottom: 0.25rem;
+}
+
+.phase-subtitle {
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  margin-bottom: 1rem;
+}
+
+.phase-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.phase-steps span {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+}
+
+.phase-card:not(:last-child)::after {
+  content: '\2192';
+  position: absolute;
+  right: -1rem;
+  top: 50%;
+  transform: translate(50%, -50%);
+  color: var(--text-muted);
+  font-size: 1.2rem;
+  z-index: 3;
+}
+
+/* ─── PIPELINE OVERVIEW ─── */
+.pipeline-section {
+  padding: 4rem 2rem 6rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.section-label {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 0.5rem;
+}
+
+.section-title {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 4vw, 3.5rem);
+  font-weight: 400;
+  margin-bottom: 1rem;
+}
+
+.section-desc {
+  color: var(--text-dim);
+  max-width: 650px;
+  margin-bottom: 3rem;
+  font-size: 1rem;
+}
+
+/* ─── PHASE DIVIDERS ─── */
+.phase-divider {
+  display: grid;
+  grid-template-columns: 48px 1fr;
+  padding: 2rem 0 0.5rem;
+  position: relative;
+}
+
+.phase-divider:first-child { padding-top: 0; }
+
+.phase-divider-marker {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: var(--accent);
+  color: var(--bg);
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 0.75rem;
+  margin-left: 8px;
+  z-index: 2;
+}
+
+.phase-divider-content {
+  padding: 0.25rem 0 0 0.75rem;
+}
+
+.phase-divider-name {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  color: var(--accent);
+}
+
+.phase-divider-desc {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+/* ─── PIPELINE FLOW DIAGRAM ─── */
+.pipeline-flow {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  position: relative;
+}
+
+.pipeline-flow::before {
+  content: '';
+  position: absolute;
+  left: 24px;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: linear-gradient(to bottom, transparent, var(--border) 5%, var(--border) 95%, transparent);
+}
+
+.pipeline-step {
+  display: grid;
+  grid-template-columns: 48px 1fr;
+  gap: 0;
+  cursor: pointer;
+  position: relative;
+}
+
+.step-marker {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  z-index: 2;
+}
+
+.step-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  background: var(--bg);
+  margin-top: 1.5rem;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+}
+
+.pipeline-step:hover .step-dot,
+.pipeline-step.active .step-dot {
+  border-color: var(--accent);
+  background: var(--accent);
+  box-shadow: 0 0 12px rgba(86,180,233,0.3);
+}
+
+.step-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.25rem 1.5rem;
+  margin: 0.5rem 0;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.step-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, var(--accent-glow) 0%, transparent 50%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.pipeline-step:hover .step-card,
+.pipeline-step.active .step-card {
+  border-color: var(--border-active);
+  background: var(--bg-card-hover);
+}
+
+.pipeline-step:hover .step-card::before,
+.pipeline-step.active .step-card::before {
+  opacity: 1;
+}
+
+.step-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  position: relative;
+  z-index: 1;
+}
+
+.step-number {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  color: var(--accent-dim);
+  letter-spacing: 0.1em;
+  min-width: 24px;
+}
+
+.step-name {
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  flex: 1;
+}
+
+.step-badge {
+  font-family: var(--font-mono);
+  font-size: 0.55rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  border: 1px solid;
+}
+
+.step-badge::before { margin-right: 0.3em; }
+.badge-compute { color: var(--compute); border-color: rgba(213,94,0,0.3); background: rgba(213,94,0,0.05); }
+.badge-compute::before { content: '\26A1'; }
+.badge-memory { color: var(--memory); border-color: rgba(0,144,214,0.3); background: rgba(0,144,214,0.05); }
+.badge-memory::before { content: '\2630'; }
+.badge-io { color: var(--io); border-color: rgba(230,159,0,0.3); background: rgba(230,159,0,0.05); }
+.badge-io::before { content: '\21C4'; }
+.badge-logic { color: var(--logic); border-color: rgba(204,121,167,0.3); background: rgba(204,121,167,0.05); }
+.badge-logic::before { content: '\2699'; }
+.badge-network { color: var(--network); border-color: rgba(86,180,233,0.3); background: rgba(86,180,233,0.05); }
+.badge-network::before { content: '\25CE'; }
+
+.step-summary {
+  color: var(--text-dim);
+  font-size: 0.9rem;
+  margin-top: 0.5rem;
+  position: relative;
+  z-index: 1;
+}
+
+.step-expand-icon {
+  color: var(--text-muted);
+  font-size: 1.2rem;
+  transition: transform 0.3s ease;
+  font-family: var(--font-mono);
+}
+
+.pipeline-step.active .step-expand-icon {
+  transform: rotate(45deg);
+  color: var(--accent);
+}
+
+/* ─── EXPANDED DETAIL ─── */
+.step-detail {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  z-index: 1;
+}
+
+.pipeline-step.active .step-detail {
+  max-height: 5000px;
+}
+
+.detail-inner {
+  padding: 1.5rem 0 0.5rem;
+  border-top: 1px solid var(--border);
+  margin-top: 1rem;
+}
+
+.detail-section {
+  margin-bottom: 1.5rem;
+}
+
+.detail-section:last-child { margin-bottom: 0; }
+
+.detail-label {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--accent-dim);
+  margin-bottom: 0.5rem;
+}
+
+.detail-text {
+  font-size: 0.92rem;
+  color: var(--text-dim);
+  line-height: 1.8;
+}
+
+.detail-text strong {
+  color: var(--text);
+  font-weight: 400;
+}
+
+.detail-text code {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  background: rgba(86,180,233,0.06);
+  color: var(--accent);
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+}
+
+/* ─── TAKEAWAY & ANALOGY ─── */
+.callout-box {
+  border-radius: 8px;
+  padding: 0.85rem 1rem;
+  margin-bottom: 1.25rem;
+  font-size: 0.9rem;
+  line-height: 1.7;
+}
+
+.callout-takeaway {
+  background: rgba(86,180,233,0.06);
+  border-left: 3px solid var(--accent);
+}
+
+.callout-takeaway .callout-label {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 0.3rem;
+}
+
+.callout-takeaway p {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.callout-analogy {
+  background: rgba(204,121,167,0.05);
+  border-left: 3px solid var(--logic);
+}
+
+.callout-analogy .callout-label {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--logic);
+  margin-bottom: 0.3rem;
+}
+
+.callout-analogy p {
+  color: var(--text-dim);
+  font-style: italic;
+}
+
+/* Sub-topics (drill-in level 2) */
+.sub-topics {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+.sub-topic {
+  background: rgba(255,255,255,0.02);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.sub-topic:hover {
+  border-color: var(--border-active);
+  background: rgba(255,255,255,0.04);
+}
+
+.sub-topic.expanded {
+  grid-column: 1 / -1;
+  border-color: var(--accent-dim);
+}
+
+.sub-topic-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sub-topic-name {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+}
+
+.sub-topic-icon {
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  transition: transform 0.3s ease;
+}
+
+.sub-topic.expanded .sub-topic-icon {
+  transform: rotate(45deg);
+  color: var(--accent);
+}
+
+.sub-topic-preview {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  margin-top: 0.35rem;
+}
+
+.sub-topic-detail {
+  display: none;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+
+.sub-topic.expanded .sub-topic-detail {
+  display: block;
+}
+
+.sub-topic-detail p {
+  font-size: 0.9rem;
+  color: var(--text-dim);
+  margin-bottom: 0.75rem;
+  line-height: 1.8;
+}
+
+.sub-topic-detail p:last-child { margin-bottom: 0; }
+
+/* Code blocks */
+.code-block {
+  background: #0d0d10;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+  margin: 0.75rem 0;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  line-height: 1.8;
+  color: var(--text-dim);
+  overflow-x: auto;
+  white-space: pre;
+}
+
+.code-block .kw { color: var(--accent); }
+.code-block .cm { color: var(--text-muted); }
+.code-block .fn { color: var(--logic); }
+.code-block .num { color: var(--io); }
+.code-block .str { color: var(--compute); }
+
+/* Data tables */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0.75rem 0;
+  font-size: 0.8rem;
+}
+
+.data-table th {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  text-align: left;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.data-table td {
+  padding: 0.5rem 0.75rem;
+  color: var(--text-dim);
+  border-bottom: 1px solid rgba(30,30,40,0.5);
+}
+
+.data-table td:first-child { color: var(--text); }
+.data-table tr:last-child td { border-bottom: none; }
+
+/* Metric callouts */
+.metrics-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.75rem;
+  margin: 0.75rem 0;
+}
+
+.metric {
+  background: rgba(255,255,255,0.02);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  text-align: center;
+}
+
+.metric-value {
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  color: var(--accent);
+}
+
+.metric-label {
+  font-family: var(--font-mono);
+  font-size: 0.55rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-top: 0.25rem;
+}
+
+/* ─── TERM DEFINITIONS ─── */
+.term {
+  color: var(--accent);
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-decoration-color: rgba(86,180,233,0.4);
+  text-underline-offset: 3px;
+  cursor: help;
+}
+
+.term-tooltip {
+  position: fixed;
+  max-width: 340px;
+  background: #1a1a22;
+  border: 1px solid var(--border-active);
+  border-radius: 10px;
+  padding: 0.85rem 1rem;
+  z-index: 1000;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  animation: tooltipIn 0.2s ease;
+}
+
+.term-tooltip-title {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 0.35rem;
+}
+
+.term-tooltip-body {
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  line-height: 1.6;
+}
+
+@keyframes tooltipIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ─── FULL JOURNEY DIAGRAM ─── */
+.journey-section {
+  padding: 4rem 2rem 6rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.journey-diagram {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 2rem;
+  margin-top: 2rem;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  line-height: 2.2;
+  color: var(--text-dim);
+  overflow-x: auto;
+  white-space: pre;
+}
+
+.journey-diagram .phase-label {
+  color: var(--accent);
+  font-weight: 500;
+}
+
+.journey-diagram .component {
+  color: var(--text);
+}
+
+.journey-diagram .detail {
+  color: var(--text-muted);
+}
+
+.journey-diagram .arrow-line {
+  color: var(--text-muted);
+}
+
+.journey-diagram .phase-group {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+/* ─── FOOTER ─── */
+.footer {
+  padding: 4rem 2rem;
+  text-align: center;
+  border-top: 1px solid var(--border);
+}
+
+.footer p {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  letter-spacing: 0.1em;
+}
+
+/* ─── SCROLL ANIMATIONS ─── */
+.reveal {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 0.6s ease;
+}
+
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ─── RESPONSIVE ─── */
+@media (max-width: 768px) {
+  .pipeline-flow::before { left: 18px; }
+  .pipeline-step { grid-template-columns: 36px 1fr; }
+  .step-card { padding: 1rem; }
+  .step-name { font-size: 1.15rem; }
+  .sub-topics { grid-template-columns: 1fr; }
+  .step-badge { display: none; }
+  .metrics-row { grid-template-columns: repeat(2, 1fr); }
+  .phase-overview { grid-template-columns: 1fr; }
+  .phase-card:not(:last-child)::after {
+    content: '\2193';
+    right: 50%;
+    top: auto;
+    bottom: -1rem;
+    transform: translate(50%, 50%);
+  }
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════ HERO ═══════════ -->
+<section class="hero">
+  <div class="hero-label">Interactive Technical Reference</div>
+  <h1>Anatomy of <em>LLM Inference</em></h1>
+  <p class="hero-sub">Every step from user request to streamed response. Click any stage to drill in.</p>
+  <div class="hero-cta">Scroll to explore <span class="arrow">&#8595;</span></div>
+</section>
+
+<!-- ═══════════ PHASE OVERVIEW ═══════════ -->
+<section class="phase-overview reveal">
+  <div class="phase-card" onclick="document.getElementById('phase-a').scrollIntoView({behavior:'smooth'})">
+    <div class="phase-letter">A</div>
+    <div class="phase-name">Request Preparation</div>
+    <div class="phase-subtitle">Getting the input ready for the GPU</div>
+    <div class="phase-steps">
+      <span>01 Request Routing</span>
+      <span>02 Preprocessing</span>
+      <span>03 Tokenization</span>
+      <span>04 Embedding &amp; Position</span>
+    </div>
+  </div>
+  <div class="phase-card" onclick="document.getElementById('phase-b').scrollIntoView({behavior:'smooth'})">
+    <div class="phase-letter">B</div>
+    <div class="phase-name">GPU Computation</div>
+    <div class="phase-subtitle">The core forward pass</div>
+    <div class="phase-steps">
+      <span>05 Scheduling &amp; Batching</span>
+      <span>06 Prefill Phase</span>
+      <span>07 KV Cache</span>
+      <span>08 Attention Mechanisms</span>
+      <span>09 Decode Phase</span>
+    </div>
+  </div>
+  <div class="phase-card" onclick="document.getElementById('phase-c').scrollIntoView({behavior:'smooth'})">
+    <div class="phase-letter">C</div>
+    <div class="phase-name">Output &amp; Delivery</div>
+    <div class="phase-subtitle">Turning logits into a response</div>
+    <div class="phase-steps">
+      <span>10 Sampling &amp; Selection</span>
+      <span>11 Detokenization &amp; Streaming</span>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ PIPELINE ═══════════ -->
+<section class="pipeline-section" id="pipeline">
+  <div class="section-label reveal">The Request Lifecycle</div>
+  <h2 class="section-title reveal">Pipeline Stages</h2>
+  <p class="section-desc reveal">An LLM inference request passes through 11 distinct stages grouped into three phases. Each solves a different problem, has different bottlenecks, and uses different optimisation strategies. Click any stage to explore.</p>
+
+  <div class="pipeline-flow" id="pipeline-flow">
+
+    <!-- ═══ PHASE A ═══ -->
+    <div class="phase-divider" id="phase-a">
+      <div class="phase-divider-marker">A</div>
+      <div class="phase-divider-content">
+        <div class="phase-divider-name">Request Preparation</div>
+        <div class="phase-divider-desc">Getting the input ready for the GPU</div>
+      </div>
+    </div>
+
+    <!-- ─── 01 ROUTING ─── -->
+    <div class="pipeline-step reveal" data-step="routing">
+      <div class="step-marker"><div class="step-dot"></div></div>
+      <div class="step-card">
+        <div class="step-header">
+          <span class="step-number">01</span>
+          <span class="step-name">Request Routing</span>
+          <span class="step-badge badge-network">Network</span>
+          <span class="step-expand-icon">+</span>
+        </div>
+        <div class="step-summary">API gateway receives the request, LLM-aware load balancer routes to the optimal GPU worker based on <span class="term" data-term="kv-cache">KV cache</span> state, queue depth, and model/<span class="term" data-term="lora">LoRA</span> affinity.</div>
+        <div class="step-detail">
+          <div class="detail-inner">
+            <div class="callout-box callout-takeaway">
+              <div class="callout-label">Key Takeaway</div>
+              <p>LLM routing must be GPU-state-aware &mdash; traditional load balancers fail because they can't see KV cache utilization, queue depth, or model placement on each worker.</p>
+            </div>
+            <div class="callout-box callout-analogy">
+              <div class="callout-label">Think of it like...</div>
+              <p>A restaurant host seating a returning customer at the same table where their appetizers are already waiting, instead of assigning a random empty seat.</p>
+            </div>
+            <div class="detail-section">
+              <div class="detail-label">Why it matters</div>
+              <div class="detail-text">
+                Unlike typical web requests, LLM inference is <strong>long-running and stateful</strong> (due to KV cache). Standard HTTP load balancers fail because they lack awareness of GPU state. Modern LLM-aware routers consider <strong>KV cache utilization</strong>, <strong>queue length</strong>, and <strong>LoRA adapter</strong> presence on each worker.
+              </div>
+            </div>
+            <div class="detail-section">
+              <div class="detail-label">Drill into specifics</div>
+              <div class="sub-topics">
+                <div class="sub-topic" onclick="toggleSubTopic(this)">
+                  <div class="sub-topic-header">
+                    <span class="sub-topic-name">KV-Cache Aware Routing</span>
+                    <span class="sub-topic-icon">+</span>
+                  </div>
+                  <div class="sub-topic-preview">Route to GPUs that already hold relevant context</div>
+                  <div class="sub-topic-detail">
+                    <p>If a user sends a follow-up message in a conversation, the KV cache for previous turns may still reside on a specific GPU. <strong>KV-cache aware routing</strong> directs the request back to that GPU, skipping prefill for the cached prefix entirely. This can eliminate <strong>95% of <span class="term" data-term="ttft">TTFT</span></strong>.</p>
+                    <p>Frameworks like <strong>llm-d</strong> (Kubernetes-native) and <strong>vLLM Router</strong> (Rust-based) implement this by polling each worker's cache state and using hash-based or prefix-matching lookups.</p>
+                  </div>
+                </div>
+                <div class="sub-topic" onclick="toggleSubTopic(this)">
+                  <div class="sub-topic-header">
+                    <span class="sub-topic-name">Prefill-Decode Disaggregation</span>
+                    <span class="sub-topic-icon">+</span>
+                  </div>
+                  <div class="sub-topic-preview">Separate GPU pools for prefill vs decode</div>
+                  <div class="sub-topic-detail">
+                    <p>The <strong>defining architecture of 2025</strong>. <span class="term" data-term="prefill">Prefill</span> is compute-bound (parallel matrix ops); <span class="term" data-term="decode">decode</span> is memory-bound (sequential KV reads). Running both on the same GPU causes interference &mdash; a long prefill blocks decode iterations, spiking latency for in-progress generations.</p>
+                    <p>The solution: <strong>dedicated prefill GPUs</strong> compute the initial KV cache, then transfer it (via <span class="term" data-term="rdma">RDMA</span>/<span class="term" data-term="nvlink">NVLink</span>) to <strong>dedicated decode GPUs</strong>. Each tier scales independently. Meta, Mistral, and Hugging Face run this in production. Gains: <strong>2&ndash;7x throughput</strong>.</p>
+                  </div>
+                </div>
+                <div class="sub-topic" onclick="toggleSubTopic(this)">
+                  <div class="sub-topic-header">
+                    <span class="sub-topic-name">Gateway Frameworks (2025)</span>
+                    <span class="sub-topic-icon">+</span>
+                  </div>
+                  <div class="sub-topic-preview">vLLM Router, K8s Gateway API, NVIDIA Dynamo</div>
+                  <div class="sub-topic-detail">
+                    <p><strong>vLLM Router</strong>: Rust-based, lightweight load balancer engineered for vLLM. State-aware, understands prefill/decode disaggregation patterns.</p>
+                    <p><strong>Kubernetes Gateway API Inference Extension</strong>: Model-aware routing at the K8s ingress level, supporting per-request criticalities and GPU-specific metrics.</p>
+                    <p><strong>NVIDIA Dynamo</strong>: Next-gen distributed inference framework with built-in disaggregation, dynamic GPU scheduling, and LLM-aware request routing. Up to <strong>30x</strong> more requests served (DeepSeek-R1 on Blackwell).</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── 02 PREPROCESSING ─── -->
+    <div class="pipeline-step reveal" data-step="preprocessing">
+      <div class="step-marker"><div class="step-dot"></div></div>
+      <div class="step-card">
+        <div class="step-header">
+          <span class="step-number">02</span>
+          <span class="step-name">Preprocessing</span>
+          <span class="step-badge badge-logic">Logic</span>
+          <span class="step-expand-icon">+</span>
+        </div>
+        <div class="step-summary">Input validation, prompt template assembly, RAG retrieval, rate limiting. CPU-bound, scales linearly with input length.</div>
+        <div class="step-detail">
+          <div class="detail-inner">
+            <div class="callout-box callout-takeaway">
+              <div class="callout-label">Key Takeaway</div>
+              <p>Prompt construction order matters &mdash; static content first, dynamic content last &mdash; to maximize <span class="term" data-term="prefix-caching">prefix cache</span> hit rates in downstream GPU stages.</p>
+            </div>
+            <div class="callout-box callout-analogy">
+              <div class="callout-label">Think of it like...</div>
+              <p>A chef's mise en place &mdash; washing, chopping, and measuring all ingredients before the stove turns on. No GPU time is used here.</p>
+            </div>
+            <div class="detail-section">
+              <div class="detail-label">What happens here</div>
+              <div class="detail-text">
+                Before any GPU work begins, the API server assembles the final prompt on CPU. This includes applying <strong>prompt templates</strong> (system instructions, chat formatting), performing <strong>RAG retrieval</strong> (if applicable), validating input constraints (max tokens, stop sequences), and <strong>rate limiting</strong>. The request metadata (ID, sampling params, timestamp) is prepared for the scheduler.
+              </div>
+            </div>
+            <div class="detail-section">
+              <div class="detail-label">Key considerations</div>
+              <div class="detail-text">
+                This stage is entirely <strong>CPU-bound</strong> and scales with input length. For RAG-heavy workloads, embedding generation and vector search can dominate preprocessing time. Smart prompt construction &mdash; placing <strong>static content first</strong> and <strong>dynamic content last</strong> &mdash; is critical for maximising prefix cache hit rates downstream.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── 03 TOKENIZATION ─── -->
+    <div class="pipeline-step reveal" data-step="tokenization">
+      <div class="step-marker"><div class="step-dot"></div></div>
+      <div class="step-card">
+        <div class="step-header">
+          <span class="step-number">03</span>
+          <span class="step-name">Tokenization</span>
+          <span class="step-badge badge-logic">Logic</span>
+          <span class="step-expand-icon">+</span>
+        </div>
+        <div class="step-summary">Raw text is converted into integer token IDs via <span class="term" data-term="bpe">BPE</span> or SentencePiece. Vocabulary sizes have grown 8x in 3 years (32K &rarr; 262K).</div>
+        <div class="step-detail">
+          <div class="detail-inner">
+            <div class="callout-box callout-takeaway">
+              <div class="callout-label">Key Takeaway</div>
+              <p>Larger vocabularies produce fewer tokens per input, directly reducing cost and latency &mdash; at the trade-off of a bigger embedding table.</p>
+            </div>
+            <div class="callout-box callout-analogy">
+              <div class="callout-label">Think of it like...</div>
+              <p>Learning common phrases in a foreign language: 'good morning' becomes one unit instead of eleven letters, so your conversations get shorter and faster.</p>
+            </div>
+            <div class="detail-section">
+              <div class="detail-label">How BPE works</div>
+              <div class="detail-text">
+                <strong>Byte Pair Encoding</strong> starts with individual bytes (256 base tokens) and iteratively merges the most frequent adjacent pair into a new token. This repeats until the desired vocabulary size is reached. Modern LLMs use <strong>byte-level BPE</strong>, meaning any input &mdash; regardless of language or special characters &mdash; can be tokenized with zero unknown tokens.
+              </div>
+            </div>
+            <div class="detail-section">
+              <div class="detail-label">Drill into specifics</div>
+              <div class="sub-topics">
+                <div class="sub-topic" onclick="toggleSubTopic(this)">
+                  <div class="sub-topic-header">
+                    <span class="sub-topic-name">Vocabulary Size Trends</span>
+                    <span class="sub-topic-icon">+</span>
+                  </div>
+                  <div class="sub-topic-preview">From 32K to 262K in 3 years</div>
+                  <div class="sub-topic-detail">
+                    <table class="data-table">
+                      <thead><tr><th>Model</th><th>Year</th><th>Vocab Size</th></tr></thead>
+                      <tbody>
+                        <tr><td>Llama 2</td><td>2023</td><td>32,000</td></tr>
+                        <tr><td>Llama 3</td><td>2024</td><td>128,256</td></tr>
+                        <tr><td>Mistral Nemo</td><td>2025</td><td>~131,000</td></tr>
+                        <tr><td>Gemini 3</td><td>2025</td><td>262,000</td></tr>
+                      </tbody>
+                    </table>
+                    <p>Larger vocabularies mean fewer tokens per input (lower cost, faster inference) but larger embedding matrices. There is a <strong>log-linear relationship</strong> between vocabulary size and training loss.</p>
+                  </div>
+                </div>
+                <div class="sub-topic" onclick="toggleSubTopic(this)">
+                  <div class="sub-topic-header">
+                    <span class="sub-topic-name">SentencePiece</span>
+                    <span class="sub-topic-icon">+</span>
+                  </div>
+                  <div class="sub-topic-preview">Language-agnostic tokenization without pre-tokenization</div>
+                  <div class="sub-topic-detail">
+                    <p>SentencePiece treats input as a <strong>raw character stream</strong> with no pre-tokenization, encoding spaces as the metasymbol <code>&#x2581;</code>. It supports both BPE and Unigram algorithms and handles any language without language-specific preprocessing.</p>
+                  </div>
+                </div>
+                <div class="sub-topic" onclick="toggleSubTopic(this)">
+                  <div class="sub-topic-header">
+                    <span class="sub-topic-name">2025 Innovations</span>
+                    <span class="sub-topic-icon">+</span>
+                  </div>
+                  <div class="sub-topic-preview">SuperBPE, BoundlessBPE, LiteToken</div>
+                  <div class="sub-topic-detail">
+                    <p><strong>SuperBPE</strong> (COLM 2025): Two-pass BPE that learns cross-word "superword" tokens. Produces <strong>33% fewer tokens</strong> and improves performance by 4.0% across 30 benchmarks.</p>
+                    <p><strong>BoundlessBPE</strong>: Relaxes word boundary constraints, achieving up to <strong>15% improvement</strong> in bytes-per-token.</p>
+                    <p><strong>LiteToken</strong> (Feb 2026): Identifies and removes "intermediate merge residues" &mdash; tokens frequent during BPE training but rarely used in final output.</p>
+                  </div>
+                </div>
+                <div class="sub-topic" onclick="toggleSubTopic(this)">
+                  <div class="sub-topic-header">
+                    <span class="sub-topic-name">Fast Tokenizers</span>
+                    <span class="sub-topic-icon">+</span>
+                  </div>
+                  <div class="sub-topic-preview">tiktoken is 3-6x faster than alternatives</div>
+                  <div class="sub-topic-detail">
+                    <p><strong>tiktoken</strong> (OpenAI, Rust core) is the fastest tokenizer at <strong>3&ndash;6x faster</strong> than alternatives. It is inference-only (no training support) and powers OpenAI models, Llama 3+, and Mistral's Tekken tokenizer.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── 04 EMBEDDING ─── -->
+    <div class="pipeline-step reveal" data-step="embedding">
+      <div class="step-marker"><div class="step-dot"></div></div>
+      <div class="step-card">
+        <div class="step-header">
+          <span class="step-number">04</span>
+          <span class="step-name">Embedding &amp; Positional Encoding</span>
+          <span class="step-badge badge-memory">Memory</span>
+          <span class="step-expand-icon">+</span>
+        </div>
+        <div class="step-summary">Token IDs are mapped to dense vectors via a lookup table, then combined with positional information (<span class="term" data-term="rope">RoPE</span>) so the model knows token order.</div>
+        <div class="step-detail">
+          <div class="detail-inner">
+            <div class="callout-box callout-takeaway">
+              <div class="callout-label">Key Takeaway</div>
+              <p>Embeddings give tokens meaning; positional encoding gives them order. Without position, 'dog bites man' and 'man bites dog' look identical to the model.</p>
+            </div>
+            <div class="callout-box callout-analogy">
+              <div class="callout-label">Think of it like...</div>
+              <p>Giving each word a GPS coordinate in meaning-space, then stamping it with a sequence number so the model knows what came first.</p>
+            </div>
+            <div class="detail-section">
+              <div class="detail-label">Token embedding</div>
+              <div class="detail-text">
+                A <strong>lookup table</strong> of shape <code>[vocab_size, d_model]</code> maps each token ID to a learned vector. For Llama 2 7B: 32,000 &times; 4,096 = <strong>~131M parameters</strong>. This is a simple table index, not a matrix multiplication. The vectors encode semantic meaning learned during training.
+              </div>
+            </div>
+            <div class="detail-section">
+              <div class="detail-label">Drill into specifics</div>
+              <div class="sub-topics">
+                <div class="sub-topic" onclick="toggleSubTopic(this)">
+                  <div class="sub-topic-header">
+                    <span class="sub-topic-name">RoPE (Rotary Position Embedding)</span>
+                    <span class="sub-topic-icon">+</span>
+                  </div>
+                  <div class="sub-topic-preview">The dominant positional encoding in 2025</div>
+                  <div class="sub-topic-detail">
+                    <p>RoPE encodes position by <strong>rotating query and key vectors</strong> in 2D subspaces using sinusoidal functions. It is parameter-free, inherently captures relative positions, and scales gracefully to long contexts.</p>
+                    <p>Extensions like <strong>YaRN</strong> and <strong>NTK-aware scaling</strong> allow context lengths far beyond training length. Used by LLaMA, Mistral, GPT-NeoX, and most open-weight models.</p>
+                  </div>
+                </div>
+                <div class="sub-topic" onclick="toggleSubTopic(this)">
+                  <div class="sub-topic-header">
+                    <span class="sub-topic-name"><span class="term" data-term="alibi">ALiBi</span></span>
+                    <span class="sub-topic-icon">+</span>
+                  </div>
+                  <div class="sub-topic-preview">Attention with Linear Biases</div>
+                  <div class="sub-topic-detail">
+                    <p>Instead of modifying embeddings, ALiBi adds a <strong>linear bias directly to attention scores</strong> based on token distance. It shows better extrapolation beyond the training window and trains faster than RoPE. Used in MPT and some specialized models.</p>
+                  </div>
+                </div>
+                <div class="sub-topic" onclick="toggleSubTopic(this)">
+                  <div class="sub-topic-header">
+                    <span class="sub-topic-name">Per-Layer Embeddings (PLE)</span>
+                    <span class="sub-topic-icon">+</span>
+                  </div>
+                  <div class="sub-topic-preview">Google Gemma 3N innovation for mobile</div>
+                  <div class="sub-topic-detail">
+                    <p>Google's <strong>Gemma 3N</strong> introduced PLE for mobile inference. Rather than one large initial embedding, PLE generates <strong>smaller, layer-specific embeddings</strong> cached to slower storage (flash memory) and loaded as each layer runs. This dramatically reduces active memory footprint for on-device models.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ PHASE B ═══ -->
+    <div class="phase-divider" id="phase-b">
+      <div class="phase-divider-marker">B</div>
+      <div class="phase-divider-content">
+        <div class="phase-divider-name">GPU Computation</div>
+        <div class="phase-divider-desc">The core forward pass</div>
+      </div>
+    </div>
+
+    <!-- ─── 05 SCHEDULING ─── -->
+    <div class="pipeline-step reveal" data-step="scheduling">
+      <div class="step-marker"><div class="step-dot"></div></div>
+      <div class="step-card">
+        <div class="step-header">
+          <span class="step-number">05</span>
+          <span class="step-name">Scheduling &amp; Batching</span>
+          <span class="step-badge badge-logic">Logic</span>
+          <span class="step-expand-icon">+</span>
+        </div>
+        <div class="step-summary">The scheduler decides which requests enter the next GPU iteration. <span class="term" data-term="continuous-batching">Continuous batching</span> replaces completed sequences instantly, achieving 80-95% GPU utilisation.</div>
+        <div class="step-detail">
+          <div class="detail-inner">
+            <div class="callout-box callout-takeaway">
+              <div class="callout-label">Key Takeaway</div>
+              <p>Continuous batching is the single biggest throughput optimization &mdash; it keeps GPUs busy by replacing finished sequences with new ones every iteration.</p>
+            </div>
+            <div class="callout-box callout-analogy">
+              <div class="callout-label">Think of it like...</div>
+              <p>A barber who starts the next haircut immediately when a chair opens, instead of waiting for an entire group appointment to finish.</p>
+            </div>
+            <div class="detail-section">
+              <div class="detail-label">Why batching is critical</div>
+              <div class="detail-text">
+                Each decode step <strong>underutilises the GPU</strong> &mdash; the bottleneck is reading model weights from memory, not computation. Batching amortises this cost: reading weights once and applying them to many concurrent requests. Without batching, GPU utilisation can be as low as <strong>5-10%</strong> during decode.
+              </div>
+            </div>
+            <div class="detail-section">
+              <div class="detail-label">Drill into specifics</div>
+              <div class="sub-topics">
+                <div class="sub-topic" onclick="toggleSubTopic(this)">
+                  <div class="sub-topic-header">
+                    <span class="sub-topic-name">Static Batching</span>
+                    <span class="sub-topic-icon">+</span>
+                  </div>
+                  <div class="sub-topic-preview">Fixed groups, wait for slowest request</div>
+                  <div class="sub-topic-detail">
+                    <p>Requests are grouped into fixed-size batches. The entire batch waits until the <strong>slowest request finishes</strong>. If one request generates 10 tokens and another generates 500, the short request idles for the long one. GPU utilisation: <strong>30-60%</strong>.</p>
+                  </div>
+                </div>
+                <div class="sub-topic" onclick="toggleSubTopic(this)">
+                  <div class="sub-topic-header">
+                    <span class="sub-topic-name">Continuous Batching</span>
+                    <span class="sub-topic-icon">+</span>
+                  </div>
+                  <div class="sub-topic-preview">Replace finished sequences every iteration</div>
+                  <div class="sub-topic-detail">
+                    <p>The breakthrough technique. Each sequence finishes independently and is <strong>immediately replaced</strong> with a new request at every decode iteration. The batch composition changes dynamically.</p>
+                    <div class="metrics-row">
+                      <div class="metric"><div class="metric-value">80-95%</div><div class="metric-label">GPU Utilisation</div></div>
+                      <div class="metric"><div class="metric-value">2-8x</div><div class="metric-label">Throughput Gain</div></div>
+                    </div>
+                    <p>All major frameworks support it: vLLM, SGLang, TensorRT-LLM ("in-flight batching"), LMDeploy, TGI.</p>
+                  </div>
+                </div>
+                <div class="sub-topic" onclick="toggleSubTopic(this)">
+                  <div class="sub-topic-header">
+                    <span class="sub-topic-name"><span class="term" data-term="chunked-prefill">Chunked Prefill</span></span>
+                    <span class="sub-topic-icon">+</span>
+                  </div>
+                  <div class="sub-topic-preview">Interleave prefill with decode steps</div>
+                  <div class="sub-topic-detail">
+                    <p>Long prompts are split into chunks processed iteratively, <strong>interleaved with decode steps</strong>. This prevents a single large prefill from blocking all in-progress decode iterations (head-of-line blocking). Critical for maintaining low <span class="term" data-term="tpot">TPOT</span> under mixed workloads.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── 06 PREFILL ─── -->
+    <div class="pipeline-step reveal" data-step="prefill">
+      <div class="step-marker"><div class="step-dot"></div></div>
+      <div class="step-card">
+        <div class="step-header">
+          <span class="step-number">06</span>
+          <span class="step-name">Prefill Phase</span>
+          <span class="step-badge badge-compute">Compute</span>
+          <span class="step-expand-icon">+</span>
+        </div>
+        <div class="step-summary">All input tokens are processed through every Transformer layer in parallel. Computes and stores the KV cache. Determines Time to First Token (TTFT).</div>
+        <div class="step-detail">
+          <div class="detail-inner">
+            <div class="callout-box callout-takeaway">
+              <div class="callout-label">Key Takeaway</div>
+              <p>Prefill processes all input tokens in parallel and is compute-bound. Its speed directly determines Time to First Token (<span class="term" data-term="ttft">TTFT</span>).</p>
+            </div>
+            <div class="callout-box callout-analogy">
+              <div class="callout-label">Think of it like...</div>
+              <p>Reading an entire exam question before writing your answer &mdash; you must process everything first, but at least you can read all words simultaneously.</p>
+            </div>
+            <div class="detail-section">
+              <div class="detail-label">How it works</div>
+              <div class="detail-text">
+                All input token embeddings (with positional encoding) are fed through the Transformer layers simultaneously. At each attention layer, the model computes <strong>Query (Q), Key (K), and Value (V)</strong> matrices for every token. Self-attention is computed: <code>Attention(Q,K,V) = <span class="term" data-term="softmax">softmax</span>(QK&#x1D40;/&radic;d&#x2096;)V</code>. The resulting <strong>K and V tensors are stored</strong> in the KV cache.
+              </div>
+            </div>
+            <div class="detail-section">
+              <div class="detail-label">Characteristics</div>
+              <div class="metrics-row">
+                <div class="metric"><div class="metric-value">Compute</div><div class="metric-label">Bottleneck Type</div></div>
+                <div class="metric"><div class="metric-value">O(n&sup2;)</div><div class="metric-label">Attention Complexity</div></div>
+                <div class="metric"><div class="metric-value">TTFT</div><div class="metric-label">Latency Metric</div></div>
+              </div>
+              <div class="detail-text">
+                Prefill is <strong>compute-bound</strong> and <strong>highly parallelisable</strong>. All tokens are known upfront, so matrix multiplications are fully batched &mdash; ideal for GPU utilisation. For a 10K-token prompt, prefill on a single GPU can take seconds. This time directly determines the <strong>Time to First Token</strong>.
+              </div>
+            </div>
+            <div class="detail-section">
+              <div class="detail-label">Drill into specifics</div>
+              <div class="sub-topics">
+                <div class="sub-topic" onclick="toggleSubTopic(this)">
+                  <div class="sub-topic-header">
+                    <span class="sub-topic-name"><span class="term" data-term="prefix-caching">Prefix Cache</span> Hit</span>
+                    <span class="sub-topic-icon">+</span>
+                  </div>
+                  <div class="sub-topic-preview">Skip prefill entirely for cached prefixes</div>
+                  <div class="sub-topic-detail">
+                    <p>When the KV cache for a prompt prefix already exists, prefill goes from <strong>O(n&sup2;) GPU compute to O(n) storage I/O</strong>, eliminating 95% of TTFT. vLLM's Automatic Prefix Caching achieves <strong>87%+ cache hit rates</strong> with well-structured prompts and <strong>88% faster TTFT</strong> for warm cache hits.</p>
+                  </div>
+                </div>
+                <div class="sub-topic" onclick="toggleSubTopic(this)">
+                  <div class="sub-topic-header">
+                    <span class="sub-topic-name">KV-Runahead</span>
+                    <span class="sub-topic-icon">+</span>
+                  </div>
+                  <div class="sub-topic-preview">Apple's parallel layer prefill (2025)</div>
+                  <div class="sub-topic-detail">
+                    <p>Apple's <strong>KV-Runahead</strong> generates KV caches for later layers in parallel while earlier layers are still processing, overlapping computation and reducing total prefill time.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── 07 KV CACHE ─── -->
+    <div class="pipeline-step reveal" data-step="kvcache">
+      <div class="step-marker"><div class="step-dot"></div></div>
+      <div class="step-card">
+        <div class="step-header">
+          <span class="step-number">07</span>
+          <span class="step-name">KV Cache &amp; Memory Management</span>
+          <span class="step-badge badge-memory">Memory</span>
+          <span class="step-expand-icon">+</span>
+        </div>
+        <div class="step-summary">Stores Key and Value tensors from all layers to avoid O(n&sup2;) recomputation. Often consumes more GPU memory than the model weights. <span class="term" data-term="pagedattention">PagedAttention</span> reduces waste from 60-80% to under 4%.</div>
+        <div class="step-detail">
+          <div class="detail-inner">
+            <div class="callout-box callout-takeaway">
+              <div class="callout-label">Key Takeaway</div>
+              <p>The KV cache trades memory for speed &mdash; it avoids recomputing attention for previous tokens, but often consumes more GPU memory than the model weights themselves.</p>
+            </div>
+            <div class="callout-box callout-analogy">
+              <div class="callout-label">Think of it like...</div>
+              <p>Keeping sticky notes of every previous conversation turn so you don't re-read the entire chat history &mdash; efficient, but your desk fills up fast.</p>
+            </div>
+            <div class="detail-section">
+              <div class="detail-label">Memory formula</div>
+              <div class="code-block"><span class="cm">// Per token</span>
+<span class="fn">KV_per_token</span> = <span class="num">2</span> &times; num_layers &times; num_kv_heads &times; head_dim &times; bytes_per_param
+
+<span class="cm">// Example: Llama 2 7B (<span class="term" data-term="fp16">FP16</span>)</span>
+<span class="cm">// 2 &times; 32 &times; 32 &times; 128 &times; 2 = 524 KB per token</span>
+<span class="cm">// 4096 ctx &times; 524KB = ~2 GB per sequence</span>
+<span class="cm">// Batch of 32 = ~64 GB &mdash; can exceed a single GPU!</span></div>
+            </div>
+            <div class="detail-section">
+              <div class="detail-label">Drill into specifics</div>
+              <div class="sub-topics">
+                <div class="sub-topic" onclick="toggleSubTopic(this)">
+                  <div class="sub-topic-header">
+                    <span class="sub-topic-name">PagedAttention</span>
+                    <span class="sub-topic-icon">+</span>
+                  </div>
+                  <div class="sub-topic-preview">OS-style virtual memory for KV cache</div>
+                  <div class="sub-topic-detail">
+                    <p>Borrows <strong>virtual memory and paging</strong> from operating systems. GPU memory is divided into fixed-size physical blocks (e.g., 16 tokens each). Each sequence's KV cache maps to logical blocks that point to scattered physical blocks via a <strong>block table</strong> (like a page table).</p>
+                    <p>Blocks are allocated <strong>on demand</strong> as tokens are generated, not pre-allocated for max length. Multiple requests sharing a prefix can <strong>point to the same physical block</strong> (copy-on-write).</p>
+                    <div class="metrics-row">
+                      <div class="metric"><div class="metric-value">&lt;4%</div><div class="metric-label">Memory Waste</div></div>
+                      <div class="metric"><div class="metric-value">2-4x</div><div class="metric-label">More Concurrent Reqs</div></div>
+                    </div>
+                  </div>
+                </div>
+                <div class="sub-topic" onclick="toggleSubTopic(this)">
+                  <div class="sub-topic-header">
+                    <span class="sub-topic-name">KV Cache Compression</span>
+                    <span class="sub-topic-icon">+</span>
+                  </div>
+                  <div class="sub-topic-preview">Eviction, quantization, merging</div>
+                  <div class="sub-topic-detail">
+                    <p><strong>Token-level</strong>: Evict unimportant tokens, dynamically allocate memory budget, merge similar KV pairs, quantise cached values to INT8/<span class="term" data-term="int4">INT4</span>.</p>
+                    <p><strong>Offloading</strong>: Move KV cache to CPU DRAM or disk when GPU memory is full, with intelligent prefetching.</p>
+                    <p><strong>Multi-tier storage</strong>: LMCache supports GPU DRAM &rarr; CPU DRAM &rarr; local disk &rarr; remote storage hierarchy.</p>
+                  </div>
+                </div>
+                <div class="sub-topic" onclick="toggleSubTopic(this)">
+                  <div class="sub-topic-header">
+                    <span class="sub-topic-name"><span class="term" data-term="mla">Multi-Head Latent Attention</span></span>
+                    <span class="sub-topic-icon">+</span>
+                  </div>
+                  <div class="sub-topic-preview">DeepSeek's 93% KV cache reduction</div>
+                  <div class="sub-topic-detail">
+                    <p>DeepSeek V2/V3's <strong>MLA</strong> compresses K and V into a low-dimensional latent vector. Only the compressed latent is stored in the KV cache; at inference, it is projected back to full K/V space. Result: <strong>93.3% KV cache reduction</strong> vs MHA, slightly outperforming in quality.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── 08 ATTENTION ─── -->
+    <div class="pipeline-step reveal" data-step="attention">
+      <div class="step-marker"><div class="step-dot"></div></div>
+      <div class="step-card">
+        <div class="step-header">
+          <span class="step-number">08</span>
+          <span class="step-name">Attention Mechanisms</span>
+          <span class="step-badge badge-compute">Compute</span>
+          <span class="step-expand-icon">+</span>
+        </div>
+        <div class="step-summary">The core computation. <span class="term" data-term="gqa">GQA</span> is the 2025 standard. <span class="term" data-term="flashattention">FlashAttention</span> makes it IO-efficient by tiling through GPU <span class="term" data-term="sram">SRAM</span> (19 TB/s) instead of <span class="term" data-term="hbm">HBM</span> (2 TB/s).</div>
+        <div class="step-detail">
+          <div class="detail-inner">
+            <div class="callout-box callout-takeaway">
+              <div class="callout-label">Key Takeaway</div>
+              <p>GQA is the 2025 standard: near-full-quality attention with a fraction of the memory cost. FlashAttention makes any variant faster via hardware-aware tiling.</p>
+            </div>
+            <div class="callout-box callout-analogy">
+              <div class="callout-label">Think of it like...</div>
+              <p>A study group sharing notes &mdash; instead of everyone writing independent copies (<span class="term" data-term="mha">MHA</span>), small groups share one set (GQA). Less paper, nearly the same understanding.</p>
+            </div>
+            <div class="detail-section">
+              <div class="detail-label">Drill into specifics</div>
+              <div class="sub-topics">
+                <div class="sub-topic" onclick="toggleSubTopic(this)">
+                  <div class="sub-topic-header">
+                    <span class="sub-topic-name">MHA &rarr; GQA &rarr; <span class="term" data-term="mqa">MQA</span></span>
+                    <span class="sub-topic-icon">+</span>
+                  </div>
+                  <div class="sub-topic-preview">The evolution of attention head sharing</div>
+                  <div class="sub-topic-detail">
+                    <p><strong>MHA</strong> (Multi-Head Attention): Original Transformer. Each head has independent Q, K, V. Maximum expressivity, highest KV cache cost.</p>
+                    <p><strong>MQA</strong> (Multi-Query Attention): All query heads share <strong>one</strong> K/V head. KV cache reduced by num_heads&times; (e.g., 32x). Lower quality.</p>
+                    <p><strong>GQA</strong> (Grouped-Query Attention): <strong>The 2025 standard</strong>. Query heads grouped, each group shares one K/V head. Example: 32 Q heads with 8 KV heads = 4x KV cache reduction. Optimal quality-efficiency balance. Used in LLaMA 3, Mistral, most open models.</p>
+                  </div>
+                </div>
+                <div class="sub-topic" onclick="toggleSubTopic(this)">
+                  <div class="sub-topic-header">
+                    <span class="sub-topic-name">FlashAttention</span>
+                    <span class="sub-topic-icon">+</span>
+                  </div>
+                  <div class="sub-topic-preview">IO-aware tiled attention: up to 7.6x faster</div>
+                  <div class="sub-topic-detail">
+                    <p>Not a different attention variant &mdash; an <strong>IO-aware implementation</strong> that makes any attention pattern faster. Core insight: standard attention is bottlenecked by memory bandwidth, not compute.</p>
+                    <p><strong>Solution</strong>: Tile Q, K, V into blocks. Load blocks from HBM to SRAM (fast, small on-chip memory). Compute attention entirely in SRAM. Write only the final output back &mdash; never materialising the full N&times;N attention matrix.</p>
+                    <div class="metrics-row">
+                      <div class="metric"><div class="metric-value">19 TB/s</div><div class="metric-label">SRAM Bandwidth</div></div>
+                      <div class="metric"><div class="metric-value">2 TB/s</div><div class="metric-label">HBM Bandwidth</div></div>
+                      <div class="metric"><div class="metric-value">7.6x</div><div class="metric-label">Speedup (GPT-2)</div></div>
+                    </div>
+                    <p><strong>FlashAttention-3</strong> (2025): Adds async loading (overlap data transfer with compute), <span class="term" data-term="fp8">FP8</span> support, and Hopper-specific optimisations.</p>
+                  </div>
+                </div>
+                <div class="sub-topic" onclick="toggleSubTopic(this)">
+                  <div class="sub-topic-header">
+                    <span class="sub-topic-name">Multi-Head Latent Attention</span>
+                    <span class="sub-topic-icon">+</span>
+                  </div>
+                  <div class="sub-topic-preview">DeepSeek's compressed attention</div>
+                  <div class="sub-topic-detail">
+                    <p>MLA compresses K and V into a <strong>low-dimensional latent vector</strong> before caching. At inference, the latent is projected back. In "absorb mode": <strong>71x less memory per layer</strong> (98.6% reduction). Slightly outperforms MHA in quality.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── 09 DECODE ─── -->
+    <div class="pipeline-step reveal" data-step="decode">
+      <div class="step-marker"><div class="step-dot"></div></div>
+      <div class="step-card">
+        <div class="step-header">
+          <span class="step-number">09</span>
+          <span class="step-name">Decode Phase</span>
+          <span class="step-badge badge-memory">Memory</span>
+          <span class="step-expand-icon">+</span>
+        </div>
+        <div class="step-summary">Tokens generated one at a time, <span class="term" data-term="autoregressive">autoregressively</span>. Each step reads the entire KV cache but does little math. Memory-bandwidth-bound, inherently sequential.</div>
+        <div class="step-detail">
+          <div class="detail-inner">
+            <div class="callout-box callout-takeaway">
+              <div class="callout-label">Key Takeaway</div>
+              <p>Decode generates one token at a time and is memory-bandwidth-bound &mdash; the GPU spends most of its time waiting for data reads, not computing.</p>
+            </div>
+            <div class="callout-box callout-analogy">
+              <div class="callout-label">Think of it like...</div>
+              <p>Writing a story one word at a time, where for each word you must re-read all your previous notes &mdash; the bottleneck isn't thinking, it's flipping through pages.</p>
+            </div>
+            <div class="detail-section">
+              <div class="detail-label">The autoregressive loop</div>
+              <div class="detail-text">
+                For each new token: the single embedding is fed through all layers. Only the <strong>Query for the new token</strong> is computed fresh. The Key and Value are computed and <strong>appended to the KV cache</strong>. Attention is computed between the new Q and all cached K/V pairs. Output <span class="term" data-term="logits">logits</span> represent probability over the vocabulary.
+              </div>
+            </div>
+            <div class="detail-section">
+              <div class="detail-label">Why it's slow</div>
+              <div class="detail-text">
+                Each decode step involves <strong>reading the entire KV cache</strong> from GPU HBM but performs little arithmetic. The arithmetic intensity is very low &mdash; the GPU is mostly waiting for memory reads. This is why decode is <strong>memory-bandwidth-bound</strong>, not compute-bound. The key metric is <strong>TPOT</strong> (Time Per Output Token).
+              </div>
+            </div>
+            <div class="detail-section">
+              <div class="detail-label">Drill into specifics</div>
+              <div class="sub-topics">
+                <div class="sub-topic" onclick="toggleSubTopic(this)">
+                  <div class="sub-topic-header">
+                    <span class="sub-topic-name"><span class="term" data-term="speculative-decoding">Speculative Decoding</span></span>
+                    <span class="sub-topic-icon">+</span>
+                  </div>
+                  <div class="sub-topic-preview">Draft model + verification: 2-3x speedup, lossless</div>
+                  <div class="sub-topic-detail">
+                    <p>A small "draft model" (e.g., 1B params) generates K candidate tokens quickly. The large target model (e.g., 70B) <strong>verifies all K tokens in a single forward pass</strong> (prefill-like parallelism). Tokens are accepted left-to-right; the first rejected token is resampled.</p>
+                    <p>The output distribution is <strong>mathematically identical</strong> to running the target model alone &mdash; this is lossless acceleration.</p>
+                    <div class="metrics-row">
+                      <div class="metric"><div class="metric-value">2-3x</div><div class="metric-label">Typical Speedup</div></div>
+                      <div class="metric"><div class="metric-value">0%</div><div class="metric-label">Quality Loss</div></div>
+                    </div>
+                    <p><strong>2025 advances</strong>: Block verification (5-8% additional speedup), Online Speculative Decoding (adapts draft to query distribution), Self-Speculative Decoding (uses early-exit layers, no separate model), Medusa (parallel draft heads).</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ PHASE C ═══ -->
+    <div class="phase-divider" id="phase-c">
+      <div class="phase-divider-marker">C</div>
+      <div class="phase-divider-content">
+        <div class="phase-divider-name">Output &amp; Delivery</div>
+        <div class="phase-divider-desc">Turning logits into a response</div>
+      </div>
+    </div>
+
+    <!-- ─── 10 SAMPLING ─── -->
+    <div class="pipeline-step reveal" data-step="sampling">
+      <div class="step-marker"><div class="step-dot"></div></div>
+      <div class="step-card">
+        <div class="step-header">
+          <span class="step-number">10</span>
+          <span class="step-name">Sampling &amp; Token Selection</span>
+          <span class="step-badge badge-logic">Logic</span>
+          <span class="step-expand-icon">+</span>
+        </div>
+        <div class="step-summary">Logits are transformed via temperature, truncated (<span class="term" data-term="top-k">top-k</span>, <span class="term" data-term="top-p">top-p</span>, <span class="term" data-term="min-p">min-p</span>), penalised for repetition, then sampled. Order matters.</div>
+        <div class="step-detail">
+          <div class="detail-inner">
+            <div class="callout-box callout-takeaway">
+              <div class="callout-label">Key Takeaway</div>
+              <p>The order of sampling operations matters: penalties &rarr; temperature &rarr; truncation &rarr; softmax &rarr; sample. Min-P is the recommended truncation method for 2025.</p>
+            </div>
+            <div class="callout-box callout-analogy">
+              <div class="callout-label">Think of it like...</div>
+              <p>Choosing a restaurant: first eliminate closed ones (truncation), adjust for how adventurous you feel (temperature), then pick from what's left.</p>
+            </div>
+            <div class="detail-section">
+              <div class="detail-label">The sampling pipeline</div>
+              <div class="code-block"><span class="fn">Raw Logits</span>
+  &rarr; <span class="kw">Repetition/Penalty Adjustments</span>
+  &rarr; <span class="kw">Temperature Scaling</span>
+  &rarr; <span class="kw">Truncation</span> (top-k / top-p / min-p)
+  &rarr; <span class="fn">Softmax</span>
+  &rarr; <span class="str">Random Sample</span></div>
+            </div>
+            <div class="detail-section">
+              <div class="detail-label">Drill into specifics</div>
+              <div class="sub-topics">
+                <div class="sub-topic" onclick="toggleSubTopic(this)">
+                  <div class="sub-topic-header">
+                    <span class="sub-topic-name">Temperature</span>
+                    <span class="sub-topic-icon">+</span>
+                  </div>
+                  <div class="sub-topic-preview">Scales logits before softmax</div>
+                  <div class="sub-topic-detail">
+                    <p>Temperature scales logits: <code>p_i = exp(z_i / T) / &Sigma;exp(z_j / T)</code></p>
+                    <p><strong>T = 1.0</strong>: Default. <strong>T &lt; 1.0</strong>: Sharper, more deterministic. <strong>T &gt; 1.0</strong>: Flatter, more creative. <strong>T &rarr; 0</strong>: Greedy decoding (always pick highest probability).</p>
+                  </div>
+                </div>
+                <div class="sub-topic" onclick="toggleSubTopic(this)">
+                  <div class="sub-topic-header">
+                    <span class="sub-topic-name">Top-K, Top-P, Min-P</span>
+                    <span class="sub-topic-icon">+</span>
+                  </div>
+                  <div class="sub-topic-preview">Truncation strategies compared</div>
+                  <div class="sub-topic-detail">
+                    <p><strong>Top-K</strong>: Keep K highest-probability tokens. Problem: fixed K is context-inappropriate.</p>
+                    <p><strong>Top-P</strong> (Nucleus): Keep smallest set whose cumulative probability exceeds P. Dynamically adaptive, but coupled to temperature.</p>
+                    <p><strong>Min-P</strong> (ICLR 2025): Filter tokens below <code>min_p &times; max_probability</code>. Consistently outperforms Top-P, especially at higher temperatures. <strong>The recommended truncation method for 2025.</strong></p>
+                  </div>
+                </div>
+                <div class="sub-topic" onclick="toggleSubTopic(this)">
+                  <div class="sub-topic-header">
+                    <span class="sub-topic-name">Repetition Penalties</span>
+                    <span class="sub-topic-icon">+</span>
+                  </div>
+                  <div class="sub-topic-preview">Frequency, presence, and LZ penalties</div>
+                  <div class="sub-topic-detail">
+                    <p><strong>Repetition penalty</strong>: Multiplicative penalty on logits of recently-seen tokens.</p>
+                    <p><strong>Frequency penalty</strong>: Additive penalty proportional to token occurrence count.</p>
+                    <p><strong>Presence penalty</strong>: Flat additive penalty on any token that has appeared at all (binary).</p>
+                    <p><strong>LZ penalty</strong> (2025): Information-theoretic penalty based on Lempel-Ziv complexity, detecting repeated n-gram patterns.</p>
+                  </div>
+                </div>
+                <div class="sub-topic" onclick="toggleSubTopic(this)">
+                  <div class="sub-topic-header">
+                    <span class="sub-topic-name">Top-n-Sigma (ACL 2025)</span>
+                    <span class="sub-topic-icon">+</span>
+                  </div>
+                  <div class="sub-topic-preview">Temperature-decoupled truncation in logit space</div>
+                  <div class="sub-topic-detail">
+                    <p>The newest method. Addresses <strong>temperature coupling</strong> &mdash; probability-based truncation produces identical token sets regardless of temperature. Top-n-sigma operates in <strong>logit space</strong>, keeping tokens within n standard deviations of the mean logit. Fully decoupled from temperature.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── 11 DETOKENIZATION & STREAMING ─── -->
+    <div class="pipeline-step reveal" data-step="streaming">
+      <div class="step-marker"><div class="step-dot"></div></div>
+      <div class="step-card">
+        <div class="step-header">
+          <span class="step-number">11</span>
+          <span class="step-name">Detokenization &amp; Streaming</span>
+          <span class="step-badge badge-io">IO</span>
+          <span class="step-expand-icon">+</span>
+        </div>
+        <div class="step-summary">Token IDs are converted back to text and streamed to the client via <span class="term" data-term="sse">Server-Sent Events (SSE)</span>. Includes content filtering and format enforcement.</div>
+        <div class="step-detail">
+          <div class="detail-inner">
+            <div class="callout-box callout-takeaway">
+              <div class="callout-label">Key Takeaway</div>
+              <p>Tokens can't always be decoded independently &mdash; partial characters must be buffered until a valid text boundary is reached before sending to the client.</p>
+            </div>
+            <div class="callout-box callout-analogy">
+              <div class="callout-label">Think of it like...</div>
+              <p>A simultaneous translator who sometimes needs to hear the next few syllables before they can translate the current word &mdash; they buffer until meaning is clear.</p>
+            </div>
+            <div class="detail-section">
+              <div class="detail-label">Detokenization subtleties</div>
+              <div class="detail-text">
+                During streaming, tokens cannot be detokenized independently. Some tokens represent <strong>partial UTF-8 characters</strong> or subwords that only form valid text when combined. The detokenizer must <strong>buffer tokens</strong> until a valid text boundary is reached. Special tokens (<code>&lt;|endoftext|&gt;</code>, tool-call markers) must be stripped.
+              </div>
+            </div>
+            <div class="detail-section">
+              <div class="detail-label">Drill into specifics</div>
+              <div class="sub-topics">
+                <div class="sub-topic" onclick="toggleSubTopic(this)">
+                  <div class="sub-topic-header">
+                    <span class="sub-topic-name">Server-Sent Events (SSE)</span>
+                    <span class="sub-topic-icon">+</span>
+                  </div>
+                  <div class="sub-topic-preview">The dominant streaming protocol</div>
+                  <div class="sub-topic-detail">
+                    <p>SSE is the standard for streaming LLM responses. Each token is packaged as an SSE message and flushed immediately:</p>
+                    <div class="code-block"><span class="kw">data:</span> <span class="str">{"choices":[{"delta":{"content":" Hello"}}]}</span>
+<span class="kw">data:</span> <span class="str">{"choices":[{"delta":{"content":" world"}}]}</span>
+<span class="kw">data:</span> <span class="str">[DONE]</span></div>
+                    <p><strong>Why SSE over WebSockets?</strong> Simpler (HTTP-based, unidirectional), built-in reconnection, works with standard infrastructure. "90% of the benefit with 10% of the headache."</p>
+                  </div>
+                </div>
+                <div class="sub-topic" onclick="toggleSubTopic(this)">
+                  <div class="sub-topic-header">
+                    <span class="sub-topic-name">Postprocessing Pipeline</span>
+                    <span class="sub-topic-icon">+</span>
+                  </div>
+                  <div class="sub-topic-preview">Safety, formatting, stop conditions</div>
+                  <div class="sub-topic-detail">
+                    <p>After detokenization, responses pass through: <strong>stop condition checking</strong> (stop sequences, max tokens, <span class="term" data-term="eos">EOS</span>), <strong>content filtering</strong> (toxicity, safety classifiers), <strong>response scoring</strong> (reward models), <strong>format enforcement</strong> (JSON schema validation), and <strong>citation linking</strong>.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /pipeline-flow -->
+</section>
+
+<!-- ═══════════ CROSS-CUTTING OPTIMIZATIONS ═══════════ -->
+<section class="pipeline-section" id="cross-cutting">
+  <div class="section-label reveal">Applied Across All Phases</div>
+  <h2 class="section-title reveal">Cross-Cutting Optimizations</h2>
+  <p class="section-desc reveal">These techniques aren't sequential pipeline steps &mdash; they apply across the entire forward pass to reduce memory footprint and distribute computation across GPUs.</p>
+  <div class="sub-topics reveal">
+    <div class="sub-topic" onclick="toggleSubTopic(this)">
+      <div class="sub-topic-header">
+        <span class="sub-topic-name">Quantization Methods</span>
+        <span class="sub-topic-icon">+</span>
+      </div>
+      <div class="sub-topic-preview"><span class="term" data-term="gptq">GPTQ</span>, <span class="term" data-term="awq">AWQ</span>, <span class="term" data-term="gguf">GGUF</span>, FP8</div>
+      <div class="sub-topic-detail">
+        <p>LLM inference is <strong>memory-bandwidth bound</strong>. Smaller weights = less data to transfer = faster inference.</p>
+        <table class="data-table">
+          <thead><tr><th>Method</th><th>Bits</th><th>Best For</th><th>Quality</th></tr></thead>
+          <tbody>
+            <tr><td>FP8 (E4M3)</td><td>8</td><td>Hopper GPUs</td><td>~99%</td></tr>
+            <tr><td>AWQ</td><td>4</td><td>GPU inference</td><td>~95%</td></tr>
+            <tr><td>GPTQ</td><td>4</td><td>GPU inference</td><td>~90%</td></tr>
+            <tr><td>GGUF</td><td>2-8</td><td>CPU / edge</td><td>~92%</td></tr>
+          </tbody>
+        </table>
+        <p><strong>AWQ</strong> key insight: not all weights are equally important. It identifies salient weights by analysing <strong>activation magnitudes</strong> and skips them during quantization. Consistently outperforms GPTQ.</p>
+        <p><strong>FP8</strong> on Hopper GPUs is nearly lossless: 2x performance, 2x memory reduction vs FP16.</p>
+      </div>
+    </div>
+    <div class="sub-topic" onclick="toggleSubTopic(this)">
+      <div class="sub-topic-header">
+        <span class="sub-topic-name"><span class="term" data-term="tp">Tensor Parallelism</span> (TP)</span>
+        <span class="sub-topic-icon">+</span>
+      </div>
+      <div class="sub-topic-preview">Slice individual layers across GPUs</div>
+      <div class="sub-topic-detail">
+        <p>Weight matrices are split column-wise or row-wise across GPUs. Each GPU holds a fraction of every layer and computes its slice in parallel. Requires <strong>AllReduce after every layer</strong> &mdash; needs high-bandwidth interconnect (NVLink). Best <strong>within a single node</strong>.</p>
+      </div>
+    </div>
+    <div class="sub-topic" onclick="toggleSubTopic(this)">
+      <div class="sub-topic-header">
+        <span class="sub-topic-name"><span class="term" data-term="pp">Pipeline Parallelism</span> (PP)</span>
+        <span class="sub-topic-icon">+</span>
+      </div>
+      <div class="sub-topic-preview">Divide layers into sequential stages</div>
+      <div class="sub-topic-detail">
+        <p>A 32-layer model with PP=4 assigns layers 0-7 to GPU 0, 8-15 to GPU 1, etc. Communication is only between adjacent stages (point-to-point), much less frequent than TP. <strong>Pipeline bubbles</strong> (idle stages) are mitigated with micro-batching. Best for <strong>scaling across nodes</strong>.</p>
+      </div>
+    </div>
+    <div class="sub-topic" onclick="toggleSubTopic(this)">
+      <div class="sub-topic-header">
+        <span class="sub-topic-name"><span class="term" data-term="ep">Expert Parallelism</span> (EP)</span>
+        <span class="sub-topic-icon">+</span>
+      </div>
+      <div class="sub-topic-preview">For <span class="term" data-term="moe">MoE</span> models: route experts to GPUs</div>
+      <div class="sub-topic-detail">
+        <p>Specialised for <strong>Mixture of Experts</strong> models (DeepSeek-V3: 256 experts, Mixtral: 8). Different experts placed on different GPUs. Requires <strong>All-to-All communication</strong> to route tokens to correct expert GPU. Since only a fraction of experts activate per token (e.g., 2/64), each GPU does less work while the total model can be massive.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ SERVING FRAMEWORKS ═══════════ -->
+<section class="pipeline-section" id="frameworks">
+  <div class="section-label reveal">Putting It All Together</div>
+  <h2 class="section-title reveal">Serving Frameworks</h2>
+  <p class="section-desc reveal">These frameworks implement the full pipeline above. Each makes different trade-offs.</p>
+
+  <div class="sub-topics reveal">
+    <div class="sub-topic" onclick="toggleSubTopic(this)">
+      <div class="sub-topic-header">
+        <span class="sub-topic-name">vLLM</span>
+        <span class="sub-topic-icon">+</span>
+      </div>
+      <div class="sub-topic-preview">Most widely adopted. PagedAttention + continuous batching.</div>
+      <div class="sub-topic-detail">
+        <p><strong>Key innovations</strong>: PagedAttention, continuous batching, OpenAI-compatible API. V1 architecture (2025) features separate engine core process for scheduler + KV cache management. Largest community, best model support (~15-20 new models/week).</p>
+        <div class="metrics-row">
+          <div class="metric"><div class="metric-value">120-160</div><div class="metric-label">req/s</div></div>
+          <div class="metric"><div class="metric-value">50-80ms</div><div class="metric-label">TTFT</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="sub-topic" onclick="toggleSubTopic(this)">
+      <div class="sub-topic-header">
+        <span class="sub-topic-name">SGLang</span>
+        <span class="sub-topic-icon">+</span>
+      </div>
+      <div class="sub-topic-preview">RadixAttention for automatic prefix sharing.</div>
+      <div class="sub-topic-detail">
+        <p><strong>RadixAttention</strong> uses a radix tree to store KV cache prefixes, enabling automatic sharing across requests with partial prefix overlap. Up to <strong>6.4x higher throughput</strong> and <strong>3.7x lower latency</strong> than vLLM on structured workloads. Best for agents, tool chains, and RAG systems.</p>
+      </div>
+    </div>
+    <div class="sub-topic" onclick="toggleSubTopic(this)">
+      <div class="sub-topic-header">
+        <span class="sub-topic-name">TensorRT-LLM</span>
+        <span class="sub-topic-icon">+</span>
+      </div>
+      <div class="sub-topic-preview">NVIDIA's optimised library. Fastest at low concurrency.</div>
+      <div class="sub-topic-detail">
+        <p>Graph-level optimisations, kernel fusion, in-flight batching. Fastest TTFT at low concurrency (<strong>35-50ms</strong>), but can degrade under high load. Tightly coupled to NVIDIA hardware. Best for ultra-low latency with well-supported models.</p>
+      </div>
+    </div>
+    <div class="sub-topic" onclick="toggleSubTopic(this)">
+      <div class="sub-topic-header">
+        <span class="sub-topic-name">NVIDIA Dynamo</span>
+        <span class="sub-topic-icon">+</span>
+      </div>
+      <div class="sub-topic-preview">Next-gen distributed framework (GTC 2025).</div>
+      <div class="sub-topic-detail">
+        <p>Built-in prefill-decode disaggregation, dynamic GPU scheduling, LLM-aware request routing. Up to <strong>30x</strong> more requests (DeepSeek-R1 on Blackwell), <strong>2x+</strong> throughput (Llama 70B on Hopper). Dynamo Planner: SLO-driven automation solving the rate-matching challenge between prefill and decode tiers.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ FULL JOURNEY DIAGRAM ═══════════ -->
+<section class="journey-section" id="journey">
+  <div class="section-label reveal">End-to-End Summary</div>
+  <h2 class="section-title reveal">The Complete Journey</h2>
+  <div class="journey-diagram reveal"><span class="component">User Request</span>
+    <span class="arrow-line">|</span>
+    <span class="arrow-line">v</span>
+<span class="phase-group">── Phase A: Request Preparation ──────────────────</span>
+    <span class="arrow-line">|</span>
+<span class="phase-label">[01 Request Routing]</span>
+    <span class="detail">|-- KV cache aware routing</span>
+    <span class="detail">|-- Prefill/decode disaggregation</span>
+    <span class="arrow-line">v</span>
+<span class="phase-label">[02 Preprocessing]</span>
+    <span class="detail">|-- Input validation, rate limiting</span>
+    <span class="detail">|-- Prompt template + RAG retrieval</span>
+    <span class="arrow-line">v</span>
+<span class="phase-label">[03 Tokenization]</span>
+    <span class="detail">|-- BPE / SentencePiece -> token IDs</span>
+    <span class="detail">|-- tiktoken (3-6x faster)</span>
+    <span class="arrow-line">v</span>
+<span class="phase-label">[04 Embedding + Position]</span>
+    <span class="detail">|-- Token ID -> vector (table lookup)</span>
+    <span class="detail">|-- + RoPE positional encoding</span>
+    <span class="arrow-line">|</span>
+    <span class="arrow-line">v</span>
+<span class="phase-group">── Phase B: GPU Computation ───────────────────────</span>
+    <span class="arrow-line">|</span>
+<span class="phase-label">[05 Scheduler Queue]</span>
+    <span class="detail">|-- Continuous batching: join next iteration</span>
+    <span class="arrow-line">v</span>
+<span class="phase-label">[06 PREFILL]</span> <span class="detail" style="color:var(--compute)">(compute-bound, parallel)</span>
+    <span class="detail">|-- Check prefix cache -> skip if hit</span>
+    <span class="detail">|-- All tokens through all layers</span>
+    <span class="detail">|-- Store K,V in KV cache (PagedAttention)</span>
+    <span class="detail">|-- FlashAttention for IO efficiency</span>
+    <span class="arrow-line">v</span>
+<span class="phase-label">[07-08 KV Cache + Attention]</span>
+    <span class="detail">|-- GQA (standard), MLA (DeepSeek)</span>
+    <span class="detail">|-- PagedAttention: &lt;4% memory waste</span>
+    <span class="arrow-line">v</span>
+<span class="phase-label">[09 DECODE LOOP]</span> <span class="detail" style="color:var(--memory)">(memory-bound, sequential)</span>
+    <span class="detail">|-- Single token through all layers</span>
+    <span class="detail">|-- Q attends to cached K,V</span>
+    <span class="detail">|-- Speculative decoding: 2-3x speedup</span>
+    <span class="arrow-line">|</span>
+    <span class="arrow-line">v</span>
+<span class="phase-group">── Phase C: Output &amp; Delivery ────────────────────</span>
+    <span class="arrow-line">|</span>
+<span class="phase-label">[10 Sampling]</span>
+    <span class="detail">|-- Penalties -> Temperature -> Min-P -> Softmax -> Sample</span>
+    <span class="arrow-line">v</span>
+<span class="phase-label">[11 Detokenize + Stream]</span>
+    <span class="detail">|-- Incremental detokenization</span>
+    <span class="detail">|-- SSE streaming -> content filter -> [DONE]</span>
+    <span class="arrow-line">v</span>
+<span class="component">User receives streamed response</span>
+
+<span class="detail">─────────────────────────────────────────────────────</span>
+<span class="detail" style="color:var(--text-dim)">Cross-cutting: Quantization (FP8/INT4) + Parallelism (TP/PP/EP)</span>
+<span class="detail" style="color:var(--text-muted)">Applied across all phases to reduce memory &amp; distribute compute</span></div>
+</section>
+
+<!-- ═══════════ FOOTER ═══════════ -->
+<footer class="footer">
+  <p>Built as an interactive learning reference &middot; Sources: vLLM, NVIDIA, Meta, DeepSeek, Hugging Face, BentoML, Apple, Google &middot; 2025-2026</p>
+</footer>
+
+<script>
+// ─── Pipeline step toggle ───
+document.querySelectorAll('.pipeline-step').forEach(step => {
+  step.querySelector('.step-card').addEventListener('click', (e) => {
+    if (e.target.closest('.sub-topic')) return;
+    if (e.target.closest('.term')) return;
+    step.classList.toggle('active');
+  });
+});
+
+// ─── Sub-topic toggle ───
+function toggleSubTopic(el) {
+  const wasExpanded = el.classList.contains('expanded');
+  // Close siblings
+  el.parentElement.querySelectorAll('.sub-topic.expanded').forEach(s => {
+    if (s !== el) s.classList.remove('expanded');
+  });
+  el.classList.toggle('expanded', !wasExpanded);
+}
+
+// ─── Scroll reveal ───
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('visible');
+    }
+  });
+}, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+// ─── Term tooltip system ───
+const termDefs = {
+  'kv-cache': 'Stores precomputed Key and Value attention tensors so the model doesn\'t recompute them for every previous token at each generation step.',
+  'ttft': 'Time to First Token \u2014 latency from sending a request to receiving the first generated token. Dominated by prefill time.',
+  'tpot': 'Time Per Output Token \u2014 average latency between consecutive generated tokens during the decode phase.',
+  'bpe': 'Byte Pair Encoding \u2014 a tokenization algorithm that iteratively merges the most frequent adjacent byte/character pairs into new tokens.',
+  'rope': 'Rotary Position Embedding \u2014 encodes token position by rotating query and key vectors in 2D subspaces using sinusoidal functions. Parameter-free.',
+  'gqa': 'Grouped-Query Attention \u2014 query heads share Key/Value heads in groups (e.g., 32 Q heads sharing 8 KV heads). The 2025 standard for efficient attention.',
+  'mha': 'Multi-Head Attention \u2014 the original Transformer attention where each head has fully independent Query, Key, and Value projections.',
+  'mqa': 'Multi-Query Attention \u2014 all query heads share a single Key/Value head pair. Maximum KV cache reduction at some quality cost.',
+  'mla': 'Multi-Head Latent Attention \u2014 DeepSeek\'s method that compresses K and V into a low-rank latent before caching, then projects back at inference time.',
+  'flashattention': 'An IO-aware attention implementation that tiles computation through fast on-chip SRAM (~19 TB/s) instead of slow HBM (~2 TB/s), never materializing the full N\u00d7N attention matrix.',
+  'pagedattention': 'Manages KV cache like OS virtual memory \u2014 fixed-size blocks allocated on demand with a block table mapping logical to physical blocks. Reduces memory waste to under 4%.',
+  'prefill': 'The first inference phase: all input tokens are processed through every Transformer layer in parallel, computing and storing the KV cache. Compute-bound.',
+  'decode': 'The autoregressive generation phase: tokens produced one at a time, each requiring a read of the full KV cache. Memory-bandwidth-bound.',
+  'tp': 'Tensor Parallelism \u2014 splits individual weight matrices across GPUs within a node. Each GPU computes a slice of every layer. Requires NVLink.',
+  'pp': 'Pipeline Parallelism \u2014 assigns consecutive layers to different GPUs. Communication only between adjacent stages. Best across nodes.',
+  'ep': 'Expert Parallelism \u2014 for MoE models, places different experts on different GPUs. Uses All-to-All communication to route tokens to the correct expert.',
+  'hbm': 'High Bandwidth Memory \u2014 the main GPU memory (e.g., 80 GB on A100). ~2\u20133 TB/s bandwidth. Stores model weights and KV cache.',
+  'sram': 'Static RAM \u2014 small (~20 MB on A100), ultra-fast on-chip GPU memory at ~19 TB/s bandwidth. Used by FlashAttention for tiled computation.',
+  'nvlink': 'NVIDIA\'s high-bandwidth GPU-to-GPU interconnect (~900 GB/s on H100). Essential for tensor parallelism within a single node.',
+  'rdma': 'Remote Direct Memory Access \u2014 lets GPUs read/write each other\'s memory directly, bypassing the CPU. Used for KV cache transfer in disaggregated serving.',
+  'sse': 'Server-Sent Events \u2014 a simple HTTP protocol for unidirectional server-to-client streaming. The standard for LLM response delivery.',
+  'fp16': 'Half-precision floating point (16-bit). The baseline format for LLM weights at inference. 2 bytes per parameter.',
+  'fp8': '8-bit floating point (E4M3 format). On Hopper GPUs (H100+), nearly lossless with 2\u00d7 speed and 2\u00d7 memory savings vs FP16.',
+  'int4': '4-bit integer quantization. Reduces model size by 4\u00d7 vs FP16. Used by AWQ and GPTQ. Some quality loss (~5\u201310%).',
+  'lora': 'Low-Rank Adaptation \u2014 parameter-efficient fine-tuning that adds small trainable rank-decomposition matrices alongside frozen base weights.',
+  'moe': 'Mixture of Experts \u2014 an architecture with many parallel "expert" sub-networks per layer, where only a few activate per token (e.g., 2 of 64).',
+  'softmax': 'Converts raw logits into a probability distribution where all values are positive and sum to 1: softmax(z_i) = exp(z_i) / \u03a3exp(z_j).',
+  'logits': 'Raw, unnormalized output scores from the model\'s final layer \u2014 one value per vocabulary token. Converted to probabilities via softmax.',
+  'autoregressive': 'A generation method where each new token depends on all previously generated tokens. The model produces output one token at a time, sequentially.',
+  'speculative-decoding': 'A small draft model generates candidate tokens quickly, then the large model verifies them all in one parallel pass. Mathematically lossless, 2\u20133\u00d7 speedup.',
+  'continuous-batching': 'Replacing finished sequences with new requests at every decode iteration, keeping GPU utilization at 80\u201395% vs 30\u201360% with static batching.',
+  'prefix-caching': 'Reusing previously computed KV cache entries for matching prompt prefixes, skipping redundant prefill computation. Can reduce TTFT by 88%+.',
+  'awq': 'Activation-aware Weight Quantization \u2014 identifies salient weights via activation magnitudes and preserves them during 4-bit quantization.',
+  'gptq': 'Post-training quantization using approximate second-order information (Hessian) to minimize quantization error. Widely supported in inference frameworks.',
+  'gguf': 'A file format for quantized models optimized for CPU and edge inference via llama.cpp. Supports flexible 2\u20138 bit quantization.',
+  'alibi': 'Attention with Linear Biases \u2014 adds a distance-based linear penalty to attention scores instead of modifying embeddings. Better length extrapolation than RoPE.',
+  'chunked-prefill': 'Splits long prompts into chunks processed across iterations, interleaved with decode steps. Prevents one large prefill from blocking ongoing generation.',
+  'min-p': 'A sampling method that filters tokens below min_p \u00d7 max_probability. Adapts to the model\'s confidence level. Recommended over top-p for 2025.',
+  'top-p': 'Nucleus sampling \u2014 keeps the smallest token set whose cumulative probability exceeds p. Adaptive but coupled to temperature.',
+  'top-k': 'Keeps only the k highest-probability tokens for sampling. Simple but uses a fixed cutoff regardless of context.',
+  'eos': 'End of Sequence \u2014 a special token signaling the model has finished generating its response.',
+};
+
+// Tooltip handler — direct handlers on .term to stop propagation before parent toggles
+let activeTooltip = null;
+let activeTermEl = null;
+
+function showTermTooltip(term) {
+  // Toggle off if clicking the same term
+  if (activeTermEl === term && activeTooltip) {
+    activeTooltip.remove();
+    activeTooltip = null;
+    activeTermEl = null;
+    return;
+  }
+  if (activeTooltip) { activeTooltip.remove(); activeTooltip = null; }
+  var key = term.dataset.term;
+  var def = termDefs[key];
+  if (!def) return;
+  activeTermEl = term;
+  var tooltip = document.createElement('div');
+  tooltip.className = 'term-tooltip';
+  tooltip.innerHTML = '<div class="term-tooltip-title">' + term.textContent + '</div><div class="term-tooltip-body">' + def + '</div>';
+  document.body.appendChild(tooltip);
+  var rect = term.getBoundingClientRect();
+  var ttRect = tooltip.getBoundingClientRect();
+  var top = rect.bottom + 8;
+  var left = rect.left + (rect.width / 2) - (ttRect.width / 2);
+  if (left < 12) left = 12;
+  if (left + ttRect.width > window.innerWidth - 12) left = window.innerWidth - ttRect.width - 12;
+  if (top + ttRect.height > window.innerHeight - 12) top = rect.top - ttRect.height - 8;
+  tooltip.style.top = top + 'px';
+  tooltip.style.left = left + 'px';
+  activeTooltip = tooltip;
+}
+
+// Direct click on each .term — stopPropagation prevents parent toggles (sub-topics, step-cards)
+document.querySelectorAll('.term').forEach(function(t) {
+  t.addEventListener('click', function(e) {
+    e.stopPropagation();
+    e.preventDefault();
+    showTermTooltip(t);
+  });
+});
+
+// Close tooltip when clicking anywhere else
+document.addEventListener('click', function(e) {
+  if (activeTooltip && !e.target.closest('.term-tooltip') && !e.target.closest('.term')) {
+    activeTooltip.remove();
+    activeTooltip = null;
+    activeTermEl = null;
+  }
+});
+</script>
+
+</body>
+</html>
