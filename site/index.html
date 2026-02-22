@@ -762,6 +762,146 @@ body {
   font-weight: 700;
 }
 
+/* ─── JOURNEY DETAIL PANEL ─── */
+.journey-container {
+  display: flex;
+  gap: 1.5rem;
+  align-items: flex-start;
+  margin-top: 2rem;
+}
+
+.journey-container .journey-diagram {
+  margin-top: 0;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.journey-hint {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-top: 0.75rem;
+}
+
+.journey-diagram .phase-label[data-step] {
+  cursor: pointer;
+  padding: 0 0.25em;
+  margin: 0 -0.25em;
+  border-radius: 3px;
+  transition: background 0.15s ease, color 0.15s ease;
+  border-bottom: 1px dotted transparent;
+}
+
+.journey-diagram .phase-label[data-step]:hover {
+  background: var(--accent-glow);
+  border-bottom-color: var(--accent-dim);
+}
+
+.journey-diagram .phase-label[data-step]:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.journey-diagram .phase-label.active-label {
+  background: var(--accent-glow);
+  border-left: 2px solid var(--accent);
+  padding-left: calc(0.25em + 2px);
+  margin-left: calc(-0.25em - 2px);
+}
+
+.journey-detail-panel {
+  flex: 1 1 480px;
+  max-width: 560px;
+  min-width: 340px;
+  position: sticky;
+  top: 1.5rem;
+  max-height: calc(100vh - 3rem);
+  overflow-y: auto;
+  display: none;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+}
+
+.journey-detail-panel.visible {
+  display: block;
+  animation: panelSlideIn 0.25s ease;
+}
+
+@keyframes panelSlideIn {
+  from { opacity: 0; transform: translateX(12px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.journey-detail-header {
+  position: sticky;
+  top: 0;
+  background: var(--bg-card);
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1.25rem 1.5rem 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.journey-detail-step-number {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--accent);
+  letter-spacing: 0.05em;
+}
+
+.journey-detail-step-name {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  color: var(--text);
+  flex: 1;
+}
+
+.journey-detail-close {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-dim);
+  font-size: 1.2rem;
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.journey-detail-close:hover {
+  border-color: var(--border-active);
+  color: var(--text);
+}
+
+.journey-detail-content {
+  padding: 1.5rem;
+}
+
+.journey-detail-content .detail-inner {
+  display: block !important;
+}
+
+.journey-detail-divider {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 1.5rem 0;
+}
+
+.journey-detail-panel::-webkit-scrollbar { width: 6px; }
+.journey-detail-panel::-webkit-scrollbar-track { background: transparent; }
+.journey-detail-panel::-webkit-scrollbar-thumb {
+  background: var(--border-active);
+  border-radius: 3px;
+}
+
 /* ─── FOOTER ─── */
 .footer {
   padding: 4rem 2rem;
@@ -804,6 +944,14 @@ body {
     top: auto;
     bottom: -1rem;
     transform: translate(50%, 50%);
+  }
+  .journey-container { flex-direction: column; }
+  .journey-detail-panel {
+    position: relative;
+    top: 0;
+    max-width: 100%;
+    min-width: 0;
+    max-height: 60vh;
   }
 }
 
@@ -907,8 +1055,16 @@ body {
 
 .term-tooltip-source:hover { opacity: 1; }
 
+[data-theme="light"] .journey-detail-panel {
+  box-shadow: 0 2px 16px rgba(0,0,0,0.08);
+}
+
+[data-theme="light"] .journey-diagram .phase-label[data-step]:hover {
+  background: rgba(26,122,181,0.07);
+}
+
 /* ─── THEME TRANSITION ─── */
-body, .code-block, .journey-diagram, .callout-box, .metric {
+body, .code-block, .journey-diagram, .callout-box, .metric, .journey-detail-panel, .journey-detail-header {
   transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
 }
 
@@ -1889,44 +2045,46 @@ body, .code-block, .journey-diagram, .callout-box, .metric {
 <section class="journey-section" id="journey">
   <div class="section-label reveal">End-to-End Summary</div>
   <h2 class="section-title reveal">The Complete Journey</h2>
-  <div class="journey-diagram reveal"><span class="component">User Request</span>
+  <div class="journey-hint reveal">Click any step label to view details</div>
+  <div class="journey-container">
+    <div class="journey-diagram reveal"><span class="component">User Request</span>
     <span class="arrow-line">|</span>
     <span class="arrow-line">v</span>
 <span class="phase-group">── Phase A: Request Preparation ──────────────────</span>
     <span class="arrow-line">|</span>
-<span class="phase-label">[01 Request Routing]</span>
+<span class="phase-label" data-step="routing" tabindex="0" role="button">[01 Request Routing]</span>
     <span class="detail">|-- KV cache aware routing</span>
     <span class="detail">|-- Prefill/decode disaggregation</span>
     <span class="arrow-line">v</span>
-<span class="phase-label">[02 Preprocessing]</span>
+<span class="phase-label" data-step="preprocessing" tabindex="0" role="button">[02 Preprocessing]</span>
     <span class="detail">|-- Input validation, rate limiting</span>
     <span class="detail">|-- Prompt template + RAG retrieval</span>
     <span class="arrow-line">v</span>
-<span class="phase-label">[03 Tokenization]</span>
+<span class="phase-label" data-step="tokenization" tabindex="0" role="button">[03 Tokenization]</span>
     <span class="detail">|-- BPE / SentencePiece -> token IDs</span>
     <span class="detail">|-- tiktoken (3-6x faster)</span>
     <span class="arrow-line">v</span>
-<span class="phase-label">[04 Embedding + Position]</span>
+<span class="phase-label" data-step="embedding" tabindex="0" role="button">[04 Embedding + Position]</span>
     <span class="detail">|-- Token ID -> vector (table lookup)</span>
     <span class="detail">|-- + RoPE positional encoding</span>
     <span class="arrow-line">|</span>
     <span class="arrow-line">v</span>
 <span class="phase-group">── Phase B: GPU Computation ───────────────────────</span>
     <span class="arrow-line">|</span>
-<span class="phase-label">[05 Scheduler Queue]</span>
+<span class="phase-label" data-step="scheduling" tabindex="0" role="button">[05 Scheduler Queue]</span>
     <span class="detail">|-- Continuous batching: join next iteration</span>
     <span class="arrow-line">v</span>
-<span class="phase-label">[06 PREFILL]</span> <span class="detail" style="color:var(--compute)">(compute-bound, parallel)</span>
+<span class="phase-label" data-step="prefill" tabindex="0" role="button">[06 PREFILL]</span> <span class="detail" style="color:var(--compute)">(compute-bound, parallel)</span>
     <span class="detail">|-- Check prefix cache -> skip if hit</span>
     <span class="detail">|-- All tokens through all layers</span>
     <span class="detail">|-- Store K,V in KV cache (PagedAttention)</span>
     <span class="detail">|-- FlashAttention for IO efficiency</span>
     <span class="arrow-line">v</span>
-<span class="phase-label">[07-08 KV Cache + Attention]</span>
+<span class="phase-label" data-step="kvcache" data-step-alt="attention" tabindex="0" role="button">[07-08 KV Cache + Attention]</span>
     <span class="detail">|-- GQA (standard), MLA (DeepSeek)</span>
     <span class="detail">|-- PagedAttention: &lt;4% memory waste</span>
     <span class="arrow-line">v</span>
-<span class="phase-label">[09 DECODE LOOP]</span> <span class="detail" style="color:var(--memory)">(memory-bound, sequential)</span>
+<span class="phase-label" data-step="decode" tabindex="0" role="button">[09 DECODE LOOP]</span> <span class="detail" style="color:var(--memory)">(memory-bound, sequential)</span>
     <span class="detail">|-- Single token through all layers</span>
     <span class="detail">|-- Q attends to cached K,V</span>
     <span class="detail">|-- Speculative decoding: 2-3x speedup</span>
@@ -1934,10 +2092,10 @@ body, .code-block, .journey-diagram, .callout-box, .metric {
     <span class="arrow-line">v</span>
 <span class="phase-group">── Phase C: Output &amp; Delivery ────────────────────</span>
     <span class="arrow-line">|</span>
-<span class="phase-label">[10 Sampling]</span>
+<span class="phase-label" data-step="sampling" tabindex="0" role="button">[10 Sampling]</span>
     <span class="detail">|-- Penalties -> Temperature -> Min-P -> Softmax -> Sample</span>
     <span class="arrow-line">v</span>
-<span class="phase-label">[11 Detokenize + Stream]</span>
+<span class="phase-label" data-step="streaming" tabindex="0" role="button">[11 Detokenize + Stream]</span>
     <span class="detail">|-- Incremental detokenization</span>
     <span class="detail">|-- SSE streaming -> content filter -> [DONE]</span>
     <span class="arrow-line">v</span>
@@ -1946,6 +2104,15 @@ body, .code-block, .journey-diagram, .callout-box, .metric {
 <span class="detail">─────────────────────────────────────────────────────</span>
 <span class="detail" style="color:var(--text-dim)">Cross-cutting: Quantization (FP8/INT4) + Parallelism (TP/PP/EP)</span>
 <span class="detail" style="color:var(--text-muted)">Applied across all phases to reduce memory &amp; distribute compute</span></div>
+    <div class="journey-detail-panel" id="journey-detail-panel">
+      <div class="journey-detail-header">
+        <span class="journey-detail-step-number"></span>
+        <span class="journey-detail-step-name"></span>
+        <button class="journey-detail-close" aria-label="Close">&times;</button>
+      </div>
+      <div class="journey-detail-content"></div>
+    </div>
+  </div>
 </section>
 
 <!-- ═══════════ FOOTER ═══════════ -->
@@ -2085,6 +2252,138 @@ document.addEventListener('click', function(e) {
     activeTermEl = null;
   }
 });
+
+// ─── Journey detail panel ───
+(function() {
+  var panel = document.getElementById('journey-detail-panel');
+  if (!panel) return;
+  var panelContent = panel.querySelector('.journey-detail-content');
+  var panelNumber = panel.querySelector('.journey-detail-step-number');
+  var panelName = panel.querySelector('.journey-detail-step-name');
+  var closeBtn = panel.querySelector('.journey-detail-close');
+  var activeLabel = null;
+
+  function getStepData(stepId) {
+    var stepEl = document.querySelector('.pipeline-step[data-step="' + stepId + '"]');
+    if (!stepEl) return null;
+    var number = stepEl.querySelector('.step-number');
+    var name = stepEl.querySelector('.step-name');
+    var detailInner = stepEl.querySelector('.detail-inner');
+    return {
+      number: number ? number.textContent : '',
+      name: name ? name.textContent : '',
+      content: detailInner ? detailInner.cloneNode(true) : null
+    };
+  }
+
+  function initClonedInteractions(container) {
+    // Re-attach sub-topic toggles
+    container.querySelectorAll('.sub-topic').forEach(function(st) {
+      st.removeAttribute('onclick');
+      st.addEventListener('click', function(e) {
+        if (e.target.closest('.term')) return;
+        e.stopPropagation();
+        toggleSubTopic(st);
+      });
+    });
+    // Re-attach term tooltips with stopPropagation
+    container.querySelectorAll('.term').forEach(function(t) {
+      t.addEventListener('click', function(e) {
+        e.stopPropagation();
+        e.preventDefault();
+        showTermTooltip(t);
+      });
+    });
+  }
+
+  function closePanel() {
+    panel.classList.remove('visible');
+    panelContent.innerHTML = '';
+    if (activeLabel) {
+      activeLabel.classList.remove('active-label');
+      activeLabel = null;
+    }
+  }
+
+  function openPanel(label) {
+    var stepId = label.getAttribute('data-step');
+    var altId = label.getAttribute('data-step-alt');
+
+    // Toggle off if clicking same label
+    if (activeLabel === label) {
+      closePanel();
+      return;
+    }
+
+    // Remove previous highlight
+    if (activeLabel) activeLabel.classList.remove('active-label');
+    activeLabel = label;
+    label.classList.add('active-label');
+
+    // Get primary step data
+    var data = getStepData(stepId);
+    if (!data) return;
+
+    panelContent.innerHTML = '';
+
+    // Get alt step data if combined label
+    var altData = altId ? getStepData(altId) : null;
+
+    // Set header
+    if (altData) {
+      panelNumber.textContent = data.number + '-' + altData.number;
+      panelName.textContent = data.name + ' + ' + altData.name;
+    } else {
+      panelNumber.textContent = data.number;
+      panelName.textContent = data.name;
+    }
+
+    // Add primary content
+    if (data.content) {
+      panelContent.appendChild(data.content);
+      initClonedInteractions(data.content);
+    }
+
+    // Add alt step content with divider
+    if (altData && altData.content) {
+      var divider = document.createElement('hr');
+      divider.className = 'journey-detail-divider';
+      panelContent.appendChild(divider);
+      panelContent.appendChild(altData.content);
+      initClonedInteractions(altData.content);
+    }
+
+    panel.classList.add('visible');
+  }
+
+  // Click handlers on phase labels
+  document.querySelectorAll('.journey-diagram .phase-label[data-step]').forEach(function(label) {
+    label.addEventListener('click', function(e) {
+      e.stopPropagation();
+      openPanel(label);
+    });
+    label.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        e.stopPropagation();
+        openPanel(label);
+      }
+    });
+  });
+
+  // Close button
+  closeBtn.addEventListener('click', function(e) {
+    e.stopPropagation();
+    closePanel();
+  });
+
+  // Escape key
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && panel.classList.contains('visible')) {
+      closePanel();
+    }
+  });
+})();
 
 // ─── Theme toggle ───
 (function() {
