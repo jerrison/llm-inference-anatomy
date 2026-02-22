@@ -430,7 +430,7 @@ body {
 }
 
 .pipeline-step.active .step-detail {
-  max-height: 5000px;
+  max-height: 8000px;
 }
 
 .detail-inner {
@@ -1157,6 +1157,149 @@ body, .code-block, .journey-diagram, .callout-box, .metric, .journey-detail-pane
 .theme-toggle {
   transition: border-color 0.3s ease, background-color 0.3s ease;
 }
+
+/* ─── STEP VISUALS ─── */
+.step-visual {
+  position: relative;
+  height: 260px;
+  background: rgba(255,255,255,0.015);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  margin: 0.75rem 0;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+}
+
+.sv-node {
+  position: absolute;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.35rem 0.55rem;
+  color: var(--text-dim);
+  font-size: 0.65rem;
+  white-space: nowrap;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.sv-node.highlight {
+  border-color: var(--accent);
+  background: var(--accent-glow);
+  color: var(--text);
+}
+
+.sv-label {
+  font-family: var(--font-mono);
+  font-size: 0.5rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  position: absolute;
+}
+
+.sv-line {
+  position: absolute;
+  background: var(--border);
+}
+.sv-line.h { height: 1px; }
+.sv-line.v { width: 1px; }
+.sv-line.active { background: var(--accent-dim); }
+
+.sv-packet {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 8px rgba(86,180,233,0.4);
+  z-index: 2;
+}
+
+.sv-bar {
+  height: 14px;
+  background: rgba(255,255,255,0.04);
+  border-radius: 3px;
+  overflow: hidden;
+  position: relative;
+}
+.sv-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.4s ease;
+}
+
+.sv-grid {
+  display: inline-grid;
+  gap: 2px;
+}
+.sv-cell {
+  width: 16px;
+  height: 16px;
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  transition: background 0.15s, border-color 0.15s;
+}
+.sv-cell.lit { background: var(--accent); border-color: var(--accent-dim); }
+.sv-cell.waste { background: rgba(213,94,0,0.25); border-color: rgba(213,94,0,0.4); }
+.sv-cell.dim { background: rgba(86,180,233,0.08); border-color: rgba(86,180,233,0.15); }
+
+.sv-btn {
+  font-family: var(--font-mono);
+  font-size: 0.55rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.25rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg-card);
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+  outline: none;
+}
+.sv-btn:hover { border-color: var(--accent-dim); color: var(--accent); }
+.sv-btn.active { border-color: var(--accent); color: var(--accent); background: var(--accent-glow); }
+
+.sv-controls {
+  position: absolute;
+  bottom: 0.6rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 0.35rem;
+  z-index: 3;
+}
+
+.sv-stat {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.6rem;
+  font-size: 0.55rem;
+  color: var(--accent);
+  z-index: 3;
+}
+
+.sv-token {
+  display: inline-block;
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  font-size: 0.65rem;
+  margin: 0.1rem;
+  border: 1px solid;
+}
+
+@keyframes svPulse { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
+@keyframes svAppear { from { opacity: 0; transform: scale(0.85); } to { opacity: 1; transform: scale(1); } }
+
+[data-theme="light"] .step-visual { background: rgba(0,0,0,0.02); }
+[data-theme="light"] .sv-node { background: #fff; }
+[data-theme="light"] .sv-packet { box-shadow: 0 0 8px rgba(26,122,181,0.3); }
+[data-theme="light"] .sv-bar { background: rgba(0,0,0,0.04); }
+
+@media (max-width: 768px) {
+  .step-visual { height: 200px; }
+}
 </style>
 <script>
 (function(){
@@ -1278,6 +1421,10 @@ body, .code-block, .journey-diagram, .callout-box, .metric, .journey-detail-pane
               <p>A restaurant host seating a returning customer at the same table where their appetizers are already waiting, instead of assigning a random empty seat.</p>
             </div>
             <div class="detail-section">
+              <div class="detail-label">Interactive Visual</div>
+              <div class="step-visual" data-visual="routing"></div>
+            </div>
+            <div class="detail-section">
               <div class="detail-label">Why it matters</div>
               <div class="detail-text">
                 Unlike typical web requests, LLM inference is <strong>long-running and stateful</strong> (due to KV cache). Standard HTTP load balancers fail because they lack awareness of GPU state. Modern LLM-aware routers consider <strong>KV cache utilization</strong>, <strong>queue length</strong>, and <strong>LoRA adapter</strong> presence on each worker.
@@ -1320,6 +1467,36 @@ body, .code-block, .journey-diagram, .callout-box, .metric, .journey-detail-pane
                     <p><strong>NVIDIA Dynamo</strong>: Next-gen distributed inference framework with built-in disaggregation, dynamic GPU scheduling, and LLM-aware request routing. Up to <strong>30x</strong> more requests served (DeepSeek-R1 on Blackwell).</p>
                   </div>
                 </div>
+                <div class="sub-topic" onclick="toggleSubTopic(this)">
+                  <div class="sub-topic-header">
+                    <span class="sub-topic-name">Rate Limiting as Pricing Lever</span>
+                    <span class="sub-topic-icon">+</span>
+                  </div>
+                  <div class="sub-topic-preview">Not just protection &mdash; a business strategy</div>
+                  <div class="sub-topic-detail">
+                    <p>Per-customer rate limits (requests/sec, tokens/min) map directly to <strong>pricing tiers</strong>. Queue vs. reject during spikes is a business decision: queuing adds latency but preserves revenue, rejecting loses it. Rate limits are <strong>pricing levers</strong>, not just technical constraints.</p>
+                  </div>
+                </div>
+                <div class="sub-topic" onclick="toggleSubTopic(this)">
+                  <div class="sub-topic-header">
+                    <span class="sub-topic-name">Multi-LoRA Hot-Swapping</span>
+                    <span class="sub-topic-icon">+</span>
+                  </div>
+                  <div class="sub-topic-preview">Base model stays loaded, adapters swap per-request</div>
+                  <div class="sub-topic-detail">
+                    <p>The base model stays resident on GPU while <span class="term" data-term="lora">LoRA</span> adapters are swapped per-request. This enables <strong>hundreds of fine-tuned variants</strong> from a single GPU deployment. Router efficiency &mdash; how well requests are matched to loaded adapters &mdash; is the <strong>most important unit economics driver</strong>.</p>
+                  </div>
+                </div>
+                <div class="sub-topic" onclick="toggleSubTopic(this)">
+                  <div class="sub-topic-header">
+                    <span class="sub-topic-name"><span class="term" data-term="cold-start">Cold Start</span> Times</span>
+                    <span class="sub-topic-icon">+</span>
+                  </div>
+                  <div class="sub-topic-preview">30-120 seconds for large models</div>
+                  <div class="sub-topic-detail">
+                    <p>When a model isn't already loaded on a GPU, loading weights from disk takes <strong>30&ndash;120 seconds</strong> for large models. Hot models are load-balanced across replicas; cold models either incur this latency or require pre-warmed standby GPUs (costly idle capacity).</p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -1349,6 +1526,10 @@ body, .code-block, .journey-diagram, .callout-box, .metric, .journey-detail-pane
               <p>A chef's mise en place &mdash; washing, chopping, and measuring all ingredients before the stove turns on. No GPU time is used here.</p>
             </div>
             <div class="detail-section">
+              <div class="detail-label">Interactive Visual</div>
+              <div class="step-visual" data-visual="preprocessing"></div>
+            </div>
+            <div class="detail-section">
               <div class="detail-label">What happens here</div>
               <div class="detail-text">
                 Before any GPU work begins, the API server assembles the final prompt on CPU. This includes applying <strong>prompt templates</strong> (system instructions, chat formatting), performing <strong>RAG retrieval</strong> (if applicable), validating input constraints (max tokens, stop sequences), and <strong>rate limiting</strong>. The request metadata (ID, sampling params, timestamp) is prepared for the scheduler.
@@ -1358,6 +1539,21 @@ body, .code-block, .journey-diagram, .callout-box, .metric, .journey-detail-pane
               <div class="detail-label">Key considerations</div>
               <div class="detail-text">
                 This stage is entirely <strong>CPU-bound</strong> and scales with input length. For RAG-heavy workloads, embedding generation and vector search can dominate preprocessing time. Smart prompt construction &mdash; placing <strong>static content first</strong> and <strong>dynamic content last</strong> &mdash; is critical for maximising prefix cache hit rates downstream.
+              </div>
+            </div>
+            <div class="detail-section">
+              <div class="detail-label">Drill into specifics</div>
+              <div class="sub-topics">
+                <div class="sub-topic" onclick="toggleSubTopic(this)">
+                  <div class="sub-topic-header">
+                    <span class="sub-topic-name">Content Moderation Before GPU</span>
+                    <span class="sub-topic-icon">+</span>
+                  </div>
+                  <div class="sub-topic-preview">Filter harmful requests before spending compute</div>
+                  <div class="sub-topic-detail">
+                    <p>Optional content moderation runs <strong>before any GPU spend</strong>. A lightweight safety classifier screens requests for harmful content, preventing expensive GPU cycles on requests that would be filtered anyway. This is especially important at scale where abusive traffic can waste significant compute budget.</p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -1385,6 +1581,10 @@ body, .code-block, .journey-diagram, .callout-box, .metric, .journey-detail-pane
             <div class="callout-box callout-analogy">
               <div class="callout-label">Think of it like...</div>
               <p>Learning common phrases in a foreign language: 'good morning' becomes one unit instead of eleven letters, so your conversations get shorter and faster.</p>
+            </div>
+            <div class="detail-section">
+              <div class="detail-label">Interactive Visual</div>
+              <div class="step-visual" data-visual="tokenization"></div>
             </div>
             <div class="detail-section">
               <div class="detail-label">How BPE works</div>
@@ -1446,6 +1646,22 @@ body, .code-block, .journey-diagram, .callout-box, .metric, .journey-detail-pane
                     <p><strong>tiktoken</strong> (OpenAI, Rust core) is the fastest tokenizer at <strong>3&ndash;6x faster</strong> than alternatives. It is inference-only (no training support) and powers OpenAI models, Llama 3+, and Mistral's Tekken tokenizer.</p>
                   </div>
                 </div>
+                <div class="sub-topic" onclick="toggleSubTopic(this)">
+                  <div class="sub-topic-header">
+                    <span class="sub-topic-name">Token Economics</span>
+                    <span class="sub-topic-icon">+</span>
+                  </div>
+                  <div class="sub-topic-preview">~4 chars/token EN, CJK languages pay 2x more</div>
+                  <div class="sub-topic-detail">
+                    <p>Tokens are the <strong>fundamental unit of cost and latency</strong>. Average characters per token vary dramatically by content type:</p>
+                    <div class="metrics-row">
+                      <div class="metric"><div class="metric-value">~4</div><div class="metric-label">Chars/Token (English)</div></div>
+                      <div class="metric"><div class="metric-value">~3</div><div class="metric-label">Chars/Token (Code)</div></div>
+                      <div class="metric"><div class="metric-value">~1.5</div><div class="metric-label">Chars/Token (CJK)</div></div>
+                    </div>
+                    <p>Japanese users pay <strong>~2x more per word</strong> due to tokenizer inefficiency. Different models use different tokenizers, so the same text produces different token counts. Most providers charge input and output tokens separately because output tokens (sequential decode) cost more to serve.</p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -1473,6 +1689,10 @@ body, .code-block, .journey-diagram, .callout-box, .metric, .journey-detail-pane
             <div class="callout-box callout-analogy">
               <div class="callout-label">Think of it like...</div>
               <p>Giving each word a GPS coordinate in meaning-space, then stamping it with a sequence number so the model knows what came first.</p>
+            </div>
+            <div class="detail-section">
+              <div class="detail-label">Interactive Visual</div>
+              <div class="step-visual" data-visual="embedding"></div>
             </div>
             <div class="detail-section">
               <div class="detail-label">Token embedding</div>
@@ -1552,9 +1772,13 @@ body, .code-block, .journey-diagram, .callout-box, .metric, .journey-detail-pane
               <p>A barber who starts the next haircut immediately when a chair opens, instead of waiting for an entire group appointment to finish.</p>
             </div>
             <div class="detail-section">
+              <div class="detail-label">Interactive Visual</div>
+              <div class="step-visual" data-visual="scheduling"></div>
+            </div>
+            <div class="detail-section">
               <div class="detail-label">Why batching is critical</div>
               <div class="detail-text">
-                Each decode step <strong>underutilises the GPU</strong> &mdash; the bottleneck is reading model weights from memory, not computation. Batching amortises this cost: reading weights once and applying them to many concurrent requests. Without batching, GPU utilisation can be as low as <strong>5-10%</strong> during decode.
+                Each decode step <strong>underutilises the GPU</strong> &mdash; the bottleneck is reading model weights from memory, not computation. Batching amortises this cost: reading weights once and applying them to many concurrent requests. At batch size 1, GPU compute utilisation is just <strong>2&ndash;5%</strong>. At batch size 32, it reaches <strong>60&ndash;80%</strong> &mdash; same weights, dramatically more work per byte loaded.
               </div>
             </div>
             <div class="detail-section">
@@ -1624,6 +1848,18 @@ body, .code-block, .journey-diagram, .callout-box, .metric, .journey-detail-pane
               <p>Reading an entire exam question before writing your answer &mdash; you must process everything first, but at least you can read all words simultaneously.</p>
             </div>
             <div class="detail-section">
+              <div class="detail-label">Interactive Visual</div>
+              <div class="step-visual" data-visual="prefill"></div>
+            </div>
+            <div class="detail-section">
+              <div class="detail-label">TTFT benchmarks</div>
+              <div class="metrics-row">
+                <div class="metric"><div class="metric-value">50-200ms</div><div class="metric-label">8B Model, Short Prompt</div></div>
+                <div class="metric"><div class="metric-value">200-800ms</div><div class="metric-label">70B Model, Short Prompt</div></div>
+                <div class="metric"><div class="metric-value">2-10s</div><div class="metric-label">70B, 100K+ Context</div></div>
+              </div>
+            </div>
+            <div class="detail-section">
               <div class="detail-label">How it works</div>
               <div class="detail-text">
                 All input token embeddings (with positional encoding) are fed through the Transformer layers simultaneously. At each attention layer, the model computes <strong>Query (Q), Key (K), and Value (V)</strong> matrices for every token. Self-attention is computed: <code>Attention(Q,K,V) = <span class="term" data-term="softmax">softmax</span>(QK&#x1D40;/&radic;d&#x2096;)V</code>. The resulting <strong>K and V tensors are stored</strong> in the KV cache.
@@ -1663,6 +1899,16 @@ body, .code-block, .journey-diagram, .callout-box, .metric, .journey-detail-pane
                     <p>Apple's <strong>KV-Runahead</strong> generates KV caches for later layers in parallel while earlier layers are still processing, overlapping computation and reducing total prefill time.</p>
                   </div>
                 </div>
+                <div class="sub-topic" onclick="toggleSubTopic(this)">
+                  <div class="sub-topic-header">
+                    <span class="sub-topic-name"><span class="term" data-term="disaggregated-serving">Disaggregated</span> Prefill/Decode</span>
+                    <span class="sub-topic-icon">+</span>
+                  </div>
+                  <div class="sub-topic-preview">Different hardware for each phase</div>
+                  <div class="sub-topic-detail">
+                    <p>Run prefill on <strong>compute-optimised hardware</strong> and decode on <strong>memory-bandwidth-optimised hardware</strong>. Prefill GPUs handle the heavy parallel matrix multiplications, then transfer the KV cache to decode GPUs via <span class="term" data-term="rdma">RDMA</span>. Each tier scales independently, improving both TTFT and throughput for high-volume, latency-sensitive workloads.</p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -1690,6 +1936,10 @@ body, .code-block, .journey-diagram, .callout-box, .metric, .journey-detail-pane
             <div class="callout-box callout-analogy">
               <div class="callout-label">Think of it like...</div>
               <p>Keeping sticky notes of every previous conversation turn so you don't re-read the entire chat history &mdash; efficient, but your desk fills up fast.</p>
+            </div>
+            <div class="detail-section">
+              <div class="detail-label">Interactive Visual</div>
+              <div class="step-visual" data-visual="kvcache"></div>
             </div>
             <div class="detail-section">
               <div class="detail-label">Memory formula</div>
@@ -1741,6 +1991,18 @@ body, .code-block, .journey-diagram, .callout-box, .metric, .journey-detail-pane
                     <p>DeepSeek V2/V3's <strong>MLA</strong> compresses K and V into a low-dimensional latent vector. Only the compressed latent is stored in the KV cache; at inference, it is projected back to full K/V space. Result: <strong>93.3% KV cache reduction</strong> vs MHA, slightly outperforming in quality.</p>
                   </div>
                 </div>
+                <div class="sub-topic" onclick="toggleSubTopic(this)">
+                  <div class="sub-topic-header">
+                    <span class="sub-topic-name">Cache Persistence Between Requests</span>
+                    <span class="sub-topic-icon">+</span>
+                  </div>
+                  <div class="sub-topic-preview">Stateless default vs. prefix caching</div>
+                  <div class="sub-topic-detail">
+                    <p><strong>Naive stateless</strong> (default): KV cache discarded after each request. Simple but wasteful &mdash; every turn re-prefills the entire conversation history.</p>
+                    <p><strong>Prefix caching</strong> (optimised): Server keeps recent KV caches in GPU memory. When the next turn arrives with an identical prefix, only new tokens are prefilled. Classic cache eviction problem &mdash; <strong>LRU or TTL-based</strong> eviction policies decide what stays.</p>
+                    <p><strong>Routing complexity</strong>: KV cache lives on specific GPUs. The next request must route to the <strong>same GPU(s)</strong>, creating session affinity and potential hot spots. If the user edits a previous message, cached KV is stale and must be invalidated.</p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -1768,6 +2030,10 @@ body, .code-block, .journey-diagram, .callout-box, .metric, .journey-detail-pane
             <div class="callout-box callout-analogy">
               <div class="callout-label">Think of it like...</div>
               <p>A study group sharing notes &mdash; instead of everyone writing independent copies (<span class="term" data-term="mha">MHA</span>), small groups share one set (GQA). Less paper, nearly the same understanding.</p>
+            </div>
+            <div class="detail-section">
+              <div class="detail-label">Interactive Visual</div>
+              <div class="step-visual" data-visual="attention"></div>
             </div>
             <div class="detail-section">
               <div class="detail-label">Drill into specifics</div>
@@ -1840,6 +2106,10 @@ body, .code-block, .journey-diagram, .callout-box, .metric, .journey-detail-pane
               <p>Writing a story one word at a time, where for each word you must re-read all your previous notes &mdash; the bottleneck isn't thinking, it's flipping through pages.</p>
             </div>
             <div class="detail-section">
+              <div class="detail-label">Interactive Visual</div>
+              <div class="step-visual" data-visual="decode"></div>
+            </div>
+            <div class="detail-section">
               <div class="detail-label">The autoregressive loop</div>
               <div class="detail-text">
                 For each new token: the single embedding is fed through all layers. Only the <strong>Query for the new token</strong> is computed fresh. The Key and Value are computed and <strong>appended to the KV cache</strong>. Attention is computed between the new Q and all cached K/V pairs. Output <span class="term" data-term="logits">logits</span> represent probability over the vocabulary.
@@ -1868,6 +2138,37 @@ body, .code-block, .journey-diagram, .callout-box, .metric, .journey-detail-pane
                       <div class="metric"><div class="metric-value">0%</div><div class="metric-label">Quality Loss</div></div>
                     </div>
                     <p><strong>2025 advances</strong>: Block verification (5-8% additional speedup), Online Speculative Decoding (adapts draft to query distribution), Self-Speculative Decoding (uses early-exit layers, no separate model), Medusa (parallel draft heads).</p>
+                  </div>
+                </div>
+                <div class="sub-topic" onclick="toggleSubTopic(this)">
+                  <div class="sub-topic-header">
+                    <span class="sub-topic-name"><span class="term" data-term="arithmetic-intensity">Arithmetic Intensity</span> Problem</span>
+                    <span class="sub-topic-icon">+</span>
+                  </div>
+                  <div class="sub-topic-preview">GPU has ~990 TFLOPS but can barely use them</div>
+                  <div class="sub-topic-detail">
+                    <p>Arithmetic intensity = compute operations &divide; bytes loaded. During decode, this ratio is <strong>abysmal</strong>: the GPU loads the entire weight matrix for a single matrix-vector multiply. For 70B at FP16, that's loading ~140 GB from <span class="term" data-term="hbm">HBM</span> at 3.35 TB/s &rarr; ~42ms minimum per token &rarr; ~24 tokens/sec. The GPU's ~990 TFLOPS sit mostly idle, starved for data.</p>
+                    <p><strong>Batching fixes this</strong>: loading weights once and processing 32 requests turns the vector ops into efficient matrix ops. Same bandwidth cost, 32x more useful compute.</p>
+                  </div>
+                </div>
+                <div class="sub-topic" onclick="toggleSubTopic(this)">
+                  <div class="sub-topic-header">
+                    <span class="sub-topic-name">GPU Memory Hierarchy</span>
+                    <span class="sub-topic-icon">+</span>
+                  </div>
+                  <div class="sub-topic-preview">Disk &rarr; RAM &rarr; HBM &rarr; SRAM &rarr; Compute</div>
+                  <div class="sub-topic-detail">
+                    <p>For every output token, the GPU processes layer by layer:</p>
+                    <table class="data-table">
+                      <thead><tr><th>Level</th><th>Size</th><th>Speed</th><th>Role</th></tr></thead>
+                      <tbody>
+                        <tr><td>NVMe Disk</td><td>TBs</td><td>~7 GB/s</td><td>Weight storage (cold start)</td></tr>
+                        <tr><td>CPU RAM</td><td>100s GB</td><td>~64 GB/s</td><td>Transit to GPU</td></tr>
+                        <tr><td>HBM</td><td>80-192 GB</td><td>3,350 GB/s</td><td>Weights + KV cache (hot)</td></tr>
+                        <tr><td>SRAM</td><td>~50 MB</td><td>~19 TB/s</td><td>On-chip compute cache</td></tr>
+                      </tbody>
+                    </table>
+                    <p>SRAM is 5.7x faster than HBM but holds only <strong>~0.036%</strong> of a 70B model. Each layer's weights must be tiled through SRAM in ~34 chunks, then evicted for the next layer. <strong>Prefetching</strong> overlaps loading Layer N+1 while computing Layer N.</p>
                   </div>
                 </div>
               </div>
@@ -1906,6 +2207,10 @@ body, .code-block, .journey-diagram, .callout-box, .metric, .journey-detail-pane
             <div class="callout-box callout-analogy">
               <div class="callout-label">Think of it like...</div>
               <p>Choosing a restaurant: first eliminate closed ones (truncation), adjust for how adventurous you feel (temperature), then pick from what's left.</p>
+            </div>
+            <div class="detail-section">
+              <div class="detail-label">Interactive Visual</div>
+              <div class="step-visual" data-visual="sampling"></div>
             </div>
             <div class="detail-section">
               <div class="detail-label">The sampling pipeline</div>
@@ -1965,6 +2270,17 @@ body, .code-block, .journey-diagram, .callout-box, .metric, .journey-detail-pane
                     <p>The newest method. Addresses <strong>temperature coupling</strong> &mdash; probability-based truncation produces identical token sets regardless of temperature. Top-n-sigma operates in <strong>logit space</strong>, keeping tokens within n standard deviations of the mean logit. Fully decoupled from temperature.</p>
                   </div>
                 </div>
+                <div class="sub-topic" onclick="toggleSubTopic(this)">
+                  <div class="sub-topic-header">
+                    <span class="sub-topic-name"><span class="term" data-term="fsm-decoding">Constrained Decoding</span> (FSM)</span>
+                    <span class="sub-topic-icon">+</span>
+                  </div>
+                  <div class="sub-topic-preview">Force valid JSON/schema output via grammar tracking</div>
+                  <div class="sub-topic-detail">
+                    <p>Uses <strong>finite state machines</strong> to mask invalid tokens at each decode step. The FSM tracks position in the output grammar (e.g., "just opened a JSON key string &mdash; only valid characters or closing quote allowed") and zeros out tokens that would produce invalid output.</p>
+                    <p>Actually uses <strong>pushdown automata</strong> (FSMs with a stack) to handle nested structures like JSON braces/brackets. Performance: <strong>O(1) per token</strong> &mdash; microseconds of overhead. After filtering, remaining tokens are <strong>renormalized</strong> to sum to 1, subtly concentrating probability mass.</p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -1992,6 +2308,10 @@ body, .code-block, .journey-diagram, .callout-box, .metric, .journey-detail-pane
             <div class="callout-box callout-analogy">
               <div class="callout-label">Think of it like...</div>
               <p>A simultaneous translator who sometimes needs to hear the next few syllables before they can translate the current word &mdash; they buffer until meaning is clear.</p>
+            </div>
+            <div class="detail-section">
+              <div class="detail-label">Interactive Visual</div>
+              <div class="step-visual" data-visual="streaming"></div>
             </div>
             <div class="detail-section">
               <div class="detail-label">Detokenization subtleties</div>
@@ -2024,6 +2344,36 @@ body, .code-block, .journey-diagram, .callout-box, .metric, .journey-detail-pane
                   <div class="sub-topic-preview">Safety, formatting, stop conditions</div>
                   <div class="sub-topic-detail">
                     <p>After detokenization, responses pass through: <strong>stop condition checking</strong> (stop sequences, max tokens, <span class="term" data-term="eos">EOS</span>), <strong>content filtering</strong> (toxicity, safety classifiers), <strong>response scoring</strong> (reward models), <strong>format enforcement</strong> (JSON schema validation), and <strong>citation linking</strong>.</p>
+                  </div>
+                </div>
+                <div class="sub-topic" onclick="toggleSubTopic(this)">
+                  <div class="sub-topic-header">
+                    <span class="sub-topic-name">Multi-Turn Statefulness</span>
+                    <span class="sub-topic-icon">+</span>
+                  </div>
+                  <div class="sub-topic-preview">Each turn re-sends full conversation history</div>
+                  <div class="sub-topic-detail">
+                    <p>Each turn is a <strong>completely separate HTTP request</strong>. The SSE connection closes after <code>[DONE]</code>. The server retains <strong>no state between turns</strong>. The client assembles the full conversation history and sends the entire thing as the prompt in each new request. Every turn gets more expensive &mdash; the entire history is re-processed as input tokens (unless <span class="term" data-term="prefix-caching">prefix caching</span> is available).</p>
+                  </div>
+                </div>
+                <div class="sub-topic" onclick="toggleSubTopic(this)">
+                  <div class="sub-topic-header">
+                    <span class="sub-topic-name">LB Idle Timeouts</span>
+                    <span class="sub-topic-icon">+</span>
+                  </div>
+                  <div class="sub-topic-preview">Load balancers can kill long generations</div>
+                  <div class="sub-topic-detail">
+                    <p>SSE connections stay open <strong>10&ndash;30 seconds</strong> for long responses. Load balancers and proxies often have <strong>idle timeouts</strong> that kill connections before generation completes. This manifests as <strong>mysterious truncated responses</strong> &mdash; a common production issue that's hard to diagnose without proper timeout configuration.</p>
+                  </div>
+                </div>
+                <div class="sub-topic" onclick="toggleSubTopic(this)">
+                  <div class="sub-topic-header">
+                    <span class="sub-topic-name">Usage Tracking</span>
+                    <span class="sub-topic-icon">+</span>
+                  </div>
+                  <div class="sub-topic-preview">Token counts, latency, GPU time, billing</div>
+                  <div class="sub-topic-detail">
+                    <p>After generation, the system records: <strong>token counts</strong> (input, output, cached), <strong>latency telemetry</strong> (TTFT, TPOT, total), <strong>GPU time consumed</strong>, and <strong>model/parameters used</strong>. Revenue recognition differs for per-token vs. per-GPU-hour billing models.</p>
                   </div>
                 </div>
               </div>
@@ -2091,6 +2441,102 @@ body, .code-block, .journey-diagram, .callout-box, .metric, .journey-detail-pane
       <div class="sub-topic-preview">For <span class="term" data-term="moe">MoE</span> models: route experts to GPUs</div>
       <div class="sub-topic-detail">
         <p>Specialised for <strong>Mixture of Experts</strong> models (DeepSeek-V3: 256 experts, Mixtral: 8). Different experts placed on different GPUs. Requires <strong>All-to-All communication</strong> to route tokens to correct expert GPU. Since only a fraction of experts activate per token (e.g., 2/64), each GPU does less work while the total model can be massive.</p>
+      </div>
+    </div>
+    <div class="sub-topic" onclick="toggleSubTopic(this)">
+      <div class="sub-topic-header">
+        <span class="sub-topic-name">GPU Memory Hierarchy</span>
+        <span class="sub-topic-icon">+</span>
+      </div>
+      <div class="sub-topic-preview">Full path: Disk &rarr; CPU RAM &rarr; HBM &rarr; SRAM &rarr; Compute</div>
+      <div class="sub-topic-detail">
+        <p>Model weights travel through a 4-level hierarchy on every token generation. The critical bottleneck is HBM &rarr; SRAM &mdash; even <span class="term" data-term="hbm">HBM</span>'s 3,350 GB/s can't keep pace with GPU compute capacity.</p>
+        <table class="data-table">
+          <thead><tr><th>Level</th><th>Capacity</th><th>Bandwidth</th></tr></thead>
+          <tbody>
+            <tr><td>NVMe SSD</td><td>TBs</td><td>~7 GB/s</td></tr>
+            <tr><td>CPU RAM (PCIe 5.0)</td><td>100s GB</td><td>~64 GB/s</td></tr>
+            <tr><td>HBM3 (H100)</td><td>80 GB</td><td>3,350 GB/s</td></tr>
+            <tr><td>SRAM (on-chip)</td><td>~50 MB</td><td>~19 TB/s</td></tr>
+          </tbody>
+        </table>
+        <p><span class="term" data-term="sram">SRAM</span> holds only <strong>0.036%</strong> of a 70B model. Each layer's weights (~1.7 GB) are tiled through SRAM in ~34 chunks, then evicted for the next layer. Cannot keep weights on-chip between tokens.</p>
+      </div>
+    </div>
+    <div class="sub-topic" onclick="toggleSubTopic(this)">
+      <div class="sub-topic-header">
+        <span class="sub-topic-name">Why Smaller Models Are Faster</span>
+        <span class="sub-topic-icon">+</span>
+      </div>
+      <div class="sub-topic-preview">Compounding penalties from 8B to 405B</div>
+      <div class="sub-topic-detail">
+        <table class="data-table">
+          <thead><tr><th>Factor</th><th>8B</th><th>405B</th><th>Penalty</th></tr></thead>
+          <tbody>
+            <tr><td>Weight data/token</td><td>~16 GB</td><td>~810 GB</td><td>~50x</td></tr>
+            <tr><td>GPUs required</td><td>1</td><td>8-16</td><td>8-16x cost</td></tr>
+            <tr><td>Communication</td><td>Zero</td><td>126 all-reduce ops</td><td>Pure penalty</td></tr>
+            <tr><td>Batch size</td><td>64+</td><td>8-16</td><td>4-8x less throughput</td></tr>
+            <tr><td>Cost per M tokens</td><td>$0.03-0.05</td><td>$0.50-1.00</td><td>10-20x</td></tr>
+          </tbody>
+        </table>
+        <p>These factors <strong>compound</strong>: 405B requires ~50x more weight data, split across 8-16 GPUs with 126 synchronisation points per token, and can only batch 8-16 requests vs 64+.</p>
+      </div>
+    </div>
+    <div class="sub-topic" onclick="toggleSubTopic(this)">
+      <div class="sub-topic-header">
+        <span class="sub-topic-name">Performance Optimisation Stack</span>
+        <span class="sub-topic-icon">+</span>
+      </div>
+      <div class="sub-topic-preview">6 layers: naive 300 &rarr; optimised 5,000 tok/s</div>
+      <div class="sub-topic-detail">
+        <table class="data-table">
+          <thead><tr><th>Layer</th><th>Multiplier</th><th>Cumulative</th></tr></thead>
+          <tbody>
+            <tr><td>Continuous Batching</td><td>~2.5x</td><td>~750 tok/s</td></tr>
+            <tr><td>PagedAttention</td><td>~1.7x</td><td>~1,275 tok/s</td></tr>
+            <tr><td>FlashAttention</td><td>~1.3x</td><td>~1,658 tok/s</td></tr>
+            <tr><td>Quantization (FP8)</td><td>~1.8x</td><td>~2,984 tok/s</td></tr>
+            <tr><td>Custom CUDA Kernels</td><td>~1.3x</td><td>~3,879 tok/s</td></tr>
+            <tr><td>Speculative Decoding</td><td>~1.3x</td><td>~5,043 tok/s</td></tr>
+          </tbody>
+        </table>
+        <p><strong>15-17x total improvement</strong> on identical hardware. This is why the same model can have <strong>10x+ price variance</strong> across providers. Custom CUDA kernels are the hardest to replicate &mdash; years of accumulated GPU programming expertise form the core moat of inference platforms.</p>
+      </div>
+    </div>
+    <div class="sub-topic" onclick="toggleSubTopic(this)">
+      <div class="sub-topic-header">
+        <span class="sub-topic-name"><span class="term" data-term="infiniband">InfiniBand</span> Networking</span>
+        <span class="sub-topic-icon">+</span>
+      </div>
+      <div class="sub-topic-preview">400 Gbps, ~1&micro;s latency, 15-25% of cluster cost</div>
+      <div class="sub-topic-detail">
+        <p>When models are split via tensor parallelism, every forward pass requires GPUs to exchange data via all-reduce <strong>at every layer</strong>. InfiniBand provides:</p>
+        <div class="metrics-row">
+          <div class="metric"><div class="metric-value">400 Gbps</div><div class="metric-label">NDR Bandwidth</div></div>
+          <div class="metric"><div class="metric-value">~1 &micro;s</div><div class="metric-label">Port-to-Port Latency</div></div>
+          <div class="metric"><div class="metric-value">$5-15M</div><div class="metric-label">Per 1,000 GPU Cluster</div></div>
+        </div>
+        <p><strong>RDMA + GPUDirect</strong>: GPU &rarr; InfiniBand NIC &rarr; NIC &rarr; GPU, no CPU involved. NVIDIA/Mellanox near-monopoly limits price negotiation.</p>
+        <p><strong>Ethernet alternative</strong>: 30-50% cheaper with RoCE (RDMA over Converged Ethernet), closing the gap to 2-3x latency difference. Ultra Ethernet Consortium building open standard.</p>
+      </div>
+    </div>
+    <div class="sub-topic" onclick="toggleSubTopic(this)">
+      <div class="sub-topic-header">
+        <span class="sub-topic-name">HBM Specifications</span>
+        <span class="sub-topic-icon">+</span>
+      </div>
+      <div class="sub-topic-preview">DDR5 vs HBM2e vs HBM3 vs HBM3e</div>
+      <div class="sub-topic-detail">
+        <p>Memory chips stacked 8-12 layers vertically via through-silicon vias (TSVs), placed on the same silicon package as the GPU die.</p>
+        <table class="data-table">
+          <thead><tr><th>Spec</th><th>DDR5</th><th>HBM2e (A100)</th><th>HBM3 (H100)</th><th>HBM3e (H200)</th></tr></thead>
+          <tbody>
+            <tr><td>Bandwidth</td><td>~50-100 GB/s</td><td>~2,000 GB/s</td><td>~3,350 GB/s</td><td>~4,800 GB/s</td></tr>
+            <tr><td>Capacity/GPU</td><td>N/A</td><td>80 GB</td><td>80 GB</td><td>141 GB</td></tr>
+          </tbody>
+        </table>
+        <p><strong>Bandwidth &rarr; token speed</strong>. <strong>Capacity &rarr; what fits on one GPU</strong>. H200 was a big deal: same compute as H100, but 70B model fits on <strong>one GPU</strong> instead of two &mdash; eliminating communication overhead entirely.</p>
       </div>
     </div>
   </div>
@@ -2298,6 +2744,11 @@ const termDefs = {
   'gptq': { def: 'Post-training quantization using approximate second-order information (Hessian) to minimize quantization error. Widely supported in inference frameworks.', src: 'https://arxiv.org/abs/2210.17323' },
   'gguf': { def: 'A file format for quantized models optimized for CPU and edge inference via llama.cpp. Supports flexible 2\u20138 bit quantization.', src: 'https://github.com/ggerganov/ggml/blob/master/docs/gguf.md' },
   'alibi': { def: 'Attention with Linear Biases \u2014 adds a distance-based linear penalty to attention scores instead of modifying embeddings. Better length extrapolation than RoPE.', src: 'https://arxiv.org/abs/2108.12409' },
+  'arithmetic-intensity': { def: 'The ratio of compute operations to bytes loaded from memory. During decode, this ratio is extremely low \u2014 the GPU loads entire weight matrices for single vector operations, leaving compute cores mostly idle.', src: 'https://en.wikipedia.org/wiki/Roofline_model' },
+  'infiniband': { def: 'High-bandwidth, low-latency networking (400 Gbps, ~1\u00b5s latency) with RDMA for direct GPU-to-GPU communication. Adds 15-25% to total cluster cost.', src: 'https://en.wikipedia.org/wiki/InfiniBand' },
+  'cold-start': { def: 'The delay when a model must be loaded from disk to GPU memory before serving. Takes 30\u2013120 seconds for large models \u2014 loading hundreds of GB from NVMe at ~7 GB/s.', src: 'https://docs.vllm.ai/en/latest/' },
+  'disaggregated-serving': { def: 'Running prefill on compute-optimised GPUs and decode on memory-bandwidth-optimised GPUs. Each tier scales independently. Gains: 2\u20137x throughput.', src: 'https://arxiv.org/abs/2401.09670' },
+  'fsm-decoding': { def: 'Using finite state machines (actually pushdown automata) to mask invalid tokens at each decode step, enforcing valid output formats like JSON. O(1) per token overhead.', src: 'https://arxiv.org/abs/2307.09702' },
   'chunked-prefill': { def: 'Splits long prompts into chunks processed across iterations, interleaved with decode steps. Prevents one large prefill from blocking ongoing generation.', src: 'https://arxiv.org/abs/2308.16369' },
   'min-p': { def: 'A sampling method that filters tokens below min_p \u00d7 max_probability. Adapts to the model\'s confidence level. Recommended over top-p for 2025.', src: 'https://arxiv.org/abs/2407.01082' },
   'top-p': { def: 'Nucleus sampling \u2014 keeps the smallest token set whose cumulative probability exceeds p. Adaptive but coupled to temperature.', src: 'https://arxiv.org/abs/1904.09751' },
@@ -2584,6 +3035,1150 @@ document.addEventListener('click', function(e) {
       }
     });
   }
+})();
+
+// ─── Step Visual System (lazy init via MutationObserver) ───
+(function() {
+  var visualInits = {};
+  var initialized = {};
+
+  function initVisual(step) {
+    var id = step.getAttribute('data-step');
+    if (initialized[id] || !visualInits[id]) return;
+    var container = step.querySelector('.step-visual');
+    if (!container || container.getAttribute('data-init')) return;
+    container.setAttribute('data-init', '1');
+    visualInits[id](container);
+    initialized[id] = true;
+  }
+
+  // Observe class changes on pipeline steps
+  var obs = new MutationObserver(function(muts) {
+    muts.forEach(function(m) {
+      if (m.type === 'attributes' && m.attributeName === 'class') {
+        var t = m.target;
+        if (t.classList.contains('pipeline-step') && t.classList.contains('active')) {
+          initVisual(t);
+        }
+      }
+    });
+  });
+  document.querySelectorAll('.pipeline-step').forEach(function(s) {
+    obs.observe(s, { attributes: true });
+  });
+
+  // Journey panel: observe for cloned visual containers and initialize them
+  var journeyPanel = document.getElementById('journey-detail-panel');
+  if (journeyPanel) {
+    var jpContent = journeyPanel.querySelector('.journey-detail-content');
+    if (jpContent) {
+      var jpObs = new MutationObserver(function() {
+        var visuals = jpContent.querySelectorAll('.step-visual:not([data-init])');
+        visuals.forEach(function(vis) {
+          var id = vis.getAttribute('data-visual');
+          if (id && visualInits[id]) {
+            vis.setAttribute('data-init', '1');
+            setTimeout(function() { visualInits[id](vis); }, 150);
+          }
+        });
+      });
+      jpObs.observe(jpContent, { childList: true, subtree: true });
+    }
+  }
+
+  // Helper: create element with classes
+  function el(tag, cls, text) {
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text) e.textContent = text;
+    return e;
+  }
+
+  function stopProp(e) { e.stopPropagation(); }
+
+  // ═══ 01 ROUTING ═══
+  visualInits.routing = function(c) {
+    var w = c.offsetWidth, h = c.offsetHeight;
+    // Nodes
+    var nodes = [
+      { label: 'API Gateway', x: 0.08, y: 0.18 },
+      { label: 'Load Balancer', x: 0.38, y: 0.18 },
+      { label: 'GPU Worker 1', x: 0.68, y: 0.08 },
+      { label: 'GPU Worker 2', x: 0.68, y: 0.38 },
+      { label: 'GPU Worker 3', x: 0.68, y: 0.68 }
+    ];
+    nodes.forEach(function(n) {
+      var node = el('div', 'sv-node', n.label);
+      node.style.left = (n.x * w) + 'px';
+      node.style.top = (n.y * h) + 'px';
+      n.el = node;
+      c.appendChild(node);
+    });
+
+    // KV fill bars for workers
+    [2,3,4].forEach(function(i, idx) {
+      var bar = el('div', 'sv-bar');
+      bar.style.position = 'absolute';
+      bar.style.left = (nodes[i].x * w) + 'px';
+      bar.style.top = (nodes[i].y * h + 28) + 'px';
+      bar.style.width = '90px';
+      var fill = el('div', 'sv-bar-fill');
+      fill.style.background = 'var(--accent)';
+      fill.style.width = [65, 30, 80][idx] + '%';
+      bar.appendChild(fill);
+      c.appendChild(bar);
+      var lbl = el('div', 'sv-label');
+      lbl.style.position = 'absolute';
+      lbl.style.left = (nodes[i].x * w + 94) + 'px';
+      lbl.style.top = (nodes[i].y * h + 28) + 'px';
+      lbl.textContent = ['65%', '30%', '80%'][idx] + ' KV';
+      c.appendChild(lbl);
+    });
+
+    // Lines
+    var lines = [[0,1],[1,2],[1,3],[1,4]];
+    lines.forEach(function(l) {
+      var a = nodes[l[0]], b = nodes[l[1]];
+      var line = el('div', 'sv-line h');
+      var x1 = a.x * w + 80, y1 = a.y * h + 10;
+      var x2 = b.x * w, y2 = b.y * h + 10;
+      var dx = x2 - x1, dy = y2 - y1;
+      var len = Math.sqrt(dx*dx + dy*dy);
+      var angle = Math.atan2(dy, dx) * 180 / Math.PI;
+      line.style.width = len + 'px';
+      line.style.left = x1 + 'px';
+      line.style.top = y1 + 'px';
+      line.style.transform = 'rotate(' + angle + 'deg)';
+      line.style.transformOrigin = '0 0';
+      c.appendChild(line);
+    });
+
+    // Animated packet
+    var packet = el('div', 'sv-packet');
+    c.appendChild(packet);
+    var stat = el('div', 'sv-stat', 'Route to lowest KV usage');
+    c.appendChild(stat);
+
+    var animating = false;
+    function animatePacket() {
+      if (animating) return;
+      animating = true;
+      var target = 3; // Worker 2 (lowest KV)
+      var path = [nodes[0], nodes[1], nodes[target]];
+      var step = 0;
+      nodes.forEach(function(n) { n.el.classList.remove('highlight'); });
+
+      function moveNext() {
+        if (step >= path.length) {
+          animating = false;
+          return;
+        }
+        var n = path[step];
+        n.el.classList.add('highlight');
+        packet.style.left = (n.x * w + 30) + 'px';
+        packet.style.top = (n.y * h + 6) + 'px';
+        packet.style.transition = 'left 0.4s ease, top 0.4s ease';
+        step++;
+        setTimeout(moveNext, 500);
+      }
+      packet.style.transition = 'none';
+      packet.style.left = (nodes[0].x * w - 15) + 'px';
+      packet.style.top = (nodes[0].y * h + 6) + 'px';
+      setTimeout(moveNext, 100);
+    }
+
+    var ctrl = el('div', 'sv-controls');
+    var btn = el('button', 'sv-btn', 'Replay');
+    btn.addEventListener('click', function(e) { stopProp(e); animatePacket(); });
+    ctrl.appendChild(btn);
+    c.appendChild(ctrl);
+    setTimeout(animatePacket, 300);
+  };
+
+  // ═══ 02 PREPROCESSING ═══
+  visualInits.preprocessing = function(c) {
+    var w = c.offsetWidth, h = c.offsetHeight;
+    var layers = [
+      { label: 'System Prompt', tokens: '~500 tokens', color: 'var(--accent)', y: 0.55 },
+      { label: 'Few-Shot Examples', tokens: '~200 tokens', color: 'var(--logic)', y: 0.35 },
+      { label: 'User Input', tokens: '~50 tokens', color: 'var(--io)', y: 0.15 }
+    ];
+    var assembled = false;
+
+    layers.forEach(function(l, i) {
+      var box = el('div', 'sv-node');
+      box.innerHTML = '<strong>' + l.label + '</strong><br><span style="font-size:0.55rem;color:var(--text-muted)">' + l.tokens + '</span>';
+      box.style.left = '8%';
+      box.style.top = (l.y * h) + 'px';
+      box.style.width = '140px';
+      box.style.textAlign = 'center';
+      box.style.borderColor = l.color;
+      box.style.transition = 'top 0.6s ease, left 0.6s ease';
+      l.el = box;
+      c.appendChild(box);
+    });
+
+    // Bracket for prefix cacheable
+    var bracket = el('div', '');
+    bracket.style.cssText = 'position:absolute;right:15%;top:20%;height:50%;border:1px dashed var(--accent-dim);border-left:none;width:20px;border-radius:0 6px 6px 0;opacity:0;transition:opacity 0.5s';
+    c.appendChild(bracket);
+    var bracketLabel = el('div', 'sv-label');
+    bracketLabel.textContent = 'PREFIX CACHEABLE';
+    bracketLabel.style.cssText = 'right:3%;top:42%;transform:rotate(0deg);font-size:0.45rem;opacity:0;transition:opacity 0.5s';
+    c.appendChild(bracketLabel);
+
+    // Arrow result
+    var arrow = el('div', '');
+    arrow.style.cssText = 'position:absolute;left:52%;top:35%;font-size:1.5rem;color:var(--text-muted);opacity:0;transition:opacity 0.4s';
+    arrow.textContent = '\u2192';
+    c.appendChild(arrow);
+
+    var result = el('div', 'sv-node');
+    result.innerHTML = '<strong>Final Prompt</strong><br><span style="font-size:0.55rem;color:var(--text-muted)">~750 tokens</span>';
+    result.style.cssText = 'left:62%;top:30%;width:120px;text-align:center;opacity:0;transition:opacity 0.5s;border-color:var(--accent)';
+    c.appendChild(result);
+
+    var stat = el('div', 'sv-stat', 'Hover layers to see token counts');
+    c.appendChild(stat);
+
+    var ctrl = el('div', 'sv-controls');
+    var btn = el('button', 'sv-btn', 'Assemble');
+    btn.addEventListener('click', function(e) {
+      stopProp(e);
+      if (!assembled) {
+        layers.forEach(function(l, i) {
+          l.el.style.left = '30%';
+          l.el.style.top = (0.2 * h + i * 45) + 'px';
+        });
+        arrow.style.opacity = '1';
+        result.style.opacity = '1';
+        bracket.style.opacity = '1';
+        bracketLabel.style.opacity = '1';
+        btn.textContent = 'Reset';
+        assembled = true;
+      } else {
+        layers.forEach(function(l) {
+          l.el.style.left = '8%';
+          l.el.style.top = (l.y * h) + 'px';
+        });
+        arrow.style.opacity = '0';
+        result.style.opacity = '0';
+        bracket.style.opacity = '0';
+        bracketLabel.style.opacity = '0';
+        btn.textContent = 'Assemble';
+        assembled = false;
+      }
+    });
+    ctrl.appendChild(btn);
+    c.appendChild(ctrl);
+  };
+
+  // ═══ 03 TOKENIZATION ═══
+  visualInits.tokenization = function(c) {
+    var samples = {
+      'English': { text: 'How does inference work?', tokens: ['How', ' does', ' inference', ' work', '?'], ids: [2347, 1721, 45892, 1736, 30], ratio: '~4.6 chars/token' },
+      'Code': { text: 'def forward(self, x):', tokens: ['def', ' forward', '(', 'self', ',', ' x', '):'], ids: [755, 4054, 7, 944, 11, 865, 1125], ratio: '~3.0 chars/token' },
+      'Japanese': { text: '\u304A\u5143\u6C17\u3067\u3059\u304B', tokens: ['\u304A', '\u5143', '\u6C17', '\u3067\u3059', '\u304B'], ids: [2571, 3901, 4827, 9823, 1548], ratio: '~1.2 chars/token' }
+    };
+    var current = 'English';
+
+    var inputDiv = el('div', '');
+    inputDiv.style.cssText = 'position:absolute;top:12%;left:5%;right:5%;text-align:center';
+    var inputLabel = el('div', 'sv-label');
+    inputLabel.style.cssText = 'position:static;margin-bottom:6px';
+    inputLabel.textContent = 'INPUT TEXT';
+    inputDiv.appendChild(inputLabel);
+    var inputText = el('div', '');
+    inputText.style.cssText = 'font-size:1rem;color:var(--text);font-family:var(--font-body)';
+    inputDiv.appendChild(inputText);
+    c.appendChild(inputDiv);
+
+    var arrowDiv = el('div', '');
+    arrowDiv.style.cssText = 'position:absolute;top:38%;left:50%;transform:translateX(-50%);color:var(--text-muted);font-size:1.2rem';
+    arrowDiv.textContent = '\u2193 BPE \u2193';
+    c.appendChild(arrowDiv);
+
+    var tokensDiv = el('div', '');
+    tokensDiv.style.cssText = 'position:absolute;top:48%;left:5%;right:5%;text-align:center';
+    var tokLabel = el('div', 'sv-label');
+    tokLabel.style.cssText = 'position:static;margin-bottom:6px';
+    tokLabel.textContent = 'TOKENS';
+    tokensDiv.appendChild(tokLabel);
+    var tokRow = el('div', '');
+    tokRow.style.cssText = 'display:flex;flex-wrap:wrap;justify-content:center;gap:4px';
+    tokensDiv.appendChild(tokRow);
+    c.appendChild(tokensDiv);
+
+    var ratioDiv = el('div', 'sv-stat');
+    c.appendChild(ratioDiv);
+
+    var colors = ['var(--accent)', 'var(--logic)', 'var(--io)', 'var(--compute)', 'var(--memory)', 'var(--network)', 'var(--accent-dim)'];
+
+    function render() {
+      var s = samples[current];
+      inputText.textContent = s.text;
+      tokRow.innerHTML = '';
+      s.tokens.forEach(function(t, i) {
+        var tok = el('span', 'sv-token');
+        tok.textContent = t;
+        tok.style.borderColor = colors[i % colors.length];
+        tok.style.color = colors[i % colors.length];
+        tok.style.animation = 'svAppear 0.3s ease ' + (i * 0.08) + 's both';
+        var idSpan = document.createElement('span');
+        idSpan.style.cssText = 'display:block;font-size:0.5rem;color:var(--text-muted);margin-top:2px';
+        idSpan.textContent = s.ids[i];
+        tok.appendChild(idSpan);
+        tokRow.appendChild(tok);
+      });
+      ratioDiv.textContent = s.tokens.length + ' tokens \u2022 ' + s.ratio;
+    }
+
+    var ctrl = el('div', 'sv-controls');
+    ['English', 'Code', 'Japanese'].forEach(function(lang) {
+      var btn = el('button', 'sv-btn' + (lang === current ? ' active' : ''), lang);
+      btn.addEventListener('click', function(e) {
+        stopProp(e);
+        current = lang;
+        ctrl.querySelectorAll('.sv-btn').forEach(function(b) { b.classList.remove('active'); });
+        btn.classList.add('active');
+        render();
+      });
+      ctrl.appendChild(btn);
+    });
+    c.appendChild(ctrl);
+    render();
+  };
+
+  // ═══ 04 EMBEDDING ═══
+  visualInits.embedding = function(c) {
+    var tokens = ['How', 'does', 'inference', 'work', '?'];
+    var dims = 8;
+    var vectors = tokens.map(function() {
+      var v = [];
+      for (var i = 0; i < dims; i++) v.push(Math.random() * 0.8 + 0.1);
+      return v;
+    });
+
+    var leftCol = el('div', '');
+    leftCol.style.cssText = 'position:absolute;left:5%;top:15%;width:20%';
+    var lbl1 = el('div', 'sv-label');
+    lbl1.style.cssText = 'position:static;margin-bottom:8px';
+    lbl1.textContent = 'TOKEN IDS';
+    leftCol.appendChild(lbl1);
+    tokens.forEach(function(t, i) {
+      var row = el('div', 'sv-node');
+      row.style.cssText = 'position:static;margin-bottom:4px;cursor:pointer;text-align:center;font-size:0.6rem';
+      row.textContent = t;
+      row.setAttribute('data-idx', i);
+      row.addEventListener('click', function(e) { stopProp(e); highlightToken(i); });
+      row.addEventListener('mouseenter', function() { highlightToken(i); });
+      leftCol.appendChild(row);
+    });
+    c.appendChild(leftCol);
+
+    var arrowDiv = el('div', '');
+    arrowDiv.style.cssText = 'position:absolute;left:28%;top:45%;color:var(--text-muted);font-size:1.5rem';
+    arrowDiv.textContent = '\u2192';
+    c.appendChild(arrowDiv);
+
+    var lookupLabel = el('div', 'sv-label');
+    lookupLabel.textContent = 'LOOKUP TABLE';
+    lookupLabel.style.cssText = 'position:absolute;left:35%;top:10%';
+    c.appendChild(lookupLabel);
+
+    var rightCol = el('div', '');
+    rightCol.style.cssText = 'position:absolute;left:35%;top:15%;width:60%';
+    var lbl2 = el('div', 'sv-label');
+    lbl2.style.cssText = 'position:static;margin-bottom:8px';
+    lbl2.textContent = 'EMBEDDING VECTORS (8 of 4096 DIMS)';
+    rightCol.appendChild(lbl2);
+
+    var barRows = [];
+    tokens.forEach(function(t, i) {
+      var row = el('div', '');
+      row.style.cssText = 'display:flex;align-items:center;gap:3px;margin-bottom:4px;opacity:0.4;transition:opacity 0.3s';
+      var name = el('span', '');
+      name.style.cssText = 'width:60px;font-size:0.55rem;color:var(--text-muted)';
+      name.textContent = t;
+      row.appendChild(name);
+      vectors[i].forEach(function(v) {
+        var bar = el('div', '');
+        bar.style.cssText = 'width:' + (v * 40) + 'px;height:10px;background:var(--accent);border-radius:2px;transition:width 0.3s';
+        row.appendChild(bar);
+      });
+      rightCol.appendChild(row);
+      barRows.push(row);
+    });
+    c.appendChild(rightCol);
+
+    var stat = el('div', 'sv-stat', 'Hover a token');
+    c.appendChild(stat);
+
+    function highlightToken(idx) {
+      barRows.forEach(function(r, i) { r.style.opacity = i === idx ? '1' : '0.25'; });
+      leftCol.querySelectorAll('.sv-node').forEach(function(n, i) {
+        n.classList.toggle('highlight', i === idx);
+      });
+      stat.textContent = tokens[idx] + ' \u2192 [' + vectors[idx].map(function(v) { return v.toFixed(2); }).join(', ') + '...]';
+    }
+  };
+
+  // ═══ 05 SCHEDULING ═══
+  visualInits.scheduling = function(c) {
+    var w = c.offsetWidth;
+    var cols = 12, rows = 4;
+    var mode = 'static';
+
+    var staticData = [
+      [1,1,1,1,1,1,0,0,0,0,0,0],
+      [1,1,1,1,1,1,1,1,1,0,0,0],
+      [1,1,1,0,0,0,0,0,0,0,0,0],
+      [1,1,1,1,1,1,1,1,1,1,1,1]
+    ];
+    var contData = [
+      [1,1,1,1,1,3,3,3,3,3,3,3],
+      [1,1,1,1,1,1,1,1,1,3,3,3],
+      [1,1,1,3,3,3,3,3,5,5,5,5],
+      [1,1,1,1,1,1,1,1,1,1,1,1]
+    ];
+
+    function calcUtil(data) {
+      var total = 0, used = 0;
+      data.forEach(function(r) { r.forEach(function(v) { total++; if (v > 0) used++; }); });
+      return Math.round(used / total * 100);
+    }
+
+    // Labels
+    var titleL = el('div', 'sv-label');
+    titleL.style.cssText = 'position:absolute;left:5%;top:6%';
+    c.appendChild(titleL);
+
+    var gridDiv = el('div', '');
+    gridDiv.style.cssText = 'position:absolute;left:5%;top:18%;right:5%';
+    c.appendChild(gridDiv);
+
+    var stat = el('div', 'sv-stat');
+    c.appendChild(stat);
+
+    // Time axis
+    var timeLabel = el('div', 'sv-label');
+    timeLabel.style.cssText = 'position:absolute;left:50%;bottom:14%;transform:translateX(-50%)';
+    timeLabel.textContent = 'TIME \u2192';
+    c.appendChild(timeLabel);
+
+    function render() {
+      var data = mode === 'static' ? staticData : contData;
+      titleL.textContent = (mode === 'static' ? 'STATIC' : 'CONTINUOUS') + ' BATCHING';
+      stat.textContent = 'GPU Util: ' + calcUtil(data) + '%';
+      gridDiv.innerHTML = '';
+      var grid = el('div', 'sv-grid');
+      grid.style.gridTemplateColumns = 'repeat(' + cols + ', 1fr)';
+      grid.style.width = '100%';
+      data.forEach(function(row, ri) {
+        row.forEach(function(val, ci) {
+          var cell = el('div', 'sv-cell');
+          cell.style.width = '100%';
+          cell.style.paddingBottom = '100%';
+          cell.style.height = '0';
+          if (val === 0) cell.classList.add('waste');
+          else if (val === 1) cell.classList.add('lit');
+          else if (val === 3) { cell.classList.add('lit'); cell.style.background = 'var(--io)'; cell.style.borderColor = 'var(--io)'; }
+          else if (val === 5) { cell.classList.add('lit'); cell.style.background = 'var(--logic)'; cell.style.borderColor = 'var(--logic)'; }
+          grid.appendChild(cell);
+        });
+      });
+      // Row labels
+      var labelCol = el('div', '');
+      labelCol.style.cssText = 'position:absolute;right:2%;top:18%;font-size:0.45rem;color:var(--text-muted);line-height:2.5';
+      labelCol.innerHTML = 'Slot 0<br>Slot 1<br>Slot 2<br>Slot 3';
+      // Remove old labels
+      var old = c.querySelector('.slot-labels');
+      if (old) old.remove();
+      labelCol.className = 'slot-labels';
+      c.appendChild(labelCol);
+      gridDiv.appendChild(grid);
+    }
+
+    var ctrl = el('div', 'sv-controls');
+    ['Static', 'Continuous'].forEach(function(m) {
+      var btn = el('button', 'sv-btn' + (m.toLowerCase() === mode ? ' active' : ''), m);
+      btn.addEventListener('click', function(e) {
+        stopProp(e);
+        mode = m.toLowerCase();
+        ctrl.querySelectorAll('.sv-btn').forEach(function(b) { b.classList.remove('active'); });
+        btn.classList.add('active');
+        render();
+      });
+      ctrl.appendChild(btn);
+    });
+    c.appendChild(ctrl);
+    render();
+  };
+
+  // ═══ 06 PREFILL ═══
+  visualInits.prefill = function(c) {
+    var tokens = ['The', 'cat', 'sat', 'on', 'the', 'mat'];
+    var n = tokens.length;
+    var mode = 'prefill';
+
+    var titleDiv = el('div', 'sv-label');
+    titleDiv.style.cssText = 'position:absolute;left:5%;top:6%';
+    c.appendChild(titleDiv);
+
+    var gridContainer = el('div', '');
+    gridContainer.style.cssText = 'position:absolute;left:12%;top:16%;right:12%';
+    c.appendChild(gridContainer);
+
+    // Token labels (top)
+    var topLabels = el('div', '');
+    topLabels.style.cssText = 'display:grid;gap:2px;margin-bottom:4px;grid-template-columns:40px repeat(' + n + ',1fr)';
+    var corner = el('div', '');
+    topLabels.appendChild(corner);
+    tokens.forEach(function(t) {
+      var lbl = el('div', '');
+      lbl.style.cssText = 'text-align:center;font-size:0.5rem;color:var(--text-muted)';
+      lbl.textContent = t;
+      topLabels.appendChild(lbl);
+    });
+    gridContainer.appendChild(topLabels);
+
+    var grid = el('div', 'sv-grid');
+    grid.style.gridTemplateColumns = '40px repeat(' + n + ', 1fr)';
+    grid.style.width = '100%';
+    var cells = [];
+    for (var i = 0; i < n; i++) {
+      var rowLabel = el('div', '');
+      rowLabel.style.cssText = 'display:flex;align-items:center;font-size:0.5rem;color:var(--text-muted)';
+      rowLabel.textContent = tokens[i];
+      grid.appendChild(rowLabel);
+      var row = [];
+      for (var j = 0; j < n; j++) {
+        var cell = el('div', 'sv-cell');
+        cell.style.width = '100%';
+        cell.style.paddingBottom = '100%';
+        cell.style.height = '0';
+        grid.appendChild(cell);
+        row.push(cell);
+      }
+      cells.push(row);
+    }
+    gridContainer.appendChild(grid);
+
+    var stat = el('div', 'sv-stat');
+    c.appendChild(stat);
+
+    function render() {
+      titleDiv.textContent = mode === 'prefill' ? 'PREFILL: ALL CELLS SIMULTANEOUSLY' : 'DECODE: ROW BY ROW (SEQUENTIAL)';
+      stat.textContent = mode === 'prefill' ? 'Compute-bound \u2022 Parallel' : 'Memory-bound \u2022 Sequential';
+      // Clear all
+      cells.forEach(function(row) { row.forEach(function(cell) {
+        cell.className = 'sv-cell';
+        cell.style.transition = 'background 0.15s, border-color 0.15s';
+      }); });
+
+      if (mode === 'prefill') {
+        // Light up causal mask (lower triangle) all at once
+        setTimeout(function() {
+          for (var i = 0; i < n; i++) {
+            for (var j = 0; j <= i; j++) {
+              cells[i][j].classList.add('lit');
+            }
+          }
+        }, 200);
+      } else {
+        // Light up row by row with delay
+        var row = 0;
+        function lightRow() {
+          if (row >= n) return;
+          for (var j = 0; j <= row; j++) {
+            cells[row][j].classList.add('lit');
+          }
+          row++;
+          setTimeout(lightRow, 400);
+        }
+        setTimeout(lightRow, 200);
+      }
+    }
+
+    var ctrl = el('div', 'sv-controls');
+    ['Prefill', 'Decode'].forEach(function(m) {
+      var btn = el('button', 'sv-btn' + (m.toLowerCase() === mode ? ' active' : ''), m);
+      btn.addEventListener('click', function(e) {
+        stopProp(e);
+        mode = m.toLowerCase();
+        ctrl.querySelectorAll('.sv-btn').forEach(function(b) { b.classList.remove('active'); });
+        btn.classList.add('active');
+        render();
+      });
+      ctrl.appendChild(btn);
+    });
+    c.appendChild(ctrl);
+    render();
+  };
+
+  // ═══ 07 KV CACHE ═══
+  visualInits.kvcache = function(c) {
+    var w = c.offsetWidth, h = c.offsetHeight;
+    var numTokens = 4;
+
+    var logLabel = el('div', 'sv-label');
+    logLabel.textContent = 'LOGICAL (SEQUENTIAL)';
+    logLabel.style.cssText = 'position:absolute;left:8%;top:8%';
+    c.appendChild(logLabel);
+
+    var physLabel = el('div', 'sv-label');
+    physLabel.textContent = 'PHYSICAL (PAGED)';
+    physLabel.style.cssText = 'position:absolute;left:55%;top:8%';
+    c.appendChild(physLabel);
+
+    var logSlots = [];
+    var physSlots = [];
+    var physPositions = [0.15, 0.6, 0.35, 0.75, 0.5, 0.2, 0.85, 0.45];
+    var physYPositions = [0.2, 0.25, 0.5, 0.45, 0.7, 0.75, 0.6, 0.35];
+    var connections = [];
+
+    function addToken() {
+      if (numTokens > 7) return;
+      var i = numTokens;
+      // Logical slot
+      var lslot = el('div', 'sv-node');
+      lslot.textContent = 'Token ' + i;
+      lslot.style.cssText = 'position:absolute;left:8%;top:' + (18 + i * 28) + 'px;font-size:0.55rem;width:70px;text-align:center';
+      lslot.style.animation = 'svAppear 0.3s ease both';
+      c.appendChild(lslot);
+      logSlots.push(lslot);
+
+      // Physical block
+      var px = 55 + physPositions[i % physPositions.length] * 35;
+      var py = 15 + physYPositions[i % physYPositions.length] * 70;
+      var pslot = el('div', 'sv-node highlight');
+      pslot.textContent = 'Block ' + i;
+      pslot.style.cssText = 'position:absolute;left:' + px + '%;top:' + py + '%;font-size:0.55rem;width:65px;text-align:center';
+      pslot.style.animation = 'svAppear 0.3s ease both';
+      c.appendChild(pslot);
+      physSlots.push(pslot);
+
+      // Connection line (SVG would be better but keep it simple)
+      var conn = el('div', 'sv-line h active');
+      conn.style.cssText = 'position:absolute;height:1px;background:var(--accent-dim);opacity:0.5';
+      var lx = 25;
+      var ly = 18 + i * 28 + 8;
+      var rx = px;
+      var ry = py;
+      // Approximate with % → px
+      setTimeout(function() {
+        var lslotRect = lslot.getBoundingClientRect();
+        var pslotRect = pslot.getBoundingClientRect();
+        var cRect = c.getBoundingClientRect();
+        var x1 = lslotRect.right - cRect.left;
+        var y1 = lslotRect.top + lslotRect.height/2 - cRect.top;
+        var x2 = pslotRect.left - cRect.left;
+        var y2 = pslotRect.top + pslotRect.height/2 - cRect.top;
+        var dx = x2 - x1, dy = y2 - y1;
+        var len = Math.sqrt(dx*dx + dy*dy);
+        var angle = Math.atan2(dy, dx) * 180 / Math.PI;
+        conn.style.width = len + 'px';
+        conn.style.left = x1 + 'px';
+        conn.style.top = y1 + 'px';
+        conn.style.transform = 'rotate(' + angle + 'deg)';
+        conn.style.transformOrigin = '0 0';
+      }, 100);
+      c.appendChild(conn);
+      connections.push(conn);
+      numTokens++;
+      stat.textContent = numTokens + ' tokens \u2022 ' + numTokens + ' blocks allocated';
+    }
+
+    // Initial tokens
+    for (var t = 0; t < numTokens; t++) {
+      (function(i) {
+        var lslot = el('div', 'sv-node');
+        lslot.textContent = 'Token ' + i;
+        lslot.style.cssText = 'position:absolute;left:8%;top:' + (18 + i * 28) + 'px;font-size:0.55rem;width:70px;text-align:center';
+        c.appendChild(lslot);
+        logSlots.push(lslot);
+
+        var px = 55 + physPositions[i] * 35;
+        var py = 15 + physYPositions[i] * 70;
+        var pslot = el('div', 'sv-node highlight');
+        pslot.textContent = 'Block ' + i;
+        pslot.style.cssText = 'position:absolute;left:' + px + '%;top:' + py + '%;font-size:0.55rem;width:65px;text-align:center';
+        c.appendChild(pslot);
+        physSlots.push(pslot);
+
+        var conn = el('div', 'sv-line h active');
+        conn.style.cssText = 'position:absolute;height:1px;background:var(--accent-dim);opacity:0.5';
+        c.appendChild(conn);
+        connections.push(conn);
+
+        setTimeout(function() {
+          var lslotRect = lslot.getBoundingClientRect();
+          var pslotRect = pslot.getBoundingClientRect();
+          var cRect = c.getBoundingClientRect();
+          var x1 = lslotRect.right - cRect.left;
+          var y1 = lslotRect.top + lslotRect.height/2 - cRect.top;
+          var x2 = pslotRect.left - cRect.left;
+          var y2 = pslotRect.top + pslotRect.height/2 - cRect.top;
+          var dx = x2 - x1, dy = y2 - y1;
+          var len = Math.sqrt(dx*dx + dy*dy);
+          var angle = Math.atan2(dy, dx) * 180 / Math.PI;
+          conn.style.width = len + 'px';
+          conn.style.left = x1 + 'px';
+          conn.style.top = y1 + 'px';
+          conn.style.transform = 'rotate(' + angle + 'deg)';
+          conn.style.transformOrigin = '0 0';
+        }, 300);
+      })(t);
+    }
+
+    var stat = el('div', 'sv-stat', numTokens + ' tokens \u2022 ' + numTokens + ' blocks allocated');
+    c.appendChild(stat);
+
+    var ctrl = el('div', 'sv-controls');
+    var btn = el('button', 'sv-btn', 'Add Token');
+    btn.addEventListener('click', function(e) { stopProp(e); addToken(); });
+    ctrl.appendChild(btn);
+    c.appendChild(ctrl);
+  };
+
+  // ═══ 08 ATTENTION ═══
+  visualInits.attention = function(c) {
+    var configs = {
+      'MHA': { q: 8, kv: 8, label: '8 Q \u2192 8 KV (1:1)', cache: '1x' },
+      'GQA': { q: 8, kv: 2, label: '8 Q \u2192 2 KV (4:1)', cache: '4x reduction' },
+      'MQA': { q: 8, kv: 1, label: '8 Q \u2192 1 KV (8:1)', cache: '8x reduction' }
+    };
+    var mode = 'GQA';
+
+    var titleDiv = el('div', 'sv-label');
+    titleDiv.style.cssText = 'position:absolute;left:50%;top:5%;transform:translateX(-50%)';
+    c.appendChild(titleDiv);
+
+    var stat = el('div', 'sv-stat');
+    c.appendChild(stat);
+
+    var vizDiv = el('div', '');
+    vizDiv.style.cssText = 'position:absolute;left:5%;right:5%;top:15%;bottom:18%';
+    c.appendChild(vizDiv);
+
+    function render() {
+      var cfg = configs[mode];
+      titleDiv.textContent = mode + ': ' + cfg.label;
+      stat.textContent = 'KV Cache: ' + cfg.cache;
+      vizDiv.innerHTML = '';
+
+      var qLabel = el('div', 'sv-label');
+      qLabel.style.cssText = 'position:static;text-align:center;margin-bottom:6px';
+      qLabel.textContent = 'QUERY HEADS';
+      vizDiv.appendChild(qLabel);
+
+      var qRow = el('div', '');
+      qRow.style.cssText = 'display:flex;justify-content:center;gap:6px;margin-bottom:20px';
+      for (var i = 0; i < cfg.q; i++) {
+        var qHead = el('div', '');
+        var kvGroup = Math.floor(i / (cfg.q / cfg.kv));
+        var colors = ['var(--accent)', 'var(--logic)', 'var(--io)', 'var(--compute)', 'var(--memory)', 'var(--network)', 'var(--accent-dim)', '#9a98a0'];
+        qHead.style.cssText = 'width:24px;height:24px;border-radius:50%;border:2px solid ' + colors[kvGroup % colors.length] + ';display:flex;align-items:center;justify-content:center;font-size:0.45rem;color:var(--text-muted)';
+        qHead.textContent = 'Q' + i;
+        qRow.appendChild(qHead);
+      }
+      vizDiv.appendChild(qRow);
+
+      // Connection indicators
+      var connDiv = el('div', '');
+      connDiv.style.cssText = 'text-align:center;margin-bottom:20px;font-size:0.8rem;color:var(--text-muted)';
+      connDiv.textContent = '\u2193'.repeat(cfg.kv);
+      vizDiv.appendChild(connDiv);
+
+      var kvLabel = el('div', 'sv-label');
+      kvLabel.style.cssText = 'position:static;text-align:center;margin-bottom:6px';
+      kvLabel.textContent = 'KEY/VALUE HEADS';
+      vizDiv.appendChild(kvLabel);
+
+      var kvRow = el('div', '');
+      kvRow.style.cssText = 'display:flex;justify-content:center;gap:6px';
+      for (var j = 0; j < cfg.kv; j++) {
+        var kvHead = el('div', '');
+        kvHead.style.cssText = 'width:28px;height:28px;border-radius:50%;background:' + colors[j % colors.length] + ';display:flex;align-items:center;justify-content:center;font-size:0.45rem;color:var(--bg);font-weight:700';
+        kvHead.textContent = 'KV' + j;
+        kvRow.appendChild(kvHead);
+      }
+      vizDiv.appendChild(kvRow);
+    }
+
+    var ctrl = el('div', 'sv-controls');
+    ['MHA', 'GQA', 'MQA'].forEach(function(m) {
+      var btn = el('button', 'sv-btn' + (m === mode ? ' active' : ''), m);
+      btn.addEventListener('click', function(e) {
+        stopProp(e);
+        mode = m;
+        ctrl.querySelectorAll('.sv-btn').forEach(function(b) { b.classList.remove('active'); });
+        btn.classList.add('active');
+        render();
+      });
+      ctrl.appendChild(btn);
+    });
+    c.appendChild(ctrl);
+    render();
+  };
+
+  // ═══ 09 DECODE ═══
+  visualInits.decode = function(c) {
+    var steps = [
+      { label: 'Load Weights', angle: 0, color: 'var(--compute)', thick: true },
+      { label: 'Compute', angle: 90, color: 'var(--accent)', thick: false },
+      { label: 'Sample', angle: 180, color: 'var(--logic)', thick: false },
+      { label: 'Append KV', angle: 270, color: 'var(--memory)', thick: false }
+    ];
+    var currentStep = 0;
+    var tokenCount = 0;
+    var playing = false;
+    var timer = null;
+    var cx = c.offsetWidth / 2, cy = c.offsetHeight / 2 - 10;
+    var r = Math.min(cx, cy) * 0.55;
+
+    // Draw step nodes
+    steps.forEach(function(s, i) {
+      var rad = (s.angle - 90) * Math.PI / 180;
+      var x = cx + r * Math.cos(rad);
+      var y = cy + r * Math.sin(rad);
+      var node = el('div', 'sv-node');
+      node.textContent = s.label;
+      node.style.left = (x - 40) + 'px';
+      node.style.top = (y - 12) + 'px';
+      node.style.width = '80px';
+      node.style.textAlign = 'center';
+      if (s.thick) {
+        node.style.borderWidth = '2px';
+        node.style.borderColor = s.color;
+      }
+      s.el = node;
+      c.appendChild(node);
+    });
+
+    // Weight loading dominance note
+    var note = el('div', '');
+    note.style.cssText = 'position:absolute;left:50%;bottom:36%;transform:translateX(-50%);font-size:0.5rem;color:var(--text-muted);text-align:center;width:120px';
+    note.textContent = 'Weight loading dominates (~80% of time)';
+    c.appendChild(note);
+
+    // Packet
+    var packet = el('div', 'sv-packet');
+    c.appendChild(packet);
+
+    var stat = el('div', 'sv-stat', 'Tokens: 0');
+    c.appendChild(stat);
+
+    function positionPacket(i) {
+      var rad = (steps[i].angle - 90) * Math.PI / 180;
+      var x = cx + r * Math.cos(rad);
+      var y = cy + r * Math.sin(rad);
+      packet.style.transition = 'left 0.3s ease, top 0.3s ease';
+      packet.style.left = (x - 4) + 'px';
+      packet.style.top = (y - 4) + 'px';
+    }
+
+    function highlightStep(i) {
+      steps.forEach(function(s, j) {
+        s.el.classList.toggle('highlight', j === i);
+      });
+      positionPacket(i);
+    }
+
+    function advance() {
+      highlightStep(currentStep);
+      currentStep = (currentStep + 1) % steps.length;
+      if (currentStep === 0) {
+        tokenCount++;
+        stat.textContent = 'Tokens: ' + tokenCount;
+      }
+    }
+
+    var ctrl = el('div', 'sv-controls');
+    var playBtn = el('button', 'sv-btn active', 'Play');
+    playBtn.addEventListener('click', function(e) {
+      stopProp(e);
+      if (playing) {
+        clearInterval(timer);
+        playing = false;
+        playBtn.textContent = 'Play';
+        playBtn.classList.remove('active');
+      } else {
+        timer = setInterval(advance, 600);
+        playing = true;
+        playBtn.textContent = 'Pause';
+        playBtn.classList.add('active');
+      }
+    });
+    ctrl.appendChild(playBtn);
+
+    var stepBtn = el('button', 'sv-btn', 'Step');
+    stepBtn.addEventListener('click', function(e) { stopProp(e); advance(); });
+    ctrl.appendChild(stepBtn);
+    c.appendChild(ctrl);
+
+    // Auto-play
+    highlightStep(0);
+    timer = setInterval(advance, 600);
+    playing = true;
+
+    // Pause when step closes
+    var parentStep = c.closest('.pipeline-step');
+    if (parentStep) {
+      var closeObs = new MutationObserver(function() {
+        if (!parentStep.classList.contains('active') && playing) {
+          clearInterval(timer);
+          playing = false;
+          playBtn.textContent = 'Play';
+          playBtn.classList.remove('active');
+        }
+      });
+      closeObs.observe(parentStep, { attributes: true });
+    }
+  };
+
+  // ═══ 10 SAMPLING ═══
+  visualInits.sampling = function(c) {
+    var rawProbs = [0.32, 0.18, 0.12, 0.08, 0.06, 0.05, 0.04, 0.03, 0.025, 0.02, 0.015, 0.01, 0.008, 0.006, 0.004];
+    var labels = ['the', 'a', 'one', 'my', 'his', 'her', 'its', 'an', 'our', 'this', 'that', 'some', 'your', 'each', 'no'];
+    var stage = 0; // 0=raw, 1=temperature, 2=filtered
+    var stageNames = ['Raw Logits', 'After Temperature (T=0.7)', 'After Top-K (K=5)'];
+
+    var barContainer = el('div', '');
+    barContainer.style.cssText = 'position:absolute;left:5%;right:5%;top:12%;bottom:18%';
+    c.appendChild(barContainer);
+
+    var titleDiv = el('div', 'sv-label');
+    titleDiv.style.cssText = 'position:absolute;left:5%;top:5%';
+    c.appendChild(titleDiv);
+
+    var stat = el('div', 'sv-stat');
+    c.appendChild(stat);
+
+    function sharpen(probs, temp) {
+      var logs = probs.map(function(p) { return Math.log(p) / temp; });
+      var maxLog = Math.max.apply(null, logs);
+      var exps = logs.map(function(l) { return Math.exp(l - maxLog); });
+      var sum = exps.reduce(function(a, b) { return a + b; }, 0);
+      return exps.map(function(e) { return e / sum; });
+    }
+
+    function render() {
+      titleDiv.textContent = stageNames[stage];
+      barContainer.innerHTML = '';
+      var probs;
+      if (stage === 0) probs = rawProbs.slice();
+      else if (stage === 1) probs = sharpen(rawProbs, 0.7);
+      else {
+        probs = sharpen(rawProbs, 0.7);
+        // Top-5: zero out rest, renormalize
+        var sorted = probs.map(function(p, i) { return { p: p, i: i }; }).sort(function(a, b) { return b.p - a.p; });
+        var kept = {};
+        for (var k = 0; k < 5; k++) kept[sorted[k].i] = true;
+        var sum = 0;
+        probs = probs.map(function(p, i) {
+          if (kept[i]) { sum += p; return p; }
+          return 0;
+        });
+        probs = probs.map(function(p) { return p / sum; });
+      }
+
+      var maxP = Math.max.apply(null, probs);
+      probs.forEach(function(p, i) {
+        var row = el('div', '');
+        row.style.cssText = 'display:flex;align-items:center;gap:6px;margin-bottom:2px';
+        var lbl = el('span', '');
+        lbl.style.cssText = 'width:30px;text-align:right;font-size:0.55rem;color:var(--text-muted)';
+        lbl.textContent = labels[i];
+        row.appendChild(lbl);
+        var bar = el('div', 'sv-bar');
+        bar.style.flex = '1';
+        bar.style.height = '11px';
+        var fill = el('div', 'sv-bar-fill');
+        fill.style.background = p === 0 ? 'var(--border)' : 'var(--accent)';
+        fill.style.width = (p / maxP * 100) + '%';
+        fill.style.opacity = p === 0 ? '0.3' : '1';
+        bar.appendChild(fill);
+        row.appendChild(bar);
+        var pct = el('span', '');
+        pct.style.cssText = 'width:35px;font-size:0.5rem;color:' + (p === 0 ? 'var(--text-muted)' : 'var(--accent)');
+        pct.textContent = p === 0 ? '-' : (p * 100).toFixed(1) + '%';
+        row.appendChild(pct);
+        barContainer.appendChild(row);
+      });
+      stat.textContent = stage === 2 ? '5 tokens kept, renormalized' : probs.filter(function(p) { return p > 0; }).length + ' candidate tokens';
+    }
+
+    var ctrl = el('div', 'sv-controls');
+    stageNames.forEach(function(name, i) {
+      var short = ['Raw', 'Temp', 'Top-K'][i];
+      var btn = el('button', 'sv-btn' + (i === stage ? ' active' : ''), short);
+      btn.addEventListener('click', function(e) {
+        stopProp(e);
+        stage = i;
+        ctrl.querySelectorAll('.sv-btn').forEach(function(b) { b.classList.remove('active'); });
+        btn.classList.add('active');
+        render();
+      });
+      ctrl.appendChild(btn);
+    });
+
+    var sampleBtn = el('button', 'sv-btn', 'Sample');
+    sampleBtn.addEventListener('click', function(e) {
+      stopProp(e);
+      stage = 2;
+      ctrl.querySelectorAll('.sv-btn').forEach(function(b) { b.classList.remove('active'); });
+      ctrl.children[2].classList.add('active');
+      render();
+      // Pick random from top 5
+      var probs2 = sharpen(rawProbs, 0.7);
+      var sorted = probs2.map(function(p, i) { return { p: p, i: i }; }).sort(function(a, b) { return b.p - a.p; });
+      var sum = 0;
+      for (var k = 0; k < 5; k++) sum += sorted[k].p;
+      var r = Math.random() * sum, acc = 0, picked = 0;
+      for (var k = 0; k < 5; k++) { acc += sorted[k].p; if (r <= acc) { picked = sorted[k].i; break; } }
+      stat.textContent = 'Sampled: "' + labels[picked] + '" (' + (probs2[picked] / sum * 100).toFixed(1) + '%)';
+      // Highlight picked bar
+      var rows = barContainer.children;
+      if (rows[picked]) rows[picked].style.background = 'var(--accent-glow)';
+    });
+    ctrl.appendChild(sampleBtn);
+    c.appendChild(ctrl);
+    render();
+  };
+
+  // ═══ 11 STREAMING ═══
+  visualInits.streaming = function(c) {
+    var w = c.offsetWidth, h = c.offsetHeight;
+    var tokens = ['Hello', ' world', ',', ' how', ' are', ' you', ' today', '?'];
+    var currentToken = 0;
+    var playing = false;
+    var timer = null;
+
+    // Server and client nodes
+    var server = el('div', 'sv-node');
+    server.textContent = 'GPU Server';
+    server.style.cssText = 'position:absolute;left:8%;top:30%;width:80px;text-align:center;border-color:var(--compute)';
+    c.appendChild(server);
+
+    var client = el('div', 'sv-node');
+    client.textContent = 'Client';
+    client.style.cssText = 'position:absolute;right:8%;top:30%;width:70px;text-align:center;border-color:var(--accent)';
+    c.appendChild(client);
+
+    // Connection line
+    var connLine = el('div', 'sv-line h');
+    connLine.style.cssText = 'position:absolute;left:22%;top:' + (h * 0.3 + 10) + 'px;width:56%;height:1px;background:var(--border)';
+    c.appendChild(connLine);
+
+    var sseLabel = el('div', 'sv-label');
+    sseLabel.textContent = 'SSE CONNECTION';
+    sseLabel.style.cssText = 'position:absolute;left:50%;top:25%;transform:translateX(-50%)';
+    c.appendChild(sseLabel);
+
+    // TTFT marker
+    var ttftMarker = el('div', '');
+    ttftMarker.style.cssText = 'position:absolute;left:50%;top:42%;transform:translateX(-50%);font-size:0.5rem;color:var(--compute);opacity:0;transition:opacity 0.3s';
+    ttftMarker.textContent = '\u2190 TTFT \u2192';
+    c.appendChild(ttftMarker);
+
+    // Accumulated text
+    var textDiv = el('div', '');
+    textDiv.style.cssText = 'position:absolute;left:10%;right:10%;bottom:18%;background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-family:var(--font-body);font-size:0.85rem;color:var(--text);min-height:30px';
+    c.appendChild(textDiv);
+
+    var textLabel = el('div', 'sv-label');
+    textLabel.textContent = 'ACCUMULATED RESPONSE';
+    textLabel.style.cssText = 'position:absolute;left:10%;bottom:' + (h * 0.18 + 38) + 'px';
+    c.appendChild(textLabel);
+
+    // Packet
+    var packet = el('div', 'sv-packet');
+    packet.style.opacity = '0';
+    c.appendChild(packet);
+
+    var stat = el('div', 'sv-stat', 'Ready');
+    c.appendChild(stat);
+
+    function sendToken() {
+      if (currentToken >= tokens.length) {
+        stat.textContent = 'data: [DONE]';
+        playing = false;
+        clearInterval(timer);
+        var playBtn = c.querySelector('.sv-btn');
+        if (playBtn) { playBtn.textContent = 'Replay'; playBtn.classList.remove('active'); }
+        return;
+      }
+
+      if (currentToken === 0) ttftMarker.style.opacity = '1';
+      else ttftMarker.style.opacity = '0';
+
+      // Animate packet from server to client
+      packet.style.transition = 'none';
+      packet.style.left = '22%';
+      packet.style.top = (h * 0.3 + 6) + 'px';
+      packet.style.opacity = '1';
+      setTimeout(function() {
+        packet.style.transition = 'left 0.25s ease';
+        packet.style.left = '75%';
+      }, 50);
+
+      setTimeout(function() {
+        packet.style.opacity = '0';
+        textDiv.textContent += tokens[currentToken];
+        stat.textContent = 'data: {"delta":"' + tokens[currentToken].trim() + '"}';
+        currentToken++;
+      }, 300);
+    }
+
+    function startStream() {
+      currentToken = 0;
+      textDiv.textContent = '';
+      stat.textContent = 'Streaming...';
+      playing = true;
+      timer = setInterval(sendToken, 500);
+      var playBtn = c.querySelector('.sv-btn');
+      if (playBtn) { playBtn.textContent = 'Pause'; playBtn.classList.add('active'); }
+    }
+
+    var ctrl = el('div', 'sv-controls');
+    var playBtn = el('button', 'sv-btn', 'Play');
+    playBtn.addEventListener('click', function(e) {
+      stopProp(e);
+      if (playing) {
+        clearInterval(timer);
+        playing = false;
+        playBtn.textContent = 'Play';
+        playBtn.classList.remove('active');
+      } else if (currentToken >= tokens.length) {
+        startStream();
+      } else {
+        timer = setInterval(sendToken, 500);
+        playing = true;
+        playBtn.textContent = 'Pause';
+        playBtn.classList.add('active');
+      }
+    });
+    ctrl.appendChild(playBtn);
+    c.appendChild(ctrl);
+
+    // Auto-play
+    setTimeout(startStream, 400);
+
+    // Pause when step closes
+    var parentStep = c.closest('.pipeline-step');
+    if (parentStep) {
+      var closeObs = new MutationObserver(function() {
+        if (!parentStep.classList.contains('active') && playing) {
+          clearInterval(timer);
+          playing = false;
+          playBtn.textContent = 'Play';
+          playBtn.classList.remove('active');
+        }
+      });
+      closeObs.observe(parentStep, { attributes: true });
+    }
+  };
 })();
 </script>
 
