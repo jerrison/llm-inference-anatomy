@@ -928,6 +928,92 @@ body {
   transform: translateY(0);
 }
 
+/* ─── MINI-MAP ─── */
+.minimap {
+  position: fixed;
+  right: 1.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 400;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.35s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.minimap.visible { opacity: 1; pointer-events: auto; }
+
+.minimap-phase { padding: 0.4rem 0; position: relative; }
+.minimap-phase + .minimap-phase { border-top: 1px solid var(--border); margin-top: 0.15rem; padding-top: 0.55rem; }
+
+.minimap-phase-label {
+  font-family: var(--font-mono);
+  font-size: 0.5rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--accent-dim);
+  margin-bottom: 0.35rem;
+  padding-left: 2px;
+}
+
+.minimap-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.2rem 0;
+  text-decoration: none;
+  cursor: pointer;
+  outline: none;
+}
+
+.minimap-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border);
+  background: var(--bg);
+  flex-shrink: 0;
+  transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.minimap-label {
+  font-family: var(--font-mono);
+  font-size: 0.55rem;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  white-space: nowrap;
+  transition: color 0.2s ease;
+}
+
+.minimap-item:hover .minimap-dot { border-color: var(--border-active); }
+.minimap-item:hover .minimap-label { color: var(--text-dim); }
+
+.minimap-item:focus-visible .minimap-dot {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.minimap-item.active .minimap-dot {
+  background: var(--accent);
+  border-color: var(--accent);
+  box-shadow: 0 0 6px var(--accent-glow), 0 0 12px var(--accent-glow);
+}
+.minimap-item.active .minimap-label { color: var(--text); }
+
+[data-theme="light"] .minimap-dot { background: var(--bg-card); }
+[data-theme="light"] .minimap-item.active .minimap-dot {
+  box-shadow: 0 0 8px rgba(26,122,181,0.2);
+}
+
+@media (max-width: 1440px) {
+  .minimap-label { display: none; }
+  .minimap { right: 0.75rem; }
+}
+@media (max-width: 768px) {
+  .minimap { display: none; }
+}
+
 /* ─── RESPONSIVE ─── */
 @media (max-width: 768px) {
   .pipeline-flow::before { left: 18px; }
@@ -1064,7 +1150,7 @@ body {
 }
 
 /* ─── THEME TRANSITION ─── */
-body, .code-block, .journey-diagram, .callout-box, .metric, .journey-detail-panel, .journey-detail-header {
+body, .code-block, .journey-diagram, .callout-box, .metric, .journey-detail-panel, .journey-detail-header, .minimap-phase {
   transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
 }
 
@@ -1085,6 +1171,29 @@ body, .code-block, .journey-diagram, .callout-box, .metric, .journey-detail-pane
 <body>
 
 <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme"></button>
+
+<nav class="minimap" id="minimap" aria-label="Pipeline navigation">
+  <div class="minimap-phase">
+    <div class="minimap-phase-label">A</div>
+    <a class="minimap-item" href="#" data-target="routing"><span class="minimap-dot"></span><span class="minimap-label">Routing</span></a>
+    <a class="minimap-item" href="#" data-target="preprocessing"><span class="minimap-dot"></span><span class="minimap-label">Preprocessing</span></a>
+    <a class="minimap-item" href="#" data-target="tokenization"><span class="minimap-dot"></span><span class="minimap-label">Tokenization</span></a>
+    <a class="minimap-item" href="#" data-target="embedding"><span class="minimap-dot"></span><span class="minimap-label">Embedding</span></a>
+  </div>
+  <div class="minimap-phase">
+    <div class="minimap-phase-label">B</div>
+    <a class="minimap-item" href="#" data-target="scheduling"><span class="minimap-dot"></span><span class="minimap-label">Scheduling</span></a>
+    <a class="minimap-item" href="#" data-target="prefill"><span class="minimap-dot"></span><span class="minimap-label">Prefill</span></a>
+    <a class="minimap-item" href="#" data-target="kvcache"><span class="minimap-dot"></span><span class="minimap-label">KV Cache</span></a>
+    <a class="minimap-item" href="#" data-target="attention"><span class="minimap-dot"></span><span class="minimap-label">Attention</span></a>
+    <a class="minimap-item" href="#" data-target="decode"><span class="minimap-dot"></span><span class="minimap-label">Decode</span></a>
+  </div>
+  <div class="minimap-phase">
+    <div class="minimap-phase-label">C</div>
+    <a class="minimap-item" href="#" data-target="sampling"><span class="minimap-dot"></span><span class="minimap-label">Sampling</span></a>
+    <a class="minimap-item" href="#" data-target="streaming"><span class="minimap-dot"></span><span class="minimap-label">Streaming</span></a>
+  </div>
+</nav>
 
 <!-- ═══════════ HERO ═══════════ -->
 <section class="hero">
@@ -2382,6 +2491,65 @@ document.addEventListener('click', function(e) {
     if (e.key === 'Escape' && panel.classList.contains('visible')) {
       closePanel();
     }
+  });
+})();
+
+// ─── Mini-map scroll-spy ───
+(function() {
+  var minimap = document.getElementById('minimap');
+  var pipeline = document.getElementById('pipeline');
+  var items = minimap.querySelectorAll('.minimap-item');
+  var steps = document.querySelectorAll('.pipeline-step[data-step]');
+
+  // Build lookup: data-target -> minimap item
+  var itemMap = {};
+  items.forEach(function(item) {
+    itemMap[item.getAttribute('data-target')] = item;
+  });
+
+  // 1. Section observer — show/hide minimap
+  var sectionObs = new IntersectionObserver(function(entries) {
+    entries.forEach(function(entry) {
+      minimap.classList.toggle('visible', entry.isIntersecting);
+    });
+  }, { threshold: 0 });
+  sectionObs.observe(pipeline);
+
+  // 2. Step observer — highlight current step
+  var activeSteps = new Set();
+  var stepObs = new IntersectionObserver(function(entries) {
+    entries.forEach(function(entry) {
+      var id = entry.target.getAttribute('data-step');
+      if (entry.isIntersecting) {
+        activeSteps.add(id);
+      } else {
+        activeSteps.delete(id);
+      }
+    });
+    // Highlight the last visible step (furthest down the page)
+    items.forEach(function(item) { item.classList.remove('active'); });
+    var lastActive = null;
+    steps.forEach(function(step) {
+      var id = step.getAttribute('data-step');
+      if (activeSteps.has(id)) lastActive = id;
+    });
+    if (lastActive && itemMap[lastActive]) {
+      itemMap[lastActive].classList.add('active');
+    }
+  }, { rootMargin: '-30% 0px -30% 0px', threshold: 0 });
+
+  steps.forEach(function(step) { stepObs.observe(step); });
+
+  // 3. Click handler — smooth scroll
+  items.forEach(function(item) {
+    item.addEventListener('click', function(e) {
+      e.preventDefault();
+      var target = item.getAttribute('data-target');
+      var stepEl = document.querySelector('.pipeline-step[data-step="' + target + '"]');
+      if (stepEl) {
+        stepEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    });
   });
 })();
 
