@@ -806,9 +806,129 @@ body {
     transform: translate(50%, 50%);
   }
 }
+
+/* ─── LIGHT THEME ─── */
+[data-theme="light"] {
+  --bg: #f5f3ef;
+  --bg-card: #ffffff;
+  --bg-card-hover: #f0eee9;
+  --border: #d8d5ce;
+  --border-active: #b0abb8;
+  --text: #1a1a1f;
+  --text-dim: #4a4750;
+  --text-muted: #8a8690;
+  --accent: #1a7ab5;
+  --accent-dim: #155e8c;
+  --accent-glow: rgba(26,122,181,0.07);
+  --compute: #b34a00;
+  --memory: #006fa8;
+  --io: #9d6e00;
+  --logic: #a85d87;
+  --network: #1a7ab5;
+}
+
+[data-theme="light"] .hero::before {
+  background:
+    radial-gradient(ellipse 80% 50% at 50% 0%, rgba(26,122,181,0.06) 0%, transparent 50%),
+    radial-gradient(ellipse 60% 40% at 20% 80%, rgba(0,111,168,0.04) 0%, transparent 50%),
+    radial-gradient(ellipse 60% 40% at 80% 80%, rgba(168,93,135,0.04) 0%, transparent 50%);
+}
+
+[data-theme="light"] .step-dot { background: var(--bg-card); }
+
+[data-theme="light"] .pipeline-step:hover .step-dot,
+[data-theme="light"] .pipeline-step.active .step-dot {
+  box-shadow: 0 0 12px rgba(26,122,181,0.25);
+}
+
+[data-theme="light"] .badge-compute { border-color: rgba(179,74,0,0.3); background: rgba(179,74,0,0.06); }
+[data-theme="light"] .badge-memory { border-color: rgba(0,111,168,0.3); background: rgba(0,111,168,0.06); }
+[data-theme="light"] .badge-io { border-color: rgba(157,110,0,0.3); background: rgba(157,110,0,0.06); }
+[data-theme="light"] .badge-logic { border-color: rgba(168,93,135,0.3); background: rgba(168,93,135,0.06); }
+[data-theme="light"] .badge-network { border-color: rgba(26,122,181,0.3); background: rgba(26,122,181,0.06); }
+
+[data-theme="light"] .sub-topic { background: rgba(0,0,0,0.02); }
+[data-theme="light"] .sub-topic:hover { background: rgba(0,0,0,0.04); }
+[data-theme="light"] .metric { background: rgba(0,0,0,0.02); }
+[data-theme="light"] .code-block { background: #f0ede8; }
+
+[data-theme="light"] .term-tooltip {
+  background: #ffffff;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+}
+
+[data-theme="light"] .callout-takeaway { background: rgba(26,122,181,0.06); }
+[data-theme="light"] .callout-analogy { background: rgba(168,93,135,0.06); }
+[data-theme="light"] .detail-text code { background: rgba(26,122,181,0.08); }
+[data-theme="light"] .data-table td { border-bottom-color: rgba(0,0,0,0.06); }
+[data-theme="light"] .term { text-decoration-color: rgba(26,122,181,0.4); }
+[data-theme="light"] ::selection { background: var(--accent); color: #ffffff; }
+
+/* ─── THEME TOGGLE ─── */
+.theme-toggle {
+  position: fixed;
+  top: 1.25rem;
+  right: 1.25rem;
+  z-index: 500;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  backdrop-filter: blur(8px);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-dim);
+  font-size: 1.1rem;
+}
+
+.theme-toggle:hover {
+  border-color: var(--border-active);
+  background: var(--bg-card-hover);
+}
+
+.theme-toggle::after { content: '\263C'; }
+[data-theme="light"] .theme-toggle::after { content: '\263E'; }
+
+/* ─── TERM SOURCE LINK ─── */
+.term-tooltip-source {
+  display: inline-block;
+  margin-top: 0.4rem;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  color: var(--accent-dim);
+  opacity: 0.7;
+  text-decoration: none;
+  letter-spacing: 0.05em;
+  transition: opacity 0.2s ease;
+}
+
+.term-tooltip-source:hover { opacity: 1; }
+
+/* ─── THEME TRANSITION ─── */
+body, .code-block, .journey-diagram, .callout-box, .metric {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+.theme-toggle {
+  transition: border-color 0.3s ease, background-color 0.3s ease;
+}
 </style>
+<script>
+(function(){
+  var s = localStorage.getItem('theme');
+  if (s) { document.documentElement.setAttribute('data-theme', s); }
+  else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+    document.documentElement.setAttribute('data-theme', 'light');
+  } else { document.documentElement.setAttribute('data-theme', 'dark'); }
+})();
+</script>
 </head>
 <body>
+
+<button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme"></button>
 
 <!-- ═══════════ HERO ═══════════ -->
 <section class="hero">
@@ -1866,47 +1986,47 @@ document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
 
 // ─── Term tooltip system ───
 const termDefs = {
-  'kv-cache': 'Stores precomputed Key and Value attention tensors so the model doesn\'t recompute them for every previous token at each generation step.',
-  'ttft': 'Time to First Token \u2014 latency from sending a request to receiving the first generated token. Dominated by prefill time.',
-  'tpot': 'Time Per Output Token \u2014 average latency between consecutive generated tokens during the decode phase.',
-  'bpe': 'Byte Pair Encoding \u2014 a tokenization algorithm that iteratively merges the most frequent adjacent byte/character pairs into new tokens.',
-  'rope': 'Rotary Position Embedding \u2014 encodes token position by rotating query and key vectors in 2D subspaces using sinusoidal functions. Parameter-free.',
-  'gqa': 'Grouped-Query Attention \u2014 query heads share Key/Value heads in groups (e.g., 32 Q heads sharing 8 KV heads). The 2025 standard for efficient attention.',
-  'mha': 'Multi-Head Attention \u2014 the original Transformer attention where each head has fully independent Query, Key, and Value projections.',
-  'mqa': 'Multi-Query Attention \u2014 all query heads share a single Key/Value head pair. Maximum KV cache reduction at some quality cost.',
-  'mla': 'Multi-Head Latent Attention \u2014 DeepSeek\'s method that compresses K and V into a low-rank latent before caching, then projects back at inference time.',
-  'flashattention': 'An IO-aware attention implementation that tiles computation through fast on-chip SRAM (~19 TB/s) instead of slow HBM (~2 TB/s), never materializing the full N\u00d7N attention matrix.',
-  'pagedattention': 'Manages KV cache like OS virtual memory \u2014 fixed-size blocks allocated on demand with a block table mapping logical to physical blocks. Reduces memory waste to under 4%.',
-  'prefill': 'The first inference phase: all input tokens are processed through every Transformer layer in parallel, computing and storing the KV cache. Compute-bound.',
-  'decode': 'The autoregressive generation phase: tokens produced one at a time, each requiring a read of the full KV cache. Memory-bandwidth-bound.',
-  'tp': 'Tensor Parallelism \u2014 splits individual weight matrices across GPUs within a node. Each GPU computes a slice of every layer. Requires NVLink.',
-  'pp': 'Pipeline Parallelism \u2014 assigns consecutive layers to different GPUs. Communication only between adjacent stages. Best across nodes.',
-  'ep': 'Expert Parallelism \u2014 for MoE models, places different experts on different GPUs. Uses All-to-All communication to route tokens to the correct expert.',
-  'hbm': 'High Bandwidth Memory \u2014 the main GPU memory (e.g., 80 GB on A100). ~2\u20133 TB/s bandwidth. Stores model weights and KV cache.',
-  'sram': 'Static RAM \u2014 small (~20 MB on A100), ultra-fast on-chip GPU memory at ~19 TB/s bandwidth. Used by FlashAttention for tiled computation.',
-  'nvlink': 'NVIDIA\'s high-bandwidth GPU-to-GPU interconnect (~900 GB/s on H100). Essential for tensor parallelism within a single node.',
-  'rdma': 'Remote Direct Memory Access \u2014 lets GPUs read/write each other\'s memory directly, bypassing the CPU. Used for KV cache transfer in disaggregated serving.',
-  'sse': 'Server-Sent Events \u2014 a simple HTTP protocol for unidirectional server-to-client streaming. The standard for LLM response delivery.',
-  'fp16': 'Half-precision floating point (16-bit). The baseline format for LLM weights at inference. 2 bytes per parameter.',
-  'fp8': '8-bit floating point (E4M3 format). On Hopper GPUs (H100+), nearly lossless with 2\u00d7 speed and 2\u00d7 memory savings vs FP16.',
-  'int4': '4-bit integer quantization. Reduces model size by 4\u00d7 vs FP16. Used by AWQ and GPTQ. Some quality loss (~5\u201310%).',
-  'lora': 'Low-Rank Adaptation \u2014 parameter-efficient fine-tuning that adds small trainable rank-decomposition matrices alongside frozen base weights.',
-  'moe': 'Mixture of Experts \u2014 an architecture with many parallel "expert" sub-networks per layer, where only a few activate per token (e.g., 2 of 64).',
-  'softmax': 'Converts raw logits into a probability distribution where all values are positive and sum to 1: softmax(z_i) = exp(z_i) / \u03a3exp(z_j).',
-  'logits': 'Raw, unnormalized output scores from the model\'s final layer \u2014 one value per vocabulary token. Converted to probabilities via softmax.',
-  'autoregressive': 'A generation method where each new token depends on all previously generated tokens. The model produces output one token at a time, sequentially.',
-  'speculative-decoding': 'A small draft model generates candidate tokens quickly, then the large model verifies them all in one parallel pass. Mathematically lossless, 2\u20133\u00d7 speedup.',
-  'continuous-batching': 'Replacing finished sequences with new requests at every decode iteration, keeping GPU utilization at 80\u201395% vs 30\u201360% with static batching.',
-  'prefix-caching': 'Reusing previously computed KV cache entries for matching prompt prefixes, skipping redundant prefill computation. Can reduce TTFT by 88%+.',
-  'awq': 'Activation-aware Weight Quantization \u2014 identifies salient weights via activation magnitudes and preserves them during 4-bit quantization.',
-  'gptq': 'Post-training quantization using approximate second-order information (Hessian) to minimize quantization error. Widely supported in inference frameworks.',
-  'gguf': 'A file format for quantized models optimized for CPU and edge inference via llama.cpp. Supports flexible 2\u20138 bit quantization.',
-  'alibi': 'Attention with Linear Biases \u2014 adds a distance-based linear penalty to attention scores instead of modifying embeddings. Better length extrapolation than RoPE.',
-  'chunked-prefill': 'Splits long prompts into chunks processed across iterations, interleaved with decode steps. Prevents one large prefill from blocking ongoing generation.',
-  'min-p': 'A sampling method that filters tokens below min_p \u00d7 max_probability. Adapts to the model\'s confidence level. Recommended over top-p for 2025.',
-  'top-p': 'Nucleus sampling \u2014 keeps the smallest token set whose cumulative probability exceeds p. Adaptive but coupled to temperature.',
-  'top-k': 'Keeps only the k highest-probability tokens for sampling. Simple but uses a fixed cutoff regardless of context.',
-  'eos': 'End of Sequence \u2014 a special token signaling the model has finished generating its response.',
+  'kv-cache': { def: 'Stores precomputed Key and Value attention tensors so the model doesn\'t recompute them for every previous token at each generation step.', src: 'https://arxiv.org/abs/1706.03762' },
+  'ttft': { def: 'Time to First Token \u2014 latency from sending a request to receiving the first generated token. Dominated by prefill time.', src: 'https://docs.vllm.ai/en/latest/serving/metrics.html' },
+  'tpot': { def: 'Time Per Output Token \u2014 average latency between consecutive generated tokens during the decode phase.', src: 'https://docs.vllm.ai/en/latest/serving/metrics.html' },
+  'bpe': { def: 'Byte Pair Encoding \u2014 a tokenization algorithm that iteratively merges the most frequent adjacent byte/character pairs into new tokens.', src: 'https://arxiv.org/abs/1508.07909' },
+  'rope': { def: 'Rotary Position Embedding \u2014 encodes token position by rotating query and key vectors in 2D subspaces using sinusoidal functions. Parameter-free.', src: 'https://arxiv.org/abs/2104.09864' },
+  'gqa': { def: 'Grouped-Query Attention \u2014 query heads share Key/Value heads in groups (e.g., 32 Q heads sharing 8 KV heads). The 2025 standard for efficient attention.', src: 'https://arxiv.org/abs/2305.13245' },
+  'mha': { def: 'Multi-Head Attention \u2014 the original Transformer attention where each head has fully independent Query, Key, and Value projections.', src: 'https://arxiv.org/abs/1706.03762' },
+  'mqa': { def: 'Multi-Query Attention \u2014 all query heads share a single Key/Value head pair. Maximum KV cache reduction at some quality cost.', src: 'https://arxiv.org/abs/1911.02150' },
+  'mla': { def: 'Multi-Head Latent Attention \u2014 DeepSeek\'s method that compresses K and V into a low-rank latent before caching, then projects back at inference time.', src: 'https://arxiv.org/abs/2405.04434' },
+  'flashattention': { def: 'An IO-aware attention implementation that tiles computation through fast on-chip SRAM (~19 TB/s) instead of slow HBM (~2 TB/s), never materializing the full N\u00d7N attention matrix.', src: 'https://arxiv.org/abs/2205.14135' },
+  'pagedattention': { def: 'Manages KV cache like OS virtual memory \u2014 fixed-size blocks allocated on demand with a block table mapping logical to physical blocks. Reduces memory waste to under 4%.', src: 'https://arxiv.org/abs/2309.06180' },
+  'prefill': { def: 'The first inference phase: all input tokens are processed through every Transformer layer in parallel, computing and storing the KV cache. Compute-bound.', src: 'https://arxiv.org/abs/2309.06180' },
+  'decode': { def: 'The autoregressive generation phase: tokens produced one at a time, each requiring a read of the full KV cache. Memory-bandwidth-bound.', src: 'https://arxiv.org/abs/2309.06180' },
+  'tp': { def: 'Tensor Parallelism \u2014 splits individual weight matrices across GPUs within a node. Each GPU computes a slice of every layer. Requires NVLink.', src: 'https://arxiv.org/abs/1909.08053' },
+  'pp': { def: 'Pipeline Parallelism \u2014 assigns consecutive layers to different GPUs. Communication only between adjacent stages. Best across nodes.', src: 'https://arxiv.org/abs/1811.06965' },
+  'ep': { def: 'Expert Parallelism \u2014 for MoE models, places different experts on different GPUs. Uses All-to-All communication to route tokens to the correct expert.', src: 'https://arxiv.org/abs/2006.16668' },
+  'hbm': { def: 'High Bandwidth Memory \u2014 the main GPU memory (e.g., 80 GB on A100). ~2\u20133 TB/s bandwidth. Stores model weights and KV cache.', src: 'https://en.wikipedia.org/wiki/High_Bandwidth_Memory' },
+  'sram': { def: 'Static RAM \u2014 small (~20 MB on A100), ultra-fast on-chip GPU memory at ~19 TB/s bandwidth. Used by FlashAttention for tiled computation.', src: 'https://en.wikipedia.org/wiki/Static_random-access_memory' },
+  'nvlink': { def: 'NVIDIA\'s high-bandwidth GPU-to-GPU interconnect (~900 GB/s on H100). Essential for tensor parallelism within a single node.', src: 'https://www.nvidia.com/en-us/data-center/nvlink/' },
+  'rdma': { def: 'Remote Direct Memory Access \u2014 lets GPUs read/write each other\'s memory directly, bypassing the CPU. Used for KV cache transfer in disaggregated serving.', src: 'https://en.wikipedia.org/wiki/Remote_direct_memory_access' },
+  'sse': { def: 'Server-Sent Events \u2014 a simple HTTP protocol for unidirectional server-to-client streaming. The standard for LLM response delivery.', src: 'https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events' },
+  'fp16': { def: 'Half-precision floating point (16-bit). The baseline format for LLM weights at inference. 2 bytes per parameter.', src: 'https://en.wikipedia.org/wiki/Half-precision_floating-point_format' },
+  'fp8': { def: '8-bit floating point (E4M3 format). On Hopper GPUs (H100+), nearly lossless with 2\u00d7 speed and 2\u00d7 memory savings vs FP16.', src: 'https://arxiv.org/abs/2209.05433' },
+  'int4': { def: '4-bit integer quantization. Reduces model size by 4\u00d7 vs FP16. Used by AWQ and GPTQ. Some quality loss (~5\u201310%).', src: 'https://arxiv.org/abs/2210.17323' },
+  'lora': { def: 'Low-Rank Adaptation \u2014 parameter-efficient fine-tuning that adds small trainable rank-decomposition matrices alongside frozen base weights.', src: 'https://arxiv.org/abs/2106.09685' },
+  'moe': { def: 'Mixture of Experts \u2014 an architecture with many parallel "expert" sub-networks per layer, where only a few activate per token (e.g., 2 of 64).', src: 'https://arxiv.org/abs/1701.06538' },
+  'softmax': { def: 'Converts raw logits into a probability distribution where all values are positive and sum to 1: softmax(z_i) = exp(z_i) / \u03a3exp(z_j).', src: 'https://en.wikipedia.org/wiki/Softmax_function' },
+  'logits': { def: 'Raw, unnormalized output scores from the model\'s final layer \u2014 one value per vocabulary token. Converted to probabilities via softmax.', src: 'https://en.wikipedia.org/wiki/Logit' },
+  'autoregressive': { def: 'A generation method where each new token depends on all previously generated tokens. The model produces output one token at a time, sequentially.', src: 'https://en.wikipedia.org/wiki/Autoregressive_model' },
+  'speculative-decoding': { def: 'A small draft model generates candidate tokens quickly, then the large model verifies them all in one parallel pass. Mathematically lossless, 2\u20133\u00d7 speedup.', src: 'https://arxiv.org/abs/2211.17192' },
+  'continuous-batching': { def: 'Replacing finished sequences with new requests at every decode iteration, keeping GPU utilization at 80\u201395% vs 30\u201360% with static batching.', src: 'https://arxiv.org/abs/2309.06180' },
+  'prefix-caching': { def: 'Reusing previously computed KV cache entries for matching prompt prefixes, skipping redundant prefill computation. Can reduce TTFT by 88%+.', src: 'https://arxiv.org/abs/2312.07104' },
+  'awq': { def: 'Activation-aware Weight Quantization \u2014 identifies salient weights via activation magnitudes and preserves them during 4-bit quantization.', src: 'https://arxiv.org/abs/2306.00978' },
+  'gptq': { def: 'Post-training quantization using approximate second-order information (Hessian) to minimize quantization error. Widely supported in inference frameworks.', src: 'https://arxiv.org/abs/2210.17323' },
+  'gguf': { def: 'A file format for quantized models optimized for CPU and edge inference via llama.cpp. Supports flexible 2\u20138 bit quantization.', src: 'https://github.com/ggerganov/ggml/blob/master/docs/gguf.md' },
+  'alibi': { def: 'Attention with Linear Biases \u2014 adds a distance-based linear penalty to attention scores instead of modifying embeddings. Better length extrapolation than RoPE.', src: 'https://arxiv.org/abs/2108.12409' },
+  'chunked-prefill': { def: 'Splits long prompts into chunks processed across iterations, interleaved with decode steps. Prevents one large prefill from blocking ongoing generation.', src: 'https://arxiv.org/abs/2308.16369' },
+  'min-p': { def: 'A sampling method that filters tokens below min_p \u00d7 max_probability. Adapts to the model\'s confidence level. Recommended over top-p for 2025.', src: 'https://arxiv.org/abs/2407.01082' },
+  'top-p': { def: 'Nucleus sampling \u2014 keeps the smallest token set whose cumulative probability exceeds p. Adaptive but coupled to temperature.', src: 'https://arxiv.org/abs/1904.09751' },
+  'top-k': { def: 'Keeps only the k highest-probability tokens for sampling. Simple but uses a fixed cutoff regardless of context.', src: 'https://arxiv.org/abs/1805.04833' },
+  'eos': { def: 'End of Sequence \u2014 a special token signaling the model has finished generating its response.', src: 'https://en.wikipedia.org/wiki/End-of-text_character' },
 };
 
 // Tooltip handler — direct handlers on .term to stop propagation before parent toggles
@@ -1923,12 +2043,18 @@ function showTermTooltip(term) {
   }
   if (activeTooltip) { activeTooltip.remove(); activeTooltip = null; }
   var key = term.dataset.term;
-  var def = termDefs[key];
-  if (!def) return;
+  var entry = termDefs[key];
+  if (!entry) return;
   activeTermEl = term;
   var tooltip = document.createElement('div');
   tooltip.className = 'term-tooltip';
-  tooltip.innerHTML = '<div class="term-tooltip-title">' + term.textContent + '</div><div class="term-tooltip-body">' + def + '</div>';
+  var html = '<div class="term-tooltip-title">' + term.textContent + '</div><div class="term-tooltip-body">' + entry.def + '</div>';
+  if (entry.src) {
+    html += '<a class="term-tooltip-source" href="' + entry.src + '" target="_blank" rel="noopener noreferrer">Source \u2197</a>';
+  }
+  tooltip.innerHTML = html;
+  var srcLink = tooltip.querySelector('.term-tooltip-source');
+  if (srcLink) { srcLink.addEventListener('click', function(e) { e.stopPropagation(); }); }
   document.body.appendChild(tooltip);
   var rect = term.getBoundingClientRect();
   var ttRect = tooltip.getBoundingClientRect();
@@ -1959,6 +2085,25 @@ document.addEventListener('click', function(e) {
     activeTermEl = null;
   }
 });
+
+// ─── Theme toggle ───
+(function() {
+  var toggle = document.getElementById('theme-toggle');
+  var html = document.documentElement;
+  function getTheme() { return html.getAttribute('data-theme') || 'dark'; }
+  toggle.addEventListener('click', function() {
+    var next = getTheme() === 'dark' ? 'light' : 'dark';
+    html.setAttribute('data-theme', next);
+    localStorage.setItem('theme', next);
+  });
+  if (window.matchMedia) {
+    window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', function(e) {
+      if (!localStorage.getItem('theme')) {
+        html.setAttribute('data-theme', e.matches ? 'light' : 'dark');
+      }
+    });
+  }
+})();
 </script>
 
 </body>
