@@ -346,7 +346,7 @@ When modifying interactions on either page:
 
 8. **Dynamic DOM + event binding**: Elements created via `innerHTML` miss initial event listener setup. Bind handlers manually after insertion.
 
-9. **Minimap scroll offset**: `scrollIntoView({ block: 'start' })` scrolls the target behind the fixed 48px nav bar. Always use `block: 'center'` for minimap navigation so the section header is visible.
+9. **Minimap scroll offset**: `scrollIntoView({ block: 'start' })` scrolls the target behind the fixed nav bar, and `block: 'center'` fails for sections near the bottom of the page (not enough content below). Use `window.scrollTo` with a fixed offset (64px) to position headers just below the nav bar — works for all sections regardless of page position.
 
 9. **Theme FOUC**: The theme init script must be in `<head>` (before body renders). If adding a new page, include the exact same init pattern.
 

@@ -339,7 +339,7 @@ Interactive visuals that create DOM elements via `innerHTML` (like the breakeven
 Both pages use the same `localStorage` key `'theme'` and the same init script in `<head>` (before body renders). Any new page must include this exact pattern to prevent FOUC and maintain theme continuity.
 
 ### 12. Minimap Scroll Offset
-`scrollIntoView({ block: 'start' })` scrolls the target element to the top of the viewport — directly behind the fixed 48px nav bar. Always use `block: 'center'` for minimap navigation so the section header remains visible.
+`scrollIntoView({ block: 'start' })` scrolls the target behind the fixed nav bar, and `block: 'center'` fails for sections near the bottom of the page (not enough content below to scroll further). Use `window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 64, behavior: 'smooth' })` — the fixed 64px offset (nav height + padding) works reliably for all sections regardless of position.
 
 ## Deployment Verification
 
