@@ -1415,7 +1415,10 @@ body, .code-block, .callout-box, .metric, .site-nav, .minimap-phase { transition
     if (el) stepSections[target] = el;
     item.addEventListener('click', function(e) {
       e.preventDefault();
-      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      if (el) {
+        var top = el.getBoundingClientRect().top + window.scrollY - 64;
+        window.scrollTo({ top: top, behavior: 'smooth' });
+      }
     });
   });
 
