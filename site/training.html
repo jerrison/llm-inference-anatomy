@@ -632,12 +632,11 @@ body {
 [data-theme="light"] .minimap-dot { background: var(--bg-card); }
 [data-theme="light"] .minimap-item.active .minimap-dot { box-shadow: 0 0 8px rgba(184,126,0,0.2); }
 
-@media (max-width: 1440px) {
-  .minimap { right: 1rem; padding: 0.5rem; border-radius: 8px; transition: opacity 0.35s ease, background 0.2s ease; }
-  .minimap-label { opacity: 0; width: 0; overflow: hidden; transition: opacity 0.2s ease, width 0.2s ease; }
-  .minimap:hover { background: var(--bg); box-shadow: -4px 0 16px rgba(0,0,0,0.3); border: 1px solid var(--border); }
-  .minimap:hover .minimap-label { opacity: 1; width: auto; }
-}
+.minimap-label { opacity: 0; width: 0; overflow: hidden; transition: opacity 0.2s ease, width 0.2s ease; }
+.minimap-phase-label { opacity: 0; width: 0; overflow: hidden; transition: opacity 0.2s ease, width 0.2s ease; }
+.minimap:hover { background: var(--bg); box-shadow: -4px 0 16px rgba(0,0,0,0.3); border: 1px solid var(--border); }
+.minimap:hover .minimap-label { opacity: 1; width: auto; }
+.minimap:hover .minimap-phase-label { opacity: 1; width: auto; }
 [data-theme="light"] .minimap:hover { box-shadow: -4px 0 16px rgba(0,0,0,0.08); }
 [data-theme="light"] .step-visual { background: rgba(0,0,0,0.02); }
 [data-theme="light"] .funnel-bar, [data-theme="light"] .opt-bar { color: rgba(255,255,255,0.95); }
@@ -904,6 +903,7 @@ body, .callout-box, .metric, .site-nav, .minimap-phase { transition: background-
     <div class="minimap-phase-label">I &middot; Post-Training</div>
     <div class="minimap-item" data-target="sft"><div class="minimap-dot"></div><span class="minimap-label">Fine-Tuning</span></div>
     <div class="minimap-item" data-target="alignment"><div class="minimap-dot"></div><span class="minimap-label">Alignment</span></div>
+    <div class="minimap-item" data-target="rft"><div class="minimap-dot"></div><span class="minimap-label">Reinforcement FT</span></div>
     <div class="minimap-item" data-target="evaluation"><div class="minimap-dot"></div><span class="minimap-label">Evaluation</span></div>
   </div>
 </div>
@@ -1528,12 +1528,112 @@ body, .callout-box, .metric, .site-nav, .minimap-phase { transition: background-
       </div>
     </div>
 
-    <!-- I3: Evaluation -->
-    <div class="pipeline-step reveal" data-step="evaluation" id="evaluation">
+    <!-- I3: Reinforcement Fine-Tuning -->
+    <div class="pipeline-step reveal" data-step="rft" id="rft">
       <div class="step-marker"><div class="step-dot"></div></div>
       <div class="step-card">
         <div class="step-header">
           <span class="step-number">I3</span>
+          <span class="step-name">Reinforcement Fine-Tuning</span>
+          <span class="step-badge badge-logic">Logic</span>
+          <span class="step-expand-icon">+</span>
+        </div>
+        <div class="step-summary">Domain-specific RL that combines expert knowledge with model reasoning &mdash; teaching models <em>how to think</em> in specialized fields, not just what to say.</div>
+        <div class="step-detail">
+          <div class="detail-inner">
+            <div class="callout-box callout-takeaway">
+              <div class="callout-label">Key Takeaway</div>
+              <p>Reinforcement Fine-Tuning (RFT) bridges the gap between general-purpose alignment and domain expertise. By using verifiable domain-specific rewards, RFT produces specialist models that reason through problems rather than pattern-match from training data. OpenAI, Google, and others now offer RFT as a product for enterprise customers.</p>
+            </div>
+            <div class="callout-box callout-analogy">
+              <div class="callout-label">Think of it like&hellip;</div>
+              <p>SFT teaches a medical student the textbook answers. RFT gives them a residency &mdash; repeated practice with real cases and expert feedback on their reasoning process, not just their final answer.</p>
+            </div>
+
+            <div class="detail-section">
+              <div class="detail-label">How It Works</div>
+              <div class="detail-text">
+                <p>RFT applies reinforcement learning after SFT, using <strong>domain-specific reward signals</strong> rather than general human preferences. The model generates multiple reasoning chains for each problem, and a reward function (often automated) scores the quality of the <em>reasoning process</em>, not just the final answer.</p>
+                <p>Key difference from standard RLHF: rewards are <strong>verifiable and domain-grounded</strong> &mdash; math correctness, code execution results, legal citation accuracy, medical diagnosis criteria &mdash; rather than subjective human preference.</p>
+              </div>
+            </div>
+
+            <div class="detail-section">
+              <div class="detail-label">RFT Methods</div>
+              <div class="sub-topics">
+                <div class="sub-topic" onclick="toggleSubTopic(this)">
+                  <div class="sub-topic-header">
+                    <span class="sub-topic-name">Expert-Guided RFT</span>
+                    <span class="sub-topic-icon">+</span>
+                  </div>
+                  <div class="sub-topic-preview">Domain experts design reward criteria</div>
+                  <div class="sub-topic-detail">
+                    <p>Domain experts provide <strong>grading rubrics</strong> rather than example answers. For a legal reasoning task, the rubric might score: correct statute identification (+1), proper precedent citation (+1), logical argument structure (+1), correct conclusion (+2). The model learns to maximize the rubric score through repeated practice.</p>
+                    <p>OpenAI&rsquo;s RFT product uses this approach: customers provide 50-500 expert-graded examples with multi-dimensional scoring criteria. The model trains on thousands of self-generated attempts, evaluated against the rubric.</p>
+                  </div>
+                </div>
+                <div class="sub-topic" onclick="toggleSubTopic(this)">
+                  <div class="sub-topic-header">
+                    <span class="sub-topic-name">Verifiable Reward RFT</span>
+                    <span class="sub-topic-icon">+</span>
+                  </div>
+                  <div class="sub-topic-preview">Automated verification for math, code, and science</div>
+                  <div class="sub-topic-detail">
+                    <p>For domains with <strong>objectively verifiable</strong> answers, rewards can be fully automated: run the generated code, check the math proof, verify the chemical formula. DeepSeek R1&rsquo;s <span class="term" data-term="grpo">GRPO</span> is a form of verifiable-reward RFT.</p>
+                    <p>Scales massively because no human annotation is needed. The model can train on millions of self-generated attempts. This is how OpenAI o1/o3 and DeepSeek R1 achieved breakthroughs on math and coding benchmarks.</p>
+                  </div>
+                </div>
+                <div class="sub-topic" onclick="toggleSubTopic(this)">
+                  <div class="sub-topic-header">
+                    <span class="sub-topic-name">Outcome vs Process Reward</span>
+                    <span class="sub-topic-icon">+</span>
+                  </div>
+                  <div class="sub-topic-preview">Scoring the final answer vs every step</div>
+                  <div class="sub-topic-detail">
+                    <p><strong>Outcome reward models (ORMs)</strong>: score only the final answer. Simple but provides sparse signal &mdash; the model doesn&rsquo;t know which reasoning step went wrong.</p>
+                    <p><strong>Process reward models (PRMs)</strong>: score each intermediate reasoning step. Richer signal, better at teaching correct reasoning chains. OpenAI&rsquo;s &ldquo;Let&rsquo;s Verify Step by Step&rdquo; (2023) showed PRMs significantly outperform ORMs on math, reducing hallucinated reasoning.</p>
+                    <p>The tradeoff: PRMs require step-level annotations, which are much more expensive to collect than outcome labels.</p>
+                  </div>
+                </div>
+                <div class="sub-topic" onclick="toggleSubTopic(this)">
+                  <div class="sub-topic-header">
+                    <span class="sub-topic-name">RFT as a Product</span>
+                    <span class="sub-topic-icon">+</span>
+                  </div>
+                  <div class="sub-topic-preview">Enterprise offerings from OpenAI, Google, and others</div>
+                  <div class="sub-topic-detail">
+                    <p><strong>OpenAI RFT</strong> (2024-2025): enterprise product that fine-tunes o1/o3 models with customer-provided grading rubrics. Customers report 10-30% improvement on domain-specific tasks vs. prompting alone. Requires 50-500 graded examples.</p>
+                    <p><strong>Google Gemini RFT</strong>: similar offering through Vertex AI, focusing on code generation and structured reasoning tasks.</p>
+                    <p>The business model: RFT is premium fine-tuning &mdash; higher margin than standard SFT because it produces genuinely differentiated models that reason better in the customer&rsquo;s domain.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="detail-section">
+              <div class="detail-label">RFT vs Other Methods</div>
+              <div class="detail-text">
+                <table class="data-table">
+                  <thead><tr><th>Method</th><th>What It Teaches</th><th>Data Needed</th><th>Best For</th></tr></thead>
+                  <tbody>
+                    <tr><td>SFT</td><td>Format &amp; knowledge</td><td>10K-100K examples</td><td>Style, format, basic skills</td></tr>
+                    <tr><td>RLHF/DPO</td><td>Human preferences</td><td>Preference pairs</td><td>General helpfulness, safety</td></tr>
+                    <tr><td>RFT</td><td>Domain reasoning</td><td>50-500 graded + self-play</td><td>Specialist reasoning tasks</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- I4: Evaluation -->
+    <div class="pipeline-step reveal" data-step="evaluation" id="evaluation">
+      <div class="step-marker"><div class="step-dot"></div></div>
+      <div class="step-card">
+        <div class="step-header">
+          <span class="step-number">I4</span>
           <span class="step-name">Evaluation</span>
           <span class="step-badge badge-logic">Logic</span>
           <span class="step-expand-icon">+</span>
@@ -1669,7 +1769,9 @@ var termDefs = {
   'constitutional-ai': { def: 'Anthropic\'s approach to alignment using AI judges that evaluate responses against a written constitution of principles. Enables RLAIF (RL from AI Feedback) at lower cost than human annotation.' },
   'kto': { def: 'Kahneman-Tversky Optimization — an alignment method using only binary (good/bad) labels instead of pairwise comparisons. Named after prospect theory, it accounts for loss aversion in the optimization objective.' },
   'lora': { def: 'Low-Rank Adaptation — freezes base model weights and trains small low-rank adapter matrices that are added to existing weight matrices. Adds <1% parameters while achieving 90-95% of full fine-tuning quality.' },
-  'mmlu': { def: 'Massive Multitask Language Understanding — a benchmark of 57 academic subjects testing broad knowledge. Essentially saturated at >90% for frontier models; MMLU-Pro adds harder 10-option questions.' }
+  'mmlu': { def: 'Massive Multitask Language Understanding — a benchmark of 57 academic subjects testing broad knowledge. Essentially saturated at >90% for frontier models; MMLU-Pro adds harder 10-option questions.' },
+  'rft': { def: 'Reinforcement Fine-Tuning — applies reinforcement learning with domain-specific, verifiable rewards after SFT to teach models specialized reasoning. Uses expert-designed rubrics or automated verification rather than general human preferences.' },
+  'prm': { def: 'Process Reward Model — scores each intermediate reasoning step rather than just the final answer. Provides richer training signal than Outcome Reward Models (ORMs), significantly reducing hallucinated reasoning chains.' }
 };
 
 function dismissTooltip() {
