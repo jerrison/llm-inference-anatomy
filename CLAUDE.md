@@ -264,7 +264,7 @@ Always verify the target `id` exists in the target file before creating the link
 ## JavaScript Interaction Patterns
 
 ### Three interaction layers (nested, with event isolation)
-1. **Pipeline step toggle** — clicking `.step-card` toggles `.active` on `.pipeline-step`
+1. **Pipeline step toggle** — clicking `.step-card` toggles `.active` on `.pipeline-step` (multiple sections can be open simultaneously — no accordion behavior)
 2. **Sub-topic toggle** — clicking `.sub-topic` expands it (accordion within step)
 3. **Term tooltip** — clicking `.term` shows a definition tooltip
 

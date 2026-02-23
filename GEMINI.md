@@ -262,7 +262,7 @@ Always verify the target `id` exists in the target file before creating.
 The site has three levels of clickable elements, nested inside each other:
 
 ```
-.pipeline-step  →  click .step-card to toggle .active (shows/hides detail)
+.pipeline-step  →  click .step-card to toggle .active (shows/hides detail, multiple can be open)
   └─ .sub-topic  →  onclick="toggleSubTopic(this)" (accordion within step)
        └─ .term  →  direct addEventListener with stopPropagation (tooltip)
 ```

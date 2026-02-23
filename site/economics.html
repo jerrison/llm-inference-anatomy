@@ -1331,10 +1331,7 @@ body, .code-block, .callout-box, .metric, .site-nav, .minimap-phase { transition
     card.addEventListener('click', function(e) {
       if (e.target.closest('.sub-topic') || e.target.closest('.term') || e.target.closest('.cross-link') || e.target.closest('a')) return;
       var step = card.closest('.pipeline-step');
-      var wasActive = step.classList.contains('active');
-      // Close all
-      document.querySelectorAll('.pipeline-step.active').forEach(function(s) { s.classList.remove('active'); });
-      if (!wasActive) step.classList.add('active');
+      step.classList.toggle('active');
     });
   });
 
