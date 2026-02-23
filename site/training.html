@@ -639,6 +639,9 @@ body {
   .minimap:hover .minimap-label { opacity: 1; width: auto; }
 }
 [data-theme="light"] .minimap:hover { box-shadow: -4px 0 16px rgba(0,0,0,0.08); }
+[data-theme="light"] .step-visual { background: rgba(0,0,0,0.02); }
+[data-theme="light"] .funnel-bar, [data-theme="light"] .opt-bar { color: rgba(255,255,255,0.95); }
+[data-theme="light"] .par-cell { color: rgba(255,255,255,0.95); }
 @media (max-width: 768px) {
   .minimap { display: none; }
 }
@@ -752,6 +755,31 @@ body {
   border-radius: 2px;
   flex-shrink: 0;
 }
+
+.step-visual { position: relative; min-height: 200px; background: rgba(255,255,255,0.015); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; margin: 0.75rem 0; font-family: var(--font-mono); font-size: 0.7rem; padding: 1.5rem; }
+
+/* Data Funnel */
+.funnel-stage { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem; }
+.funnel-label { min-width: 110px; font-size: 0.6rem; color: var(--text-dim); text-align: right; }
+.funnel-bar { height: 28px; border-radius: 4px; transition: width 1s ease; display: flex; align-items: center; padding: 0 0.5rem; font-size: 0.55rem; color: rgba(255,255,255,0.9); white-space: nowrap; }
+.funnel-arrow { text-align: center; color: var(--text-muted); font-size: 0.7rem; margin: 0.25rem 0 0.25rem 115px; }
+.funnel-value { min-width: 60px; font-size: 0.65rem; color: var(--text); }
+
+/* Optimizer Comparison */
+.opt-chart { display: flex; flex-direction: column; gap: 0.4rem; }
+.opt-row { display: flex; align-items: center; gap: 0.75rem; }
+.opt-label { min-width: 90px; font-size: 0.6rem; color: var(--text-dim); text-align: right; }
+.opt-bar-wrap { flex: 1; height: 24px; background: rgba(255,255,255,0.03); border-radius: 4px; overflow: hidden; }
+.opt-bar { height: 100%; border-radius: 4px; display: flex; align-items: center; padding: 0 0.5rem; font-size: 0.55rem; color: rgba(255,255,255,0.9); transition: width 0.8s ease; }
+.opt-val { min-width: 60px; font-size: 0.6rem; color: var(--text-dim); }
+
+/* Parallelism Grid */
+.par-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3px; max-width: 320px; margin: 0.5rem auto; }
+.par-cell { width: 100%; aspect-ratio: 1; border-radius: 3px; display: flex; align-items: center; justify-content: center; font-size: 0.45rem; color: rgba(255,255,255,0.8); transition: all 0.4s ease; }
+.par-controls { display: flex; gap: 0.5rem; justify-content: center; margin-bottom: 1rem; flex-wrap: wrap; }
+.par-btn { background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 6px; padding: 0.3rem 0.75rem; font-family: var(--font-mono); font-size: 0.6rem; color: var(--text-dim); cursor: pointer; transition: all 0.2s; }
+.par-btn.active { border-color: var(--accent); color: var(--accent); background: var(--accent-glow); }
+.par-btn:hover { border-color: var(--border-active); }
 
 /* ─── RESPONSIVE ─── */
 @media (max-width: 768px) {
@@ -998,6 +1026,8 @@ body, .callout-box, .metric, .site-nav, .minimap-phase { transition: background-
                 <div class="metric"><div class="metric-value">10%</div><div class="metric-label">DCLM Keep Rate</div></div>
               </div>
             </div>
+
+            <div class="step-visual" id="visual-data-funnel"></div>
           </div>
         </div>
       </div>
@@ -1209,6 +1239,8 @@ body, .callout-box, .metric, .site-nav, .minimap-phase { transition: background-
                 <p>Simulates larger batch sizes by accumulating gradients over multiple forward/backward passes before updating weights. Llama 3 used an effective batch size of <strong>~16M tokens</strong>, achieved through gradient accumulation across thousands of GPUs.</p>
               </div>
             </div>
+
+            <div class="step-visual" id="visual-optimizer-compare"></div>
           </div>
         </div>
       </div>
@@ -1301,6 +1333,8 @@ body, .callout-box, .metric, .site-nav, .minimap-phase { transition: background-
                 </table>
               </div>
             </div>
+
+            <div class="step-visual" id="visual-parallelism"></div>
 
             <a href="index.html#cross-cutting" class="cross-link">&rarr; How parallelism works during inference</a>
           </div>
@@ -1764,6 +1798,184 @@ var minimapShowObserver = new IntersectionObserver(function(entries) {
 }, { threshold: 0.5 });
 
 if (heroSection) minimapShowObserver.observe(heroSection);
+
+/* ─── INTERACTIVE VISUALS ─── */
+
+// G1: Data Funnel
+function initDataFunnel() {
+  var el = document.getElementById('visual-data-funnel');
+  if (!el) return;
+
+  var stages = [
+    { label: 'Raw Web Crawl', value: '240T tokens', pct: 100, color: 'var(--compute)' },
+    { label: 'Quality Filtering', value: '38T tokens', pct: 15.8, color: 'var(--io)' },
+    { label: 'Deduplication', value: '15T tokens', pct: 6.25, color: 'var(--network)' },
+    { label: 'Curated Mix', value: '3.8T tokens', pct: 1.58, color: 'var(--logic)' },
+    { label: 'Tokenized', value: '3.8T tokens', pct: 1.58, color: 'var(--accent)' }
+  ];
+
+  var html = '<div style="font-size:0.6rem;color:var(--text-muted);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:1rem">Data Pipeline — DCLM Scale</div>';
+
+  stages.forEach(function(s, i) {
+    var barW = Math.max(s.pct, 8); // min visible width
+    html += '<div class="funnel-stage">';
+    html += '<div class="funnel-label">' + s.label + '</div>';
+    html += '<div class="funnel-bar" style="width:' + barW + '%;background:' + s.color + '">' + s.value + '</div>';
+    html += '</div>';
+    if (i < stages.length - 1) {
+      html += '<div class="funnel-arrow">&#9660;</div>';
+    }
+  });
+
+  html += '<div style="display:flex;gap:0.75rem;margin-top:0.75rem;flex-wrap:wrap">';
+  html += '<div style="font-size:0.65rem;color:var(--text-dim)">Keep rate: <strong style="color:var(--accent)">~1.6%</strong> of raw data</div>';
+  html += '<div style="font-size:0.65rem;color:var(--text-dim)">Quality &gt; Quantity: top 10% by classifier score</div>';
+  html += '</div>';
+
+  el.innerHTML = html;
+}
+
+// H1: Optimizer Comparison
+function initOptimizerCompare() {
+  var el = document.getElementById('visual-optimizer-compare');
+  if (!el) return;
+
+  var opts = [
+    { name: 'AdamW', steps: 100, memory: 12, color: 'var(--compute)', note: 'Baseline — 12 bytes/param' },
+    { name: 'Muon', steps: 50, memory: 10, color: 'var(--accent)', note: '2x efficiency, PyTorch core (2025)' },
+    { name: 'SOAP', steps: 60, memory: 10, color: 'var(--network)', note: '>40% fewer iterations' },
+    { name: 'Lion', steps: 80, memory: 6, color: 'var(--logic)', note: '50% memory savings' }
+  ];
+
+  var html = '<div style="font-size:0.6rem;color:var(--text-muted);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:1rem">Optimizer Comparison (Relative to AdamW Baseline)</div>';
+
+  // Steps to converge
+  html += '<div style="font-size:0.55rem;color:var(--text-muted);margin-bottom:0.5rem;letter-spacing:0.1em;text-transform:uppercase">Steps to Converge (fewer = better)</div>';
+  html += '<div class="opt-chart">';
+  opts.forEach(function(o) {
+    html += '<div class="opt-row"><div class="opt-label">' + o.name + '</div>';
+    html += '<div class="opt-bar-wrap"><div class="opt-bar" style="width:' + o.steps + '%;background:' + o.color + '">' + o.steps + '%</div></div>';
+    html += '<div class="opt-val">' + o.note.split(',')[0] + '</div></div>';
+  });
+  html += '</div>';
+
+  // Memory per param
+  html += '<div style="font-size:0.55rem;color:var(--text-muted);margin:1rem 0 0.5rem;letter-spacing:0.1em;text-transform:uppercase">Memory per Parameter (bytes)</div>';
+  html += '<div class="opt-chart">';
+  opts.forEach(function(o) {
+    var memPct = (o.memory / 12 * 100).toFixed(0);
+    html += '<div class="opt-row"><div class="opt-label">' + o.name + '</div>';
+    html += '<div class="opt-bar-wrap"><div class="opt-bar" style="width:' + memPct + '%;background:' + o.color + '">' + o.memory + 'B</div></div>';
+    html += '<div class="opt-val">' + (o.memory === 12 ? 'Baseline' : (100 - parseInt(memPct)) + '% savings') + '</div></div>';
+  });
+  html += '</div>';
+
+  // Legend
+  html += '<div style="display:flex;flex-wrap:wrap;gap:0.75rem;margin-top:0.75rem">';
+  opts.forEach(function(o) {
+    html += '<div style="display:flex;align-items:center;gap:0.3rem"><span style="width:10px;height:10px;border-radius:2px;background:' + o.color + '"></span><span style="font-size:0.55rem;color:var(--text-dim)">' + o.name + '</span></div>';
+  });
+  html += '</div>';
+
+  el.innerHTML = html;
+}
+
+// H2: Parallelism Strategy Diagram
+function initParallelism() {
+  var el = document.getElementById('visual-parallelism');
+  if (!el) return;
+
+  var modes = {
+    dp: { title: 'Data Parallelism', desc: 'Each GPU holds full model, processes different data batches', colors: ['var(--compute)', 'var(--io)', 'var(--network)', 'var(--logic)'] },
+    tp: { title: 'Tensor Parallelism', desc: 'Weight matrices split across GPUs within a node (NVLink)', colors: ['var(--accent)', 'var(--accent)', 'var(--accent)', 'var(--accent)'] },
+    pp: { title: 'Pipeline Parallelism', desc: 'Different layers assigned to different nodes', colors: ['var(--compute)', 'var(--compute)', 'var(--io)', 'var(--io)'] },
+    fourD: { title: '4D Parallelism (Llama 3)', desc: 'TP=8 × CP=16 × PP=16 × DP on 16,384 H100s', colors: ['var(--compute)', 'var(--io)', 'var(--network)', 'var(--logic)'] }
+  };
+
+  var html = '<div style="font-size:0.6rem;color:var(--text-muted);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:1rem">Parallelism Strategies — 16-GPU Grid</div>';
+
+  // Buttons
+  html += '<div class="par-controls">';
+  html += '<button class="par-btn active" data-mode="dp">Data ∥</button>';
+  html += '<button class="par-btn" data-mode="tp">Tensor ∥</button>';
+  html += '<button class="par-btn" data-mode="pp">Pipeline ∥</button>';
+  html += '<button class="par-btn" data-mode="fourD">4D ∥</button>';
+  html += '</div>';
+
+  html += '<div id="par-desc" style="text-align:center;font-size:0.7rem;color:var(--text-dim);margin-bottom:0.75rem">' + modes.dp.desc + '</div>';
+  html += '<div class="par-grid" id="par-grid"></div>';
+
+  // Legend
+  html += '<div id="par-legend" style="display:flex;flex-wrap:wrap;gap:0.75rem;margin-top:0.75rem;justify-content:center"></div>';
+
+  el.innerHTML = html;
+
+  var grid = document.getElementById('par-grid');
+  var desc = document.getElementById('par-desc');
+  var legend = document.getElementById('par-legend');
+
+  function renderGrid(mode) {
+    var m = modes[mode];
+    var cells = '';
+    var legendItems = {};
+
+    for (var i = 0; i < 16; i++) {
+      var color, label, legendLabel;
+      if (mode === 'dp') {
+        // Each GPU gets same model, different data — color by data batch
+        var batch = i % 4;
+        color = m.colors[batch];
+        label = 'D' + batch;
+        legendLabel = ['Batch 0','Batch 1','Batch 2','Batch 3'][batch];
+      } else if (mode === 'tp') {
+        // All GPUs work on same layer — same color, labeled by slice
+        color = m.colors[0];
+        var row = Math.floor(i / 4);
+        label = 'S' + (i % 4);
+        legendLabel = 'Weight Slice';
+      } else if (mode === 'pp') {
+        // Rows = pipeline stages
+        var stage = Math.floor(i / 4);
+        color = stage < 2 ? m.colors[0] : m.colors[2];
+        label = 'L' + (stage * 2 + Math.floor((i % 4) / 2));
+        legendLabel = stage < 2 ? 'Layers 0-3' : 'Layers 4-7';
+      } else {
+        // 4D: combine TP (cols) + PP (row pairs) + DP (color variation)
+        var col = i % 4;
+        var row = Math.floor(i / 4);
+        color = m.colors[row];
+        label = 'G' + i;
+        legendLabel = ['TP group 0','TP group 1','PP stage 0','PP stage 1'][row];
+      }
+      legendItems[legendLabel] = color;
+      cells += '<div class="par-cell" style="background:' + color + '">' + label + '</div>';
+    }
+
+    grid.innerHTML = cells;
+    desc.textContent = m.desc;
+
+    var legHtml = '';
+    Object.keys(legendItems).forEach(function(k) {
+      legHtml += '<div style="display:flex;align-items:center;gap:0.3rem"><span style="width:10px;height:10px;border-radius:2px;background:' + legendItems[k] + '"></span><span style="font-size:0.55rem;color:var(--text-dim)">' + k + '</span></div>';
+    });
+    legend.innerHTML = legHtml;
+  }
+
+  renderGrid('dp');
+
+  el.querySelectorAll('.par-btn').forEach(function(btn) {
+    btn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      el.querySelectorAll('.par-btn').forEach(function(b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+      renderGrid(btn.getAttribute('data-mode'));
+    });
+  });
+}
+
+initDataFunnel();
+initOptimizerCompare();
+initParallelism();
 
 </script>
 

@@ -1610,6 +1610,16 @@ body, .code-block, .journey-diagram, .callout-box, .metric, .journey-detail-pane
                 </div>
                 <div class="sub-topic" onclick="toggleSubTopic(this)">
                   <div class="sub-topic-header">
+                    <span class="sub-topic-name">Geo-Aware Routing</span>
+                    <span class="sub-topic-icon">+</span>
+                  </div>
+                  <div class="sub-topic-preview">Route to nearest region with available capacity</div>
+                  <div class="sub-topic-detail">
+                    <p>Multi-region deployments route requests to the <strong>nearest data center with available GPU capacity</strong>. This reduces network round-trip latency (50-200ms savings for cross-continent requests) and enables failover across regions. Providers like Baseten, Anyscale, and major cloud LLM APIs use Anycast DNS or edge routing to direct traffic to the optimal region based on both proximity and current load.</p>
+                  </div>
+                </div>
+                <div class="sub-topic" onclick="toggleSubTopic(this)">
+                  <div class="sub-topic-header">
                     <span class="sub-topic-name"><span class="term" data-term="cold-start">Cold Start</span> Times</span>
                     <span class="sub-topic-icon">+</span>
                   </div>

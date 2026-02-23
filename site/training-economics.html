@@ -228,6 +228,32 @@ body { background: var(--bg); color: var(--text); font-family: var(--font-body);
 [data-theme="light"] ::selection { background: var(--accent); color: #ffffff; }
 [data-theme="light"] .minimap-dot { background: var(--bg-card); }
 [data-theme="light"] .minimap-item.active .minimap-dot { box-shadow: 0 0 8px rgba(26,122,181,0.2); }
+[data-theme="light"] .step-visual { background: rgba(0,0,0,0.02); }
+
+/* ─── INTERACTIVE VISUALS ─── */
+.step-visual { position: relative; min-height: 200px; background: rgba(255,255,255,0.015); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; margin: 0.75rem 0; font-family: var(--font-mono); font-size: 0.7rem; padding: 1.5rem; }
+.waterfall-row { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem; }
+.waterfall-label { min-width: 100px; font-size: 0.65rem; color: var(--text-dim); text-align: right; }
+.waterfall-bar-wrap { flex: 1; height: 24px; background: rgba(255,255,255,0.03); border-radius: 4px; overflow: hidden; position: relative; }
+.waterfall-segment { height: 100%; float: left; transition: width 0.6s ease; position: relative; }
+.waterfall-segment:hover { opacity: 0.85; }
+.waterfall-val { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); font-size: 0.55rem; color: rgba(255,255,255,0.9); }
+.waterfall-total { font-size: 0.65rem; color: var(--text); min-width: 60px; }
+.calc-container { display: flex; flex-direction: column; gap: 1rem; }
+.calc-slider-group { display: flex; align-items: center; gap: 1rem; }
+.calc-slider-group label { min-width: 100px; font-size: 0.65rem; color: var(--text-dim); }
+.calc-slider-group input[type="range"] { flex: 1; accent-color: var(--accent); }
+.calc-slider-group .calc-val { min-width: 60px; font-size: 0.75rem; color: var(--accent); text-align: right; }
+.calc-result { display: flex; gap: 1.5rem; flex-wrap: wrap; margin-top: 0.5rem; }
+.calc-result-item { flex: 1; min-width: 120px; background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem; text-align: center; }
+.calc-result-value { font-family: var(--font-display); font-size: 1.4rem; color: var(--accent); }
+.calc-result-label { font-family: var(--font-mono); font-size: 0.5rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--text-muted); margin-top: 0.2rem; }
+.spend-bars { display: flex; flex-direction: column; gap: 0.6rem; }
+.spend-row { display: flex; align-items: center; gap: 0.75rem; }
+.spend-year { min-width: 50px; font-size: 0.6rem; color: var(--text-dim); text-align: right; }
+.spend-bar-wrap { flex: 1; height: 28px; border: 1px solid var(--border); border-radius: 4px; overflow: hidden; display: flex; }
+.spend-train { height: 100%; display: flex; align-items: center; justify-content: center; font-size: 0.5rem; color: rgba(255,255,255,0.9); transition: width 0.6s ease; }
+.spend-infer { height: 100%; display: flex; align-items: center; justify-content: center; font-size: 0.5rem; color: rgba(255,255,255,0.9); transition: width 0.6s ease; }
 
 body, .callout-box, .metric, .site-nav, .minimap-phase { transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease; }
 </style>
@@ -398,6 +424,8 @@ body, .callout-box, .metric, .site-nav, .minimap-phase { transition: background-
               </div>
             </div>
 
+            <div class="step-visual" id="visual-training-waterfall"></div>
+
             <a href="economics.html#cost-stack" class="cross-link">&rarr; Inference cost stack comparison</a>
           </div>
         </div>
@@ -455,6 +483,8 @@ body, .callout-box, .metric, .site-nav, .minimap-phase { transition: background-
                 <p>The industry shift: <strong>spend more on training (one-time) to make every inference call cheaper (ongoing)</strong>. Over-training smaller models by 10-1,000x Chinchilla-optimal is now standard practice.</p>
               </div>
             </div>
+
+            <div class="step-visual" id="visual-scaling-curve"></div>
           </div>
         </div>
       </div>
@@ -552,6 +582,8 @@ body, .callout-box, .metric, .site-nav, .minimap-phase { transition: background-
                 <p><strong>Use APIs</strong> if: your use case can be solved with prompting + RAG, you need rapid iteration, or you can&rsquo;t justify the fixed cost of training infrastructure.</p>
               </div>
             </div>
+
+            <div class="step-visual" id="visual-cost-calc"></div>
           </div>
         </div>
       </div>
@@ -787,6 +819,8 @@ body, .callout-box, .metric, .site-nav, .minimap-phase { transition: background-
                 <p>Total AI industry spend in 2025: <strong>~$527B</strong>. Total AI revenue: <strong>~$51B</strong>. That&rsquo;s a <strong>10:1 spend-to-revenue ratio</strong>, the largest infrastructure-to-revenue gap since the early days of cloud computing. The bet: inference revenue at scale will eventually justify the capital deployed.</p>
               </div>
             </div>
+
+            <div class="step-visual" id="visual-spend-timeline"></div>
           </div>
         </div>
       </div>
@@ -965,6 +999,196 @@ var minimapShowObserver = new IntersectionObserver(function(entries) {
 }, { threshold: 0.5 });
 
 if (heroSection) minimapShowObserver.observe(heroSection);
+
+/* ─── INTERACTIVE VISUALS ─── */
+
+// J1: Training Cost Waterfall
+function initTrainingWaterfall() {
+  var el = document.getElementById('visual-training-waterfall');
+  if (!el) return;
+
+  var data = [
+    { label: 'Chips (GPUs)', pct: 25, color: 'var(--compute)' },
+    { label: 'Server & Networking', pct: 26, color: 'var(--network)' },
+    { label: 'Staff', pct: 39, color: 'var(--logic)' },
+    { label: 'Energy', pct: 4, color: 'var(--io)' },
+    { label: 'Other', pct: 6, color: 'var(--text-muted)' }
+  ];
+
+  var html = '<div style="font-size:0.6rem;color:var(--text-muted);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:1rem">Training Cost Breakdown (Epoch AI, Frontier Models)</div>';
+
+  html += '<div class="waterfall-row"><div class="waterfall-label">Cost Share</div><div class="waterfall-bar-wrap">';
+  data.forEach(function(d) {
+    html += '<div class="waterfall-segment" style="width:' + d.pct + '%;background:' + d.color + '" title="' + d.label + ': ' + d.pct + '%">';
+    if (d.pct > 6) html += '<span class="waterfall-val">' + d.pct + '%</span>';
+    html += '</div>';
+  });
+  html += '</div><div class="waterfall-total">100%</div></div>';
+
+  // Legend
+  html += '<div style="display:flex;flex-wrap:wrap;gap:0.75rem;margin-top:0.5rem">';
+  data.forEach(function(d) {
+    html += '<div style="display:flex;align-items:center;gap:0.3rem"><span style="width:10px;height:10px;border-radius:2px;background:' + d.color + '"></span><span style="font-size:0.55rem;color:var(--text-dim)">' + d.label + ' (' + d.pct + '%)</span></div>';
+  });
+  html += '</div>';
+
+  // Model costs comparison
+  html += '<div style="margin-top:1rem;font-size:0.55rem;color:var(--text-muted);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:0.5rem">Estimated Total Training Cost</div>';
+  var models = [
+    { name: 'DeepSeek V3', cost: 5.5, color: 'var(--economics)' },
+    { name: 'Llama 3 405B', cost: 60, color: 'var(--accent)' },
+    { name: 'GPT-4', cost: 89, color: 'var(--compute)' },
+    { name: 'Gemini Ultra', cost: 191, color: 'var(--logic)' }
+  ];
+  models.forEach(function(m) {
+    var pct = (m.cost / 191 * 100).toFixed(1);
+    html += '<div class="waterfall-row"><div class="waterfall-label">' + m.name + '</div>';
+    html += '<div class="waterfall-bar-wrap"><div class="waterfall-segment" style="width:' + pct + '%;background:' + m.color + '"><span class="waterfall-val">$' + m.cost + 'M</span></div></div>';
+    html += '<div class="waterfall-total">$' + m.cost + 'M</div></div>';
+  });
+
+  el.innerHTML = html;
+}
+
+// J2: Scaling Curve
+function initScalingCurve() {
+  var el = document.getElementById('visual-scaling-curve');
+  if (!el) return;
+
+  var points = [
+    { name: 'Chinchilla (70B)', tokPerParam: 20, quality: 42, color: 'var(--compute)' },
+    { name: 'Llama 3 405B', tokPerParam: 37, quality: 68, color: 'var(--accent)' },
+    { name: 'Llama 3 8B', tokPerParam: 1875, quality: 72, color: 'var(--network)' },
+    { name: 'Qwen3-0.6B', tokPerParam: 60000, quality: 58, color: 'var(--logic)' }
+  ];
+
+  var html = '<div style="font-size:0.6rem;color:var(--text-muted);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:1rem">Over-Training: Tokens per Parameter vs Chinchilla Optimal</div>';
+
+  // Visual scale — use log-ish representation
+  html += '<div style="position:relative;padding:0.5rem 0">';
+  points.forEach(function(p) {
+    var logScale = Math.log10(p.tokPerParam);
+    var maxLog = Math.log10(60000);
+    var minLog = Math.log10(20);
+    var pct = ((logScale - minLog) / (maxLog - minLog) * 85 + 5).toFixed(1);
+    var ratio = (p.tokPerParam / 20).toFixed(0);
+    html += '<div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:0.6rem">';
+    html += '<div style="min-width:110px;font-size:0.6rem;color:var(--text-dim);text-align:right">' + p.name + '</div>';
+    html += '<div style="flex:1;height:24px;background:rgba(255,255,255,0.03);border-radius:4px;overflow:hidden;position:relative">';
+    html += '<div style="width:' + pct + '%;height:100%;background:' + p.color + ';border-radius:4px;display:flex;align-items:center;padding:0 0.5rem">';
+    html += '<span style="font-size:0.5rem;color:rgba(255,255,255,0.9)">' + p.tokPerParam.toLocaleString() + 'x</span>';
+    html += '</div></div>';
+    html += '<div style="min-width:50px;font-size:0.55rem;color:var(--text-dim)">' + ratio + 'x opt</div>';
+    html += '</div>';
+  });
+  html += '</div>';
+
+  html += '<div style="text-align:center;font-size:0.65rem;color:var(--text-dim);margin-top:0.5rem">The industry shifted from <strong style="color:var(--compute)">Chinchilla-optimal</strong> (cheapest training) to <strong style="color:var(--accent)">inference-optimal</strong> (cheapest deployment)</div>';
+
+  el.innerHTML = html;
+}
+
+// K1: Cost Calculator
+function initCostCalc() {
+  var el = document.getElementById('visual-cost-calc');
+  if (!el) return;
+
+  var html = '<div style="font-size:0.6rem;color:var(--text-muted);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:1rem">Training Approach Cost Estimator</div>';
+  html += '<div class="calc-container">';
+
+  html += '<div class="calc-slider-group"><label>Model Size</label><input type="range" id="tc-size" min="0" max="3" value="1" step="1"><span class="calc-val" id="tc-size-val">7B</span></div>';
+  html += '<div class="calc-slider-group"><label>Token Budget</label><input type="range" id="tc-tokens" min="1" max="100" value="15" step="1"><span class="calc-val" id="tc-tokens-val">15T</span></div>';
+
+  html += '<div class="calc-result">';
+  html += '<div class="calc-result-item"><div class="calc-result-value" id="tc-foundation">$50K</div><div class="calc-result-label">Foundation Training</div></div>';
+  html += '<div class="calc-result-item"><div class="calc-result-value" id="tc-finetune">$50K</div><div class="calc-result-label">Full Fine-Tune</div></div>';
+  html += '<div class="calc-result-item"><div class="calc-result-value" id="tc-lora">$300</div><div class="calc-result-label">LoRA/QLoRA</div></div>';
+  html += '<div class="calc-result-item"><div class="calc-result-value" id="tc-api">$0</div><div class="calc-result-label">API (No Training)</div></div>';
+  html += '</div></div>';
+
+  el.innerHTML = html;
+
+  var sizeSlider = document.getElementById('tc-size');
+  var tokenSlider = document.getElementById('tc-tokens');
+  var sizes = [
+    { label: '0.6B', params: 0.6 },
+    { label: '7B', params: 7 },
+    { label: '70B', params: 70 },
+    { label: '405B', params: 405 }
+  ];
+
+  function updateCostCalc() {
+    var sizeIdx = parseInt(sizeSlider.value);
+    var tokens = parseInt(tokenSlider.value);
+    var size = sizes[sizeIdx];
+
+    document.getElementById('tc-size-val').textContent = size.label;
+    document.getElementById('tc-tokens-val').textContent = tokens + 'T';
+
+    // Foundation: ~$0.004 per billion param-tokens on H100 cluster
+    var foundationCost = size.params * tokens * 4000;
+    // Fine-tune: ~100x cheaper than from-scratch, 10K-100K examples
+    var ftCost = size.params * 7000;
+    // LoRA: ~100x cheaper than fine-tune
+    var loraCost = size.params * 40 + 200;
+
+    document.getElementById('tc-foundation').textContent = formatCost(foundationCost);
+    document.getElementById('tc-finetune').textContent = formatCost(ftCost);
+    document.getElementById('tc-lora').textContent = formatCost(loraCost);
+    document.getElementById('tc-api').textContent = '$0';
+  }
+
+  function formatCost(val) {
+    if (val >= 1000000) return '$' + (val / 1000000).toFixed(0) + 'M';
+    if (val >= 1000) return '$' + (val / 1000).toFixed(0) + 'K';
+    return '$' + val.toFixed(0);
+  }
+
+  sizeSlider.addEventListener('input', updateCostCalc);
+  tokenSlider.addEventListener('input', updateCostCalc);
+  updateCostCalc();
+}
+
+// L3: Training vs Inference Spend Timeline
+function initSpendTimeline() {
+  var el = document.getElementById('visual-spend-timeline');
+  if (!el) return;
+
+  var years = [
+    { year: '2023', train: 67, infer: 33 },
+    { year: '2024', train: 55, infer: 45 },
+    { year: '2025', train: 50, infer: 50 },
+    { year: '2026E', train: 35, infer: 65 }
+  ];
+
+  var html = '<div style="font-size:0.6rem;color:var(--text-muted);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:1rem">Training vs Inference Spend Shift</div>';
+
+  html += '<div class="spend-bars">';
+  years.forEach(function(y) {
+    html += '<div class="spend-row">';
+    html += '<div class="spend-year">' + y.year + '</div>';
+    html += '<div class="spend-bar-wrap">';
+    html += '<div class="spend-train" style="width:' + y.train + '%;background:var(--compute)">' + (y.train > 10 ? y.train + '% Train' : '') + '</div>';
+    html += '<div class="spend-infer" style="width:' + y.infer + '%;background:var(--accent)">' + (y.infer > 10 ? y.infer + '% Infer' : '') + '</div>';
+    html += '</div></div>';
+  });
+  html += '</div>';
+
+  // Legend
+  html += '<div style="display:flex;gap:1rem;margin-top:0.75rem;justify-content:center">';
+  html += '<div style="display:flex;align-items:center;gap:0.3rem"><span style="width:10px;height:10px;border-radius:2px;background:var(--compute)"></span><span style="font-size:0.55rem;color:var(--text-dim)">Training</span></div>';
+  html += '<div style="display:flex;align-items:center;gap:0.3rem"><span style="width:10px;height:10px;border-radius:2px;background:var(--accent)"></span><span style="font-size:0.55rem;color:var(--text-dim)">Inference</span></div>';
+  html += '</div>';
+
+  html += '<div style="text-align:center;font-size:0.65rem;color:var(--text-dim);margin-top:0.5rem">Inference projected to dominate by 2026: <strong style="color:var(--accent)">~65%</strong> of total compute spend</div>';
+
+  el.innerHTML = html;
+}
+
+initTrainingWaterfall();
+initScalingCurve();
+initCostCalc();
+initSpendTimeline();
 
 </script>
 
