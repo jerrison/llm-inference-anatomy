@@ -265,7 +265,7 @@ body {
 .capital-detail.visible { display: block; }
 
 /* ─── MINIMAP ─── */
-.minimap { position: fixed; right: 1.5rem; top: 50%; transform: translateY(-50%); z-index: 400; opacity: 0; pointer-events: none; transition: opacity 0.35s ease; display: flex; flex-direction: column; gap: 0; }
+.minimap { position: fixed; right: max(1.5rem, calc((100vw - 1200px) / 2 - 10rem)); top: 50%; transform: translateY(-50%); z-index: 400; opacity: 0; pointer-events: none; transition: opacity 0.35s ease; display: flex; flex-direction: column; gap: 0; }
 .minimap.visible { opacity: 1; pointer-events: auto; }
 .minimap-phase { padding: 0.4rem 0; position: relative; }
 .minimap-phase + .minimap-phase { border-top: 1px solid var(--border); margin-top: 0.15rem; padding-top: 0.55rem; }

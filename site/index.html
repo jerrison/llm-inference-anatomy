@@ -978,7 +978,7 @@ body {
 /* ─── MINI-MAP ─── */
 .minimap {
   position: fixed;
-  right: 1.5rem;
+  right: max(1.5rem, calc((100vw - 1200px) / 2 - 10rem));
   top: 50%;
   transform: translateY(-50%);
   z-index: 400;
