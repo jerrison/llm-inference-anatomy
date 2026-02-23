@@ -68,6 +68,7 @@ body {
 }
 .nav-link:hover { color: var(--text-dim); }
 .nav-link.active { color: var(--accent); border-bottom: 1.5px solid var(--accent); }
+.nav-divider { width: 1px; height: 18px; background: var(--border); flex-shrink: 0; }
 
 /* ─── THEME TOGGLE ─── */
 .theme-toggle {
@@ -296,10 +297,11 @@ body {
 [data-theme="light"] .minimap:hover { box-shadow: -4px 0 16px rgba(0,0,0,0.08); }
 @media (max-width: 768px) {
   .minimap { display: none; }
-  .site-nav { padding: 0 1rem; }
+  .site-nav { padding: 0 0.75rem; }
   .nav-logo { font-size: 0.85rem; }
-  .nav-link { font-size: 0.55rem; letter-spacing: 0.1em; }
-  .nav-links { gap: 0.75rem; }
+  .nav-link { font-size: 0.5rem; letter-spacing: 0.08em; }
+  .nav-links { gap: 0.5rem; }
+  .nav-divider { height: 14px; }
   .pipeline-flow::before { left: 18px; }
   .pipeline-step { grid-template-columns: 36px 1fr; }
   .step-card { padding: 1rem; }
@@ -359,10 +361,13 @@ body, .code-block, .callout-box, .metric, .site-nav, .minimap-phase { transition
 <body>
 
 <nav class="site-nav">
-  <a href="index.html" class="nav-logo">LLM Inference Anatomy</a>
+  <a href="index.html" class="nav-logo">LLM Anatomy</a>
   <div class="nav-links">
-    <a href="index.html" class="nav-link">Technical Pipeline</a>
-    <a href="economics.html" class="nav-link active">Economics</a>
+    <a href="training.html" class="nav-link">Training</a>
+    <a href="training-economics.html" class="nav-link">Training Economics</a>
+    <span class="nav-divider"></span>
+    <a href="index.html" class="nav-link">Inference</a>
+    <a href="economics.html" class="nav-link active">Inference Economics</a>
     <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme"></button>
   </div>
 </nav>
@@ -527,6 +532,7 @@ body, .code-block, .callout-box, .metric, .site-nav, .minimap-phase { transition
                   <p>InfiniBand for multi-GPU inference adds <strong>15-25% to total cluster cost</strong>. For a 1,000 H100 cluster: $5-15M in NICs, switches, and cabling. NVIDIA/Mellanox near-monopoly limits price negotiation.</p>
                   <p>Storage for model weights, KV cache spill, logging: ~5-10% of compute cost.</p>
                   <a href="index.html#cross-cutting" class="cross-link">&rarr; How InfiniBand works in the pipeline</a>
+                  <a href="training-economics.html#hardware-costs" class="cross-link">&rarr; Training hardware costs comparison</a>
                 </div>
               </div>
               <div class="sub-topic" onclick="toggleSubTopic(this)">
@@ -1294,6 +1300,8 @@ body, .code-block, .callout-box, .metric, .site-nav, .minimap-phase { transition
                 </div>
               </div>
             </div>
+
+            <a href="training-economics.html#model-funding" class="cross-link">&rarr; Foundation model funding &amp; mega-rounds</a>
 
           </div>
         </div>

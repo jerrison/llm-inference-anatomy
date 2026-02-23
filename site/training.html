@@ -1,0 +1,1771 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Anatomy of LLM Training</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=DM+Mono:wght@300;400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+/* ─── RESET & BASE ─── */
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+:root {
+  --bg: #0a0a0c;
+  --bg-card: #111115;
+  --bg-card-hover: #18181e;
+  --border: #1e1e28;
+  --border-active: #3a3a50;
+  --text: #e8e6e3;
+  --text-dim: #9a98a0;
+  --text-muted: #4a4850;
+  --accent: #E69F00;
+  --accent-dim: #b87e00;
+  --accent-glow: rgba(230,159,0,0.08);
+  --compute: #D55E00;
+  --memory: #0090D6;
+  --io: #E69F00;
+  --logic: #CC79A7;
+  --network: #56B4E9;
+  --font-display: 'Instrument Serif', serif;
+  --font-body: 'Atkinson Hyperlegible', sans-serif;
+  --font-mono: 'DM Mono', monospace;
+}
+
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-weight: 400;
+  line-height: 1.8;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  padding-top: 48px;
+}
+
+::selection { background: var(--accent); color: var(--bg); }
+
+/* ─── HERO ─── */
+.hero {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 2rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 80% 50% at 50% 0%, rgba(230,159,0,0.05) 0%, transparent 50%),
+    radial-gradient(ellipse 60% 40% at 20% 80%, rgba(213,94,0,0.03) 0%, transparent 50%),
+    radial-gradient(ellipse 60% 40% at 80% 80%, rgba(204,121,167,0.03) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+.hero-label {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 2rem;
+  opacity: 0;
+  animation: fadeUp 0.8s ease forwards 0.2s;
+}
+
+.hero h1 {
+  font-family: var(--font-display);
+  font-size: clamp(3rem, 8vw, 7rem);
+  font-weight: 400;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  max-width: 900px;
+  opacity: 0;
+  animation: fadeUp 0.8s ease forwards 0.4s;
+}
+
+.hero h1 em { font-style: italic; color: var(--accent); }
+
+.hero-sub {
+  font-size: clamp(1rem, 2vw, 1.2rem);
+  color: var(--text-dim);
+  max-width: 600px;
+  margin-top: 1.5rem;
+  opacity: 0;
+  animation: fadeUp 0.8s ease forwards 0.6s;
+}
+
+.hero-cta {
+  margin-top: 3rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  opacity: 0;
+  animation: fadeUp 0.8s ease forwards 0.8s;
+}
+
+.hero-cta .arrow { display: inline-block; animation: bounce 2s ease infinite; }
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(6px); }
+}
+
+/* ─── PHASE OVERVIEW ─── */
+.phase-overview {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 2rem 4rem;
+}
+
+.phase-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.5rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.phase-card:hover {
+  border-color: var(--border-active);
+  background: var(--bg-card-hover);
+}
+
+.phase-letter {
+  font-family: var(--font-display);
+  font-size: 2.5rem;
+  color: var(--accent);
+  line-height: 1;
+  margin-bottom: 0.5rem;
+}
+
+.phase-name { font-family: var(--font-display); font-size: 1.3rem; margin-bottom: 0.25rem; }
+.phase-subtitle { font-size: 0.85rem; color: var(--text-dim); margin-bottom: 1rem; }
+.phase-steps { display: flex; flex-direction: column; gap: 0.25rem; }
+.phase-steps span { font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-muted); letter-spacing: 0.05em; }
+
+.phase-card:not(:last-child)::after {
+  content: '\2192';
+  position: absolute;
+  right: -1rem;
+  top: 50%;
+  transform: translate(50%, -50%);
+  color: var(--text-muted);
+  font-size: 1.2rem;
+  z-index: 3;
+}
+
+/* ─── PIPELINE SECTION ─── */
+.pipeline-section {
+  padding: 4rem 2rem 6rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.section-label {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 0.5rem;
+}
+
+.section-title {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 4vw, 3.5rem);
+  font-weight: 400;
+  margin-bottom: 1rem;
+}
+
+.section-desc { color: var(--text-dim); max-width: 650px; margin-bottom: 3rem; font-size: 1rem; }
+
+/* ─── PHASE DIVIDERS ─── */
+.phase-divider {
+  display: grid;
+  grid-template-columns: 48px 1fr;
+  padding: 2rem 0 0.5rem;
+  position: relative;
+}
+.phase-divider:first-child { padding-top: 0; }
+
+.phase-divider-marker {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: var(--accent);
+  color: var(--bg);
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 0.75rem;
+  margin-left: 8px;
+  z-index: 2;
+}
+
+.phase-divider-content { padding: 0.25rem 0 0 0.75rem; }
+.phase-divider-name { font-family: var(--font-display); font-size: 1.15rem; color: var(--accent); }
+.phase-divider-desc { font-size: 0.8rem; color: var(--text-muted); }
+
+/* ─── PIPELINE FLOW ─── */
+.pipeline-flow {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  position: relative;
+}
+
+.pipeline-flow::before {
+  content: '';
+  position: absolute;
+  left: 24px;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: linear-gradient(to bottom, transparent, var(--border) 5%, var(--border) 95%, transparent);
+}
+
+.pipeline-step {
+  display: grid;
+  grid-template-columns: 48px 1fr;
+  gap: 0;
+  cursor: pointer;
+  position: relative;
+}
+
+.step-marker { display: flex; flex-direction: column; align-items: center; position: relative; z-index: 2; }
+.step-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  background: var(--bg);
+  margin-top: 1.5rem;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+}
+
+.pipeline-step:hover .step-dot,
+.pipeline-step.active .step-dot {
+  border-color: var(--accent);
+  background: var(--accent);
+  box-shadow: 0 0 12px rgba(230,159,0,0.3);
+}
+
+.step-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.25rem 1.5rem;
+  margin: 0.5rem 0;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.step-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, var(--accent-glow) 0%, transparent 50%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.pipeline-step:hover .step-card,
+.pipeline-step.active .step-card {
+  border-color: var(--border-active);
+  background: var(--bg-card-hover);
+}
+
+.pipeline-step:hover .step-card::before,
+.pipeline-step.active .step-card::before { opacity: 1; }
+
+.step-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  position: relative;
+  z-index: 1;
+  cursor: pointer;
+}
+
+.step-number { font-family: var(--font-mono); font-size: 0.6rem; color: var(--accent-dim); letter-spacing: 0.1em; min-width: 24px; }
+.step-name { font-family: var(--font-display); font-size: 1.4rem; flex: 1; }
+
+.step-badge {
+  font-family: var(--font-mono);
+  font-size: 0.55rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  border: 1px solid;
+}
+
+.step-badge::before { margin-right: 0.3em; }
+.badge-compute { color: var(--compute); border-color: rgba(213,94,0,0.3); background: rgba(213,94,0,0.05); }
+.badge-compute::before { content: '\26A1'; }
+.badge-memory { color: var(--memory); border-color: rgba(0,144,214,0.3); background: rgba(0,144,214,0.05); }
+.badge-memory::before { content: '\2630'; }
+.badge-io { color: var(--io); border-color: rgba(230,159,0,0.3); background: rgba(230,159,0,0.05); }
+.badge-io::before { content: '\21C4'; }
+.badge-logic { color: var(--logic); border-color: rgba(204,121,167,0.3); background: rgba(204,121,167,0.05); }
+.badge-logic::before { content: '\2699'; }
+.badge-network { color: var(--network); border-color: rgba(86,180,233,0.3); background: rgba(86,180,233,0.05); }
+.badge-network::before { content: '\25CE'; }
+
+.step-summary { color: var(--text-dim); font-size: 0.9rem; margin-top: 0.5rem; position: relative; z-index: 1; }
+
+.step-expand-icon {
+  color: var(--text-muted);
+  font-size: 1.2rem;
+  transition: transform 0.3s ease;
+  font-family: var(--font-mono);
+}
+
+.pipeline-step.active .step-expand-icon { transform: rotate(45deg); color: var(--accent); }
+
+/* ─── EXPANDED DETAIL ─── */
+.step-detail {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  z-index: 1;
+}
+
+.pipeline-step.active .step-detail { max-height: 8000px; }
+
+.detail-inner {
+  padding: 1.5rem 0 0.5rem;
+  border-top: 1px solid var(--border);
+  margin-top: 1rem;
+}
+
+.detail-section { margin-bottom: 1.5rem; }
+.detail-section:last-child { margin-bottom: 0; }
+
+.detail-label {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--accent-dim);
+  margin-bottom: 0.5rem;
+}
+
+.detail-text { font-size: 0.92rem; color: var(--text-dim); line-height: 1.8; }
+.detail-text strong { color: var(--text); font-weight: 400; }
+.detail-text code {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  background: rgba(230,159,0,0.06);
+  color: var(--accent);
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+}
+
+/* ─── CALLOUTS ─── */
+.callout-box {
+  border-radius: 8px;
+  padding: 0.85rem 1rem;
+  margin-bottom: 1.25rem;
+  font-size: 0.9rem;
+  line-height: 1.7;
+}
+
+.callout-takeaway {
+  background: rgba(230,159,0,0.06);
+  border-left: 3px solid var(--accent);
+}
+
+.callout-takeaway .callout-label {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 0.3rem;
+}
+
+.callout-takeaway p { color: var(--text); font-weight: 700; }
+
+.callout-analogy {
+  background: rgba(204,121,167,0.05);
+  border-left: 3px solid var(--logic);
+}
+
+.callout-analogy .callout-label {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--logic);
+  margin-bottom: 0.3rem;
+}
+
+.callout-analogy p { color: var(--text-dim); font-style: italic; }
+
+/* ─── SUB-TOPICS ─── */
+.sub-topics {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+.sub-topic {
+  background: rgba(255,255,255,0.02);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.sub-topic:hover { border-color: var(--border-active); background: rgba(255,255,255,0.04); }
+.sub-topic.expanded { grid-column: 1 / -1; border-color: var(--accent-dim); }
+
+.sub-topic-header { display: flex; align-items: center; justify-content: space-between; }
+.sub-topic-name { font-family: var(--font-display); font-size: 1.1rem; }
+.sub-topic-icon { color: var(--text-muted); font-family: var(--font-mono); font-size: 0.9rem; transition: transform 0.3s ease; }
+.sub-topic.expanded .sub-topic-icon { transform: rotate(45deg); color: var(--accent); }
+
+.sub-topic-preview { color: var(--text-muted); font-size: 0.8rem; margin-top: 0.35rem; }
+.sub-topic-detail { display: none; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border); }
+.sub-topic.expanded .sub-topic-detail { display: block; }
+.sub-topic-detail p { font-size: 0.9rem; color: var(--text-dim); margin-bottom: 0.75rem; line-height: 1.8; }
+.sub-topic-detail p:last-child { margin-bottom: 0; }
+
+/* ─── DATA TABLES ─── */
+.data-table { width: 100%; border-collapse: collapse; margin: 0.75rem 0; font-size: 0.8rem; }
+.data-table th {
+  font-family: var(--font-mono); font-size: 0.6rem; letter-spacing: 0.15em;
+  text-transform: uppercase; color: var(--text-muted); text-align: left;
+  padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--border);
+}
+.data-table td { padding: 0.5rem 0.75rem; color: var(--text-dim); border-bottom: 1px solid rgba(30,30,40,0.5); }
+.data-table td:first-child { color: var(--text); }
+.data-table tr:last-child td { border-bottom: none; }
+
+/* ─── METRICS ─── */
+.metrics-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.75rem;
+  margin: 0.75rem 0;
+}
+
+.metric {
+  background: rgba(255,255,255,0.02);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  text-align: center;
+}
+
+.metric-value { font-family: var(--font-display); font-size: 1.6rem; color: var(--accent); }
+.metric-label {
+  font-family: var(--font-mono); font-size: 0.55rem; letter-spacing: 0.15em;
+  text-transform: uppercase; color: var(--text-muted); margin-top: 0.25rem;
+}
+
+/* ─── TERMS ─── */
+.term {
+  color: var(--accent);
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-decoration-color: rgba(230,159,0,0.4);
+  text-underline-offset: 3px;
+  cursor: help;
+}
+
+.term-tooltip {
+  position: fixed;
+  max-width: 340px;
+  background: #1a1a22;
+  border: 1px solid var(--border-active);
+  border-radius: 10px;
+  padding: 0.85rem 1rem;
+  z-index: 1000;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  animation: tooltipIn 0.2s ease;
+}
+
+.term-tooltip-title {
+  font-family: var(--font-mono); font-size: 0.65rem; letter-spacing: 0.15em;
+  text-transform: uppercase; color: var(--accent); margin-bottom: 0.35rem;
+}
+
+.term-tooltip-body { font-size: 0.85rem; color: var(--text-dim); line-height: 1.6; }
+
+.term-tooltip-close {
+  position: absolute; top: 0.5rem; right: 0.5rem;
+  width: 1.25rem; height: 1.25rem;
+  display: flex; align-items: center; justify-content: center;
+  background: transparent; border: 1px solid var(--border); border-radius: 4px;
+  color: var(--text-muted); font-size: 0.65rem; cursor: pointer;
+  padding: 0; line-height: 1;
+  transition: color 0.15s, border-color 0.15s;
+}
+.term-tooltip-close:hover { color: var(--text-dim); border-color: var(--border-active); }
+
+.term-tooltip-footer {
+  display: flex; align-items: center; gap: 0.75rem;
+  margin-top: 0.5rem; padding-top: 0.4rem; border-top: 1px solid var(--border);
+}
+
+.term-tooltip-source {
+  display: inline-block;
+  margin-top: 0.4rem;
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  color: var(--accent-dim);
+  text-decoration: none;
+  letter-spacing: 0.05em;
+}
+.term-tooltip-source:hover { color: var(--accent); }
+
+@keyframes tooltipIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ─── CROSS-LINK ─── */
+.cross-link {
+  display: inline-block;
+  margin-top: 0.5rem;
+  color: var(--accent-dim);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  text-decoration: none;
+  letter-spacing: 0.05em;
+  transition: color 0.2s;
+}
+.cross-link:hover { color: var(--accent); }
+
+/* ─── FOOTER ─── */
+.footer {
+  padding: 4rem 2rem;
+  text-align: center;
+  border-top: 1px solid var(--border);
+}
+.footer p { font-family: var(--font-mono); font-size: 0.65rem; color: var(--text-muted); letter-spacing: 0.1em; }
+
+/* ─── SCROLL ANIMATIONS ─── */
+.reveal { opacity: 0; transform: translateY(20px); transition: all 0.6s ease; }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+
+/* ─── MINIMAP ─── */
+.minimap {
+  position: fixed;
+  right: max(1.5rem, calc((100vw - 1200px) / 2 - 10rem));
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 400;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.35s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.minimap.visible { opacity: 1; pointer-events: auto; }
+
+.minimap-phase { padding: 0.4rem 0; position: relative; }
+.minimap-phase + .minimap-phase { border-top: 1px solid var(--border); margin-top: 0.15rem; padding-top: 0.55rem; }
+
+.minimap-phase-label {
+  font-family: var(--font-mono); font-size: 0.5rem; letter-spacing: 0.18em;
+  text-transform: uppercase; color: var(--accent-dim); margin-bottom: 0.35rem; padding-left: 2px;
+}
+
+.minimap-item {
+  display: flex; align-items: center; gap: 0.5rem;
+  padding: 0.2rem 0; text-decoration: none; cursor: pointer; outline: none;
+}
+
+.minimap-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  border: 1.5px solid var(--border); background: var(--bg);
+  flex-shrink: 0; transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.minimap-label {
+  font-family: var(--font-mono); font-size: 0.55rem; letter-spacing: 0.06em;
+  color: var(--text-muted); white-space: nowrap; transition: color 0.2s ease;
+}
+
+.minimap-item:hover .minimap-dot { border-color: var(--border-active); }
+.minimap-item:hover .minimap-label { color: var(--text-dim); }
+.minimap-item:focus-visible .minimap-dot { outline: 2px solid var(--accent); outline-offset: 2px; }
+.minimap-item.active .minimap-dot {
+  background: var(--accent); border-color: var(--accent);
+  box-shadow: 0 0 6px var(--accent-glow), 0 0 12px var(--accent-glow);
+}
+.minimap-item.active .minimap-label { color: var(--text); }
+
+[data-theme="light"] .minimap-dot { background: var(--bg-card); }
+[data-theme="light"] .minimap-item.active .minimap-dot { box-shadow: 0 0 8px rgba(184,126,0,0.2); }
+
+@media (max-width: 1440px) {
+  .minimap { right: 1rem; padding: 0.5rem; border-radius: 8px; transition: opacity 0.35s ease, background 0.2s ease; }
+  .minimap-label { opacity: 0; width: 0; overflow: hidden; transition: opacity 0.2s ease, width 0.2s ease; }
+  .minimap:hover { background: var(--bg); box-shadow: -4px 0 16px rgba(0,0,0,0.3); border: 1px solid var(--border); }
+  .minimap:hover .minimap-label { opacity: 1; width: auto; }
+}
+[data-theme="light"] .minimap:hover { box-shadow: -4px 0 16px rgba(0,0,0,0.08); }
+@media (max-width: 768px) {
+  .minimap { display: none; }
+}
+
+/* ─── SITE NAV ─── */
+.site-nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 600;
+  height: 48px;
+  background: rgba(10,10,12,0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 2rem;
+}
+
+.nav-logo { font-family: var(--font-display); font-size: 1rem; color: var(--text); text-decoration: none; white-space: nowrap; }
+.nav-links { display: flex; align-items: center; gap: 1.5rem; }
+.nav-link {
+  font-family: var(--font-mono); font-size: 0.65rem; letter-spacing: 0.15em;
+  text-transform: uppercase; color: var(--text-muted); text-decoration: none;
+  padding: 0.25rem 0; transition: color 0.2s ease;
+}
+.nav-link:hover { color: var(--text-dim); }
+.nav-link.active { color: var(--accent); border-bottom: 1.5px solid var(--accent); }
+.nav-divider { width: 1px; height: 18px; background: var(--border); flex-shrink: 0; }
+
+[data-theme="light"] .site-nav { background: rgba(245,243,239,0.85); }
+
+.theme-toggle {
+  width: 32px; height: 32px; border-radius: 50%;
+  border: 1px solid var(--border); background: transparent;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  color: var(--text-dim); font-size: 1rem;
+  transition: border-color 0.2s ease, color 0.2s ease;
+}
+.theme-toggle:hover { border-color: var(--border-active); color: var(--text); }
+.theme-toggle::after { content: '\263C'; }
+[data-theme="light"] .theme-toggle::after { content: '\263E'; }
+
+/* ─── INTERACTIVE VISUAL ─── */
+.visual-container {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin: 1rem 0;
+  position: relative;
+  min-height: 200px;
+}
+
+.visual-label {
+  font-family: var(--font-mono); font-size: 0.6rem; letter-spacing: 0.2em;
+  text-transform: uppercase; color: var(--accent-dim); margin-bottom: 1rem;
+}
+
+.visual-bar-track {
+  background: rgba(255,255,255,0.03);
+  border-radius: 6px;
+  height: 32px;
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 0.5rem;
+}
+
+.visual-bar-fill {
+  height: 100%;
+  border-radius: 6px;
+  transition: width 0.6s ease;
+  display: flex;
+  align-items: center;
+  padding: 0 0.5rem;
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  color: var(--bg);
+  white-space: nowrap;
+}
+
+.visual-bar-label {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  color: var(--text-muted);
+  margin-bottom: 0.75rem;
+}
+
+.visual-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-top: 0.75rem;
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  color: var(--text-muted);
+}
+
+.visual-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.visual-legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+/* ─── RESPONSIVE ─── */
+@media (max-width: 768px) {
+  .site-nav { padding: 0 0.75rem; }
+  .nav-logo { font-size: 0.85rem; }
+  .nav-link { font-size: 0.5rem; letter-spacing: 0.08em; }
+  .nav-links { gap: 0.5rem; }
+  .nav-divider { height: 14px; }
+  .pipeline-flow::before { left: 18px; }
+  .pipeline-step { grid-template-columns: 36px 1fr; }
+  .step-card { padding: 1rem; }
+  .step-name { font-size: 1.15rem; }
+  .sub-topics { grid-template-columns: 1fr; }
+  .step-badge { display: none; }
+  .metrics-row { grid-template-columns: repeat(2, 1fr); }
+  .phase-overview { grid-template-columns: 1fr; }
+  .phase-card:not(:last-child)::after {
+    content: '\2193';
+    right: 50%;
+    top: auto;
+    bottom: -1rem;
+    transform: translate(50%, 50%);
+  }
+}
+
+/* ─── LIGHT THEME ─── */
+[data-theme="light"] {
+  --bg: #f5f3ef;
+  --bg-card: #ffffff;
+  --bg-card-hover: #f0eee9;
+  --border: #d8d5ce;
+  --border-active: #b0abb8;
+  --text: #1a1a1f;
+  --text-dim: #4a4750;
+  --text-muted: #8a8690;
+  --accent: #9d6e00;
+  --accent-dim: #7a5600;
+  --accent-glow: rgba(157,110,0,0.07);
+  --compute: #b34a00;
+  --memory: #006fa8;
+  --io: #9d6e00;
+  --logic: #a85d87;
+  --network: #1a7ab5;
+}
+
+[data-theme="light"] .hero::before {
+  background:
+    radial-gradient(ellipse 80% 50% at 50% 0%, rgba(157,110,0,0.06) 0%, transparent 50%),
+    radial-gradient(ellipse 60% 40% at 20% 80%, rgba(179,74,0,0.04) 0%, transparent 50%),
+    radial-gradient(ellipse 60% 40% at 80% 80%, rgba(168,93,135,0.04) 0%, transparent 50%);
+}
+
+[data-theme="light"] .step-dot { background: var(--bg-card); }
+[data-theme="light"] .pipeline-step:hover .step-dot,
+[data-theme="light"] .pipeline-step.active .step-dot { box-shadow: 0 0 12px rgba(157,110,0,0.25); }
+
+[data-theme="light"] .badge-compute { border-color: rgba(179,74,0,0.3); background: rgba(179,74,0,0.06); }
+[data-theme="light"] .badge-memory { border-color: rgba(0,111,168,0.3); background: rgba(0,111,168,0.06); }
+[data-theme="light"] .badge-io { border-color: rgba(157,110,0,0.3); background: rgba(157,110,0,0.06); }
+[data-theme="light"] .badge-logic { border-color: rgba(168,93,135,0.3); background: rgba(168,93,135,0.06); }
+[data-theme="light"] .badge-network { border-color: rgba(26,122,181,0.3); background: rgba(26,122,181,0.06); }
+
+[data-theme="light"] .sub-topic { background: rgba(0,0,0,0.02); }
+[data-theme="light"] .sub-topic:hover { background: rgba(0,0,0,0.04); }
+[data-theme="light"] .metric { background: rgba(0,0,0,0.02); }
+
+[data-theme="light"] .term-tooltip { background: #ffffff; box-shadow: 0 8px 32px rgba(0,0,0,0.12); }
+[data-theme="light"] .term-tooltip-close { border-color: rgba(0,0,0,0.15); color: rgba(0,0,0,0.3); }
+[data-theme="light"] .term-tooltip-close:hover { border-color: rgba(0,0,0,0.3); color: rgba(0,0,0,0.5); }
+[data-theme="light"] .term-tooltip-footer { border-top-color: rgba(0,0,0,0.08); }
+
+[data-theme="light"] .callout-takeaway { background: rgba(157,110,0,0.06); }
+[data-theme="light"] .callout-analogy { background: rgba(168,93,135,0.06); }
+[data-theme="light"] .detail-text code { background: rgba(157,110,0,0.08); }
+[data-theme="light"] .data-table td { border-bottom-color: rgba(0,0,0,0.06); }
+[data-theme="light"] .term { text-decoration-color: rgba(157,110,0,0.4); }
+[data-theme="light"] ::selection { background: var(--accent); color: #ffffff; }
+
+body, .callout-box, .metric, .site-nav, .minimap-phase { transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease; }
+
+</style>
+<script>
+(function(){
+  var s = localStorage.getItem('theme');
+  if (s) { document.documentElement.setAttribute('data-theme', s); }
+  else if (window.matchMedia('(prefers-color-scheme: light)').matches) {
+    document.documentElement.setAttribute('data-theme', 'light');
+  } else { document.documentElement.setAttribute('data-theme', 'dark'); }
+})();
+</script>
+</head>
+<body>
+
+<!-- ─── NAV ─── -->
+<nav class="site-nav">
+  <a href="index.html" class="nav-logo">LLM Anatomy</a>
+  <div class="nav-links">
+    <a href="training.html" class="nav-link active">Training</a>
+    <a href="training-economics.html" class="nav-link">Training Economics</a>
+    <span class="nav-divider"></span>
+    <a href="index.html" class="nav-link">Inference</a>
+    <a href="economics.html" class="nav-link">Inference Economics</a>
+    <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme"></button>
+  </div>
+</nav>
+
+<!-- ─── MINIMAP ─── -->
+<div class="minimap" id="minimap">
+  <div class="minimap-phase">
+    <div class="minimap-phase-label">G &middot; Data &amp; Arch</div>
+    <div class="minimap-item" data-target="data-pipeline"><div class="minimap-dot"></div><span class="minimap-label">Data Pipeline</span></div>
+    <div class="minimap-item" data-target="tokenizer"><div class="minimap-dot"></div><span class="minimap-label">Tokenizer</span></div>
+    <div class="minimap-item" data-target="architecture"><div class="minimap-dot"></div><span class="minimap-label">Architecture</span></div>
+  </div>
+  <div class="minimap-phase">
+    <div class="minimap-phase-label">H &middot; Training</div>
+    <div class="minimap-item" data-target="optimization"><div class="minimap-dot"></div><span class="minimap-label">Optimization</span></div>
+    <div class="minimap-item" data-target="distributed"><div class="minimap-dot"></div><span class="minimap-label">Distributed</span></div>
+    <div class="minimap-item" data-target="monitoring"><div class="minimap-dot"></div><span class="minimap-label">Monitoring</span></div>
+  </div>
+  <div class="minimap-phase">
+    <div class="minimap-phase-label">I &middot; Post-Training</div>
+    <div class="minimap-item" data-target="sft"><div class="minimap-dot"></div><span class="minimap-label">Fine-Tuning</span></div>
+    <div class="minimap-item" data-target="alignment"><div class="minimap-dot"></div><span class="minimap-label">Alignment</span></div>
+    <div class="minimap-item" data-target="evaluation"><div class="minimap-dot"></div><span class="minimap-label">Evaluation</span></div>
+  </div>
+</div>
+
+<!-- ─── HERO ─── -->
+<section class="hero">
+  <div class="hero-label">How Models Learn</div>
+  <h1>Anatomy of <em>LLM Training</em></h1>
+  <p class="hero-sub">From raw data to aligned model &mdash; every stage of building a large language model.</p>
+  <div class="hero-cta"><span class="arrow">&darr;</span> Nine stages, three phases</div>
+</section>
+
+<!-- ─── PHASE OVERVIEW ─── -->
+<div class="phase-overview">
+  <div class="phase-card" onclick="document.getElementById('phase-g').scrollIntoView({behavior:'smooth',block:'start'})">
+    <div class="phase-letter">G</div>
+    <div class="phase-name">Data &amp; Architecture</div>
+    <div class="phase-subtitle">Raw data to model blueprint</div>
+    <div class="phase-steps">
+      <span>G1 &middot; Data Pipeline</span>
+      <span>G2 &middot; Tokenizer Training</span>
+      <span>G3 &middot; Model Architecture</span>
+    </div>
+  </div>
+  <div class="phase-card" onclick="document.getElementById('phase-h').scrollIntoView({behavior:'smooth',block:'start'})">
+    <div class="phase-letter">H</div>
+    <div class="phase-name">Training Process</div>
+    <div class="phase-subtitle">Optimizers, parallelism, recovery</div>
+    <div class="phase-steps">
+      <span>H1 &middot; Optimization</span>
+      <span>H2 &middot; Distributed Training</span>
+      <span>H3 &middot; Monitoring &amp; Recovery</span>
+    </div>
+  </div>
+  <div class="phase-card" onclick="document.getElementById('phase-i').scrollIntoView({behavior:'smooth',block:'start'})">
+    <div class="phase-letter">I</div>
+    <div class="phase-name">Post-Training</div>
+    <div class="phase-subtitle">SFT, alignment, evaluation</div>
+    <div class="phase-steps">
+      <span>I1 &middot; Supervised Fine-Tuning</span>
+      <span>I2 &middot; Alignment</span>
+      <span>I3 &middot; Evaluation</span>
+    </div>
+  </div>
+</div>
+
+<!-- ─── PIPELINE SECTION ─── -->
+<section class="pipeline-section" id="pipeline">
+  <div class="section-label">The Training Pipeline</div>
+  <div class="section-title">Nine Stages of Model Creation</div>
+  <div class="section-desc">From terabytes of raw text to an aligned model that follows instructions &mdash; each stage shapes what the model knows, how it reasons, and how it responds.</div>
+
+  <div class="pipeline-flow">
+
+    <!-- ═══ PHASE G ═══ -->
+    <div class="phase-divider" id="phase-g">
+      <div class="phase-divider-marker">G</div>
+      <div class="phase-divider-content">
+        <div class="phase-divider-name">Data &amp; Architecture</div>
+        <div class="phase-divider-desc">Curating training data and designing the model</div>
+      </div>
+    </div>
+
+    <!-- G1: Data Pipeline -->
+    <div class="pipeline-step reveal" data-step="data-pipeline" id="data-pipeline">
+      <div class="step-marker"><div class="step-dot"></div></div>
+      <div class="step-card">
+        <div class="step-header">
+          <span class="step-number">G1</span>
+          <span class="step-name">Data Pipeline</span>
+          <span class="step-badge badge-io">I/O</span>
+          <span class="step-expand-icon">+</span>
+        </div>
+        <div class="step-summary">Collect, filter, and deduplicate terabytes of text &mdash; <span class="term" data-term="data-quality">data quality</span> determines the ceiling of model capability.</div>
+        <div class="step-detail">
+          <div class="detail-inner">
+            <div class="callout-box callout-takeaway">
+              <div class="callout-label">Key Takeaway</div>
+              <p>DCLM showed keeping only the top 10% of data by quality beats training on everything. Data curation is the single highest-leverage investment in model quality.</p>
+            </div>
+            <div class="callout-box callout-analogy">
+              <div class="callout-label">Think of it like&hellip;</div>
+              <p>A chef sourcing ingredients &mdash; the finest technique can&rsquo;t save a dish made from spoiled food. Training data is the raw ingredient of intelligence.</p>
+            </div>
+
+            <div class="detail-section">
+              <div class="detail-label">Data Collection</div>
+              <div class="detail-text">
+                <p>Modern training corpora start from web crawls. <strong>CommonCrawl</strong> provides petabytes of raw HTML. Curated derivatives include <span class="term" data-term="fineweb">FineWeb</span> (15T tokens), <span class="term" data-term="dclm">DCLM</span> (240T raw &rarr; 3.8T curated tokens), and RedPajama. Additional sources: books, scientific papers (~5%), code from GitHub/StackOverflow (~15%), and Wikipedia.</p>
+              </div>
+            </div>
+
+            <div class="detail-section">
+              <div class="detail-label">Quality Filtering</div>
+              <div class="detail-text">
+                <p><strong>Heuristic filters</strong>: remove documents by length (too short = low content), perplexity (too high = garbled text), PII patterns, and URL blocklists. <strong>Classifier-based filtering</strong>: train a fastText model on high-quality vs. low-quality examples, then score and threshold every document. DCLM used a 1.4B-parameter classifier trained on OpenHermes 2.5 to keep only top-quality text.</p>
+              </div>
+            </div>
+
+            <div class="detail-section">
+              <div class="detail-label">Deduplication</div>
+              <div class="detail-text">
+                <p>Duplicate content wastes compute and can cause memorization. <span class="term" data-term="minhash">MinHash LSH</span> (Locality-Sensitive Hashing) efficiently finds near-duplicate documents by approximating Jaccard similarity. <strong>SimHash</strong> provides a faster alternative for exact-duplicate detection. Exact substring dedup (suffix arrays) catches boilerplate repeated across many pages.</p>
+              </div>
+            </div>
+
+            <div class="detail-section">
+              <div class="detail-label">Data Mixing</div>
+              <div class="detail-text">
+                <p>The final training mixture balances domains: typically <strong>~70% web text, 15% code, 5% scientific, 5% books, 5% other</strong> (conversation, math, encyclopedic). Optimal mixing ratios are determined empirically by training small proxy models on different mixes and measuring downstream task performance.</p>
+              </div>
+            </div>
+
+            <div class="detail-section">
+              <div class="detail-label">Scale</div>
+              <div class="metrics-row">
+                <div class="metric"><div class="metric-value">15T</div><div class="metric-label">FineWeb Tokens</div></div>
+                <div class="metric"><div class="metric-value">3.8T</div><div class="metric-label">DCLM Curated</div></div>
+                <div class="metric"><div class="metric-value">15T</div><div class="metric-label">Llama 3 Training</div></div>
+                <div class="metric"><div class="metric-value">10%</div><div class="metric-label">DCLM Keep Rate</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- G2: Tokenizer Training -->
+    <div class="pipeline-step reveal" data-step="tokenizer" id="tokenizer">
+      <div class="step-marker"><div class="step-dot"></div></div>
+      <div class="step-card">
+        <div class="step-header">
+          <span class="step-number">G2</span>
+          <span class="step-name">Tokenizer Training</span>
+          <span class="step-badge badge-logic">Logic</span>
+          <span class="step-expand-icon">+</span>
+        </div>
+        <div class="step-summary">Build the vocabulary that converts text into the integer sequences the model actually processes.</div>
+        <div class="step-detail">
+          <div class="detail-inner">
+            <div class="callout-box callout-takeaway">
+              <div class="callout-label">Key Takeaway</div>
+              <p>Vocabulary size is a fundamental trade-off: larger vocabularies compress text better (fewer tokens per sentence) but increase embedding table size and can fragment rare words.</p>
+            </div>
+            <div class="callout-box callout-analogy">
+              <div class="callout-label">Think of it like&hellip;</div>
+              <p>Building a dictionary before learning a language. The tokenizer decides which &ldquo;words&rdquo; the model will think in &mdash; too few and it stutters, too many and it wastes memory on rare terms.</p>
+            </div>
+
+            <div class="detail-section">
+              <div class="detail-label">BPE Algorithm</div>
+              <div class="detail-text">
+                <p><span class="term" data-term="bpe">Byte-Pair Encoding</span> starts with individual bytes (or characters) and iteratively merges the most frequent adjacent pair into a new token. After thousands of merges, common words become single tokens while rare words decompose into subword pieces. GPT-4 uses <strong>tiktoken</strong> (100K vocabulary); Llama 3 uses <strong>SentencePiece</strong> (128K vocabulary, up from 32K in Llama 2).</p>
+              </div>
+            </div>
+
+            <div class="detail-section">
+              <div class="detail-label">Unigram Model</div>
+              <div class="detail-text">
+                <p>The <span class="term" data-term="unigram-model">Unigram</span> approach works in reverse: start with a very large vocabulary, then iteratively prune tokens that contribute least to the training corpus likelihood. SentencePiece supports both BPE and Unigram. Unigram tends to produce more linguistically meaningful subwords.</p>
+              </div>
+            </div>
+
+            <div class="detail-section">
+              <div class="detail-label">Vocabulary Sizes</div>
+              <div class="detail-text">
+                <table class="data-table">
+                  <thead><tr><th>Model</th><th>Vocab Size</th><th>Method</th></tr></thead>
+                  <tbody>
+                    <tr><td>GPT-4</td><td>100,256</td><td>BPE (tiktoken)</td></tr>
+                    <tr><td>Llama 3</td><td>128,256</td><td>BPE (SentencePiece)</td></tr>
+                    <tr><td>Llama 2</td><td>32,000</td><td>BPE (SentencePiece)</td></tr>
+                    <tr><td>Claude 3</td><td>~100,000</td><td>BPE</td></tr>
+                    <tr><td>Gemini</td><td>256,000</td><td>SentencePiece</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <a href="index.html#phase-a" class="cross-link">&rarr; How tokenization works during inference</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- G3: Model Architecture -->
+    <div class="pipeline-step reveal" data-step="architecture" id="architecture">
+      <div class="step-marker"><div class="step-dot"></div></div>
+      <div class="step-card">
+        <div class="step-header">
+          <span class="step-number">G3</span>
+          <span class="step-name">Model Architecture</span>
+          <span class="step-badge badge-compute">Compute</span>
+          <span class="step-expand-icon">+</span>
+        </div>
+        <div class="step-summary">The 2024 consensus: decoder-only transformer with <span class="term" data-term="rmsnorm">RMSNorm</span>, <span class="term" data-term="rope">RoPE</span>, <span class="term" data-term="swiglu">SwiGLU</span>, and <span class="term" data-term="gqa">GQA</span>.</div>
+        <div class="step-detail">
+          <div class="detail-inner">
+            <div class="callout-box callout-takeaway">
+              <div class="callout-label">Key Takeaway</div>
+              <p>Modern LLM architecture has converged on a small set of proven components. Innovation now happens at the edges: MoE for efficiency, MLA for KV cache compression, and deeper attention alternatives.</p>
+            </div>
+
+            <div class="detail-section">
+              <div class="detail-label">Attention Variants</div>
+              <div class="sub-topics">
+                <div class="sub-topic" onclick="toggleSubTopic(this)">
+                  <div class="sub-topic-header">
+                    <span class="sub-topic-name">MHA &rarr; MQA &rarr; GQA</span>
+                    <span class="sub-topic-icon">+</span>
+                  </div>
+                  <div class="sub-topic-preview">From full key-value heads to grouped sharing</div>
+                  <div class="sub-topic-detail">
+                    <p><strong>Multi-Head Attention (MHA)</strong>: each head has its own Q, K, V projections. Full expressivity but large KV cache (proportional to number of heads).</p>
+                    <p><strong>Multi-Query Attention (MQA)</strong>: all heads share a single K and V. Dramatically reduces KV cache but can hurt quality.</p>
+                    <p><strong><span class="term" data-term="gqa">Grouped-Query Attention (GQA)</span></strong>: compromise &mdash; heads are grouped, each group shares K/V. Llama 3 uses 8 KV heads for 64 query heads (8:1 ratio). Near-MHA quality with near-MQA efficiency.</p>
+                  </div>
+                </div>
+                <div class="sub-topic" onclick="toggleSubTopic(this)">
+                  <div class="sub-topic-header">
+                    <span class="sub-topic-name">Multi-head Latent Attention</span>
+                    <span class="sub-topic-icon">+</span>
+                  </div>
+                  <div class="sub-topic-preview">DeepSeek&rsquo;s 28x KV cache reduction</div>
+                  <div class="sub-topic-detail">
+                    <p><span class="term" data-term="mla">MLA</span> (DeepSeek V2/V3) compresses keys and values into a low-rank latent space before caching. Instead of storing full K/V tensors, it stores a compressed representation and reconstructs K/V on the fly during attention.</p>
+                    <p>Result: <strong>28x reduction in KV cache size</strong> compared to standard MHA, with minimal quality loss. This enables much larger batch sizes during inference.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="detail-section">
+              <div class="detail-label">Feed-Forward Network</div>
+              <div class="detail-text">
+                <p><span class="term" data-term="swiglu">SwiGLU</span> replaces the standard 2-matrix FFN (up-project &rarr; ReLU &rarr; down-project) with a 3-matrix gated design: two parallel up-projections, one gated by SiLU activation, then multiplied element-wise before the down-projection. Intermediate dimension is typically <code>(8/3) &times; d_model</code> to keep parameter count comparable.</p>
+              </div>
+            </div>
+
+            <div class="detail-section">
+              <div class="detail-label">Stability Innovations</div>
+              <div class="detail-text">
+                <p><strong>QK-Norm</strong>: normalize query and key vectors before the dot product to prevent attention logit explosion at scale. <strong>Logit capping</strong>: clip pre-softmax logits to a maximum value (e.g., 30.0 in Gemma 2). <strong>Z-loss</strong>: auxiliary loss that penalizes large logits, reducing training instability.</p>
+              </div>
+            </div>
+
+            <div class="detail-section">
+              <div class="detail-label">Mixture of Experts</div>
+              <div class="detail-text">
+                <p><span class="term" data-term="moe">MoE</span> replaces each dense FFN layer with N expert FFN layers plus a router. Only a subset of experts are activated per token. <strong>DeepSeek V3</strong>: 671B total parameters, 37B active per token (256 experts, top-8 routing). Auxiliary-loss-free load balancing via bias terms prevents expert collapse.</p>
+              </div>
+            </div>
+
+            <div class="detail-section">
+              <div class="detail-label">Positional Encodings</div>
+              <div class="detail-text">
+                <p><span class="term" data-term="rope">RoPE</span> (Rotary Position Embeddings) encodes position by rotating query/key vectors in 2D subspaces. Relative by construction &mdash; attention depends on distance between tokens, not absolute position. Supports extrapolation to longer sequences than seen during training (with techniques like NTK-aware scaling, YaRN).</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ PHASE H ═══ -->
+    <div class="phase-divider" id="phase-h">
+      <div class="phase-divider-marker">H</div>
+      <div class="phase-divider-content">
+        <div class="phase-divider-name">Training Process</div>
+        <div class="phase-divider-desc">Optimization, distribution, and resilience at scale</div>
+      </div>
+    </div>
+
+    <!-- H1: Optimization -->
+    <div class="pipeline-step reveal" data-step="optimization" id="optimization">
+      <div class="step-marker"><div class="step-dot"></div></div>
+      <div class="step-card">
+        <div class="step-header">
+          <span class="step-number">H1</span>
+          <span class="step-name">Optimization</span>
+          <span class="step-badge badge-compute">Compute</span>
+          <span class="step-expand-icon">+</span>
+        </div>
+        <div class="step-summary">Optimizers, learning rate schedules, and precision formats that turn gradient descent into efficient learning.</div>
+        <div class="step-detail">
+          <div class="detail-inner">
+            <div class="callout-box callout-takeaway">
+              <div class="callout-label">Key Takeaway</div>
+              <p>Muon (2025) achieves 2x the efficiency of AdamW and is now in PyTorch core. Meanwhile, FP8 training pioneered by DeepSeek V3 delivers 20-50% throughput gains with minimal quality loss.</p>
+            </div>
+            <div class="callout-box callout-analogy">
+              <div class="callout-label">Think of it like&hellip;</div>
+              <p>A hiker descending a foggy mountain. The optimizer decides step direction and size; the learning rate schedule decides when to take big strides vs. careful steps; precision format determines how detailed their map is.</p>
+            </div>
+
+            <div class="detail-section">
+              <div class="detail-label">Optimizers</div>
+              <div class="detail-text">
+                <table class="data-table">
+                  <thead><tr><th>Optimizer</th><th>Memory/Param</th><th>Key Advantage</th></tr></thead>
+                  <tbody>
+                    <tr><td><span class="term" data-term="adamw">AdamW</span></td><td>12 bytes</td><td>Incumbent, well-understood, reliable</td></tr>
+                    <tr><td><span class="term" data-term="muon">Muon</span></td><td>8 bytes</td><td>2x efficiency, now in PyTorch core (2025)</td></tr>
+                    <tr><td>SOAP</td><td>~12 bytes</td><td>&gt;40% fewer iterations to converge</td></tr>
+                    <tr><td>Lion</td><td>4 bytes</td><td>50% memory savings, sign-based updates</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="detail-section">
+              <div class="detail-label">Learning Rate Schedules</div>
+              <div class="detail-text">
+                <p><strong>Cosine decay</strong>: the traditional choice &mdash; warm up linearly, then decay following a cosine curve to near-zero. Problem: schedule length must be set before training begins.</p>
+                <p><span class="term" data-term="wsd">WSD (Warmup-Stable-Decay)</span>: decouple the schedule from total training steps. Warm up, hold a stable rate for most of training, then decay sharply at the end. Enables checkpoints at any point during the stable phase to be continued or branched.</p>
+              </div>
+            </div>
+
+            <div class="detail-section">
+              <div class="detail-label">Mixed Precision</div>
+              <div class="detail-text">
+                <p><strong>BF16</strong> (bfloat16): the standard for modern training. Same dynamic range as FP32 with half the bits. Supported natively on A100+.</p>
+                <p><strong>FP8</strong>: pioneered at scale by DeepSeek V3. <strong>20-50% throughput gain</strong> over BF16 with careful scaling. Uses per-tensor or per-channel quantization with high-precision master weights.</p>
+                <p><strong>FP4</strong>: emerging on NVIDIA Blackwell (B200). Still experimental for training; primarily inference-focused.</p>
+              </div>
+            </div>
+
+            <div class="detail-section">
+              <div class="detail-label">Gradient Accumulation</div>
+              <div class="detail-text">
+                <p>Simulates larger batch sizes by accumulating gradients over multiple forward/backward passes before updating weights. Llama 3 used an effective batch size of <strong>~16M tokens</strong>, achieved through gradient accumulation across thousands of GPUs.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- H2: Distributed Training -->
+    <div class="pipeline-step reveal" data-step="distributed" id="distributed">
+      <div class="step-marker"><div class="step-dot"></div></div>
+      <div class="step-card">
+        <div class="step-header">
+          <span class="step-number">H2</span>
+          <span class="step-name">Distributed Training</span>
+          <span class="step-badge badge-network">Network</span>
+          <span class="step-expand-icon">+</span>
+        </div>
+        <div class="step-summary">Splitting model and data across thousands of GPUs &mdash; the engineering challenge that defines frontier training.</div>
+        <div class="step-detail">
+          <div class="detail-inner">
+            <div class="callout-box callout-takeaway">
+              <div class="callout-label">Key Takeaway</div>
+              <p>Llama 3 405B trained on 16,384 H100 GPUs using 4D parallelism (TP=8, CP=16, PP=16, DP), achieving 400 TFLOPS per GPU (~40% MFU). Every parallelism strategy trades off communication overhead for memory savings.</p>
+            </div>
+            <div class="callout-box callout-analogy">
+              <div class="callout-label">Think of it like&hellip;</div>
+              <p>Building a skyscraper with 16,000 workers. Data parallelism gives everyone the same blueprint but different bricks. Tensor parallelism splits each floor across teams. Pipeline parallelism assigns different floors to different crews.</p>
+            </div>
+
+            <div class="detail-section">
+              <div class="detail-label">Parallelism Strategies</div>
+              <div class="sub-topics">
+                <div class="sub-topic" onclick="toggleSubTopic(this)">
+                  <div class="sub-topic-header">
+                    <span class="sub-topic-name">Data Parallelism &amp; ZeRO</span>
+                    <span class="sub-topic-icon">+</span>
+                  </div>
+                  <div class="sub-topic-preview">Replicate model, split data across GPUs</div>
+                  <div class="sub-topic-detail">
+                    <p><strong>DDP (Distributed Data Parallel)</strong>: each GPU holds a full model copy, processes different data, synchronizes gradients via all-reduce. Simple but memory-heavy.</p>
+                    <p><span class="term" data-term="zero">ZeRO</span> (Zero Redundancy Optimizer) partitions optimizer states (Stage 1: 4x savings), gradients (Stage 2: 8x), and parameters (Stage 3: linear scaling) across GPUs. Only gathers what&rsquo;s needed for each operation.</p>
+                    <p><span class="term" data-term="fsdp">FSDP2</span> (Fully Sharded Data Parallelism): PyTorch-native ZeRO Stage 3. The default for most training runs that don&rsquo;t need tensor parallelism.</p>
+                  </div>
+                </div>
+                <div class="sub-topic" onclick="toggleSubTopic(this)">
+                  <div class="sub-topic-header">
+                    <span class="sub-topic-name">Tensor Parallelism</span>
+                    <span class="sub-topic-icon">+</span>
+                  </div>
+                  <div class="sub-topic-preview">Split weight matrices within a single node</div>
+                  <div class="sub-topic-detail">
+                    <p><span class="term" data-term="tensor-parallelism">Tensor parallelism</span> splits individual weight matrices across GPUs within the same node (connected by NVLink at 900 GB/s on H100). Typically TP=8 (one per GPU in a node). Each GPU computes a slice of every layer, then exchanges results via all-reduce.</p>
+                    <p>Communication cost is proportional to hidden dimension and number of layers. Only practical within a node &mdash; inter-node bandwidth (InfiniBand at 400 Gb/s) is too slow for per-layer synchronization.</p>
+                  </div>
+                </div>
+                <div class="sub-topic" onclick="toggleSubTopic(this)">
+                  <div class="sub-topic-header">
+                    <span class="sub-topic-name">Pipeline Parallelism</span>
+                    <span class="sub-topic-icon">+</span>
+                  </div>
+                  <div class="sub-topic-preview">Distribute layers across nodes</div>
+                  <div class="sub-topic-detail">
+                    <p><span class="term" data-term="pipeline-parallelism">Pipeline parallelism</span> assigns different transformer layers to different nodes. Micro-batches flow through the pipeline like an assembly line. <strong>1F1B scheduling</strong> (one forward, one backward) minimizes the &ldquo;bubble&rdquo; where stages idle.</p>
+                    <p>Llama 3 used PP=16, meaning 16 pipeline stages across 16 nodes. Each stage holds ~5 layers of the 126-layer model.</p>
+                  </div>
+                </div>
+                <div class="sub-topic" onclick="toggleSubTopic(this)">
+                  <div class="sub-topic-header">
+                    <span class="sub-topic-name">4D Parallelism</span>
+                    <span class="sub-topic-icon">+</span>
+                  </div>
+                  <div class="sub-topic-preview">Combining all strategies at frontier scale</div>
+                  <div class="sub-topic-detail">
+                    <p><strong>Llama 3 405B on 16,384 H100s</strong>: TP=8 (within node), CP=16 (context/sequence parallelism for 128K context), PP=16 (pipeline stages), DP (data parallelism across remaining dimension). Total: 8 &times; 16 &times; 16 = 2,048 model replicas running in data-parallel.</p>
+                    <p><strong>400 TFLOPS per GPU</strong> (~40% MFU). Expert parallelism for MoE adds a 5th dimension in models like DeepSeek V3, where AllToAll routing sends tokens to the correct expert across nodes.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="detail-section">
+              <div class="detail-label">Training Frameworks</div>
+              <div class="detail-text">
+                <table class="data-table">
+                  <thead><tr><th>Framework</th><th>Org</th><th>Strength</th></tr></thead>
+                  <tbody>
+                    <tr><td>Megatron-LM</td><td>NVIDIA</td><td>TP + PP + expert parallelism, highly optimized CUDA kernels</td></tr>
+                    <tr><td>DeepSpeed</td><td>Microsoft</td><td>ZeRO optimizer, flexible parallelism composition</td></tr>
+                    <tr><td>TorchTitan</td><td>Meta</td><td>Native PyTorch 4D parallelism, used for Llama 3</td></tr>
+                    <tr><td>JAX/XLA</td><td>Google</td><td>Functional transforms (pmap/pjit), TPU-native</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <a href="index.html#cross-cutting" class="cross-link">&rarr; How parallelism works during inference</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- H3: Monitoring & Recovery -->
+    <div class="pipeline-step reveal" data-step="monitoring" id="monitoring">
+      <div class="step-marker"><div class="step-dot"></div></div>
+      <div class="step-card">
+        <div class="step-header">
+          <span class="step-number">H3</span>
+          <span class="step-name">Monitoring &amp; Recovery</span>
+          <span class="step-badge badge-logic">Logic</span>
+          <span class="step-expand-icon">+</span>
+        </div>
+        <div class="step-summary">Frontier training runs fail constantly &mdash; Llama 3 had 419 failures in 54 days. Resilience engineering is non-negotiable.</div>
+        <div class="step-detail">
+          <div class="detail-inner">
+            <div class="callout-box callout-takeaway">
+              <div class="callout-label">Key Takeaway</div>
+              <p>At scale, failures are inevitable (~1 every 3 hours for Llama 3). The key differentiator is recovery speed: async checkpointing (ByteCheckpoint: 529x speedup) and auto-repair systems (MegaScale: &gt;90% automated recovery).</p>
+            </div>
+
+            <div class="detail-section">
+              <div class="detail-label">Key Metrics</div>
+              <div class="detail-text">
+                <p><strong>Training loss</strong>: the primary signal. Should decrease smoothly; spikes indicate instability. <strong>Gradient norms</strong>: sudden increases warn of divergence. <span class="term" data-term="mfu">MFU</span> (Model FLOPS Utilization): what fraction of theoretical GPU compute is actually used. Llama 3 achieved ~40%; &gt;50% is exceptional.</p>
+                <p><strong>Validation loss</strong>: evaluated periodically on held-out data to detect overfitting or data quality issues.</p>
+              </div>
+            </div>
+
+            <div class="detail-section">
+              <div class="detail-label">Loss Spike Causes</div>
+              <div class="detail-text">
+                <p><strong>Residual amplification</strong>: deep residual connections can amplify small perturbations. <strong>Gradient intensification</strong>: sudden gradient magnitude jumps, often triggered by unusual data batches. <strong>Attention logit explosion</strong>: unbounded dot products in attention &mdash; mitigated by QK-norm and logit capping.</p>
+              </div>
+            </div>
+
+            <div class="detail-section">
+              <div class="detail-label">Failure Statistics</div>
+              <div class="metrics-row">
+                <div class="metric"><div class="metric-value">419</div><div class="metric-label">Llama 3 Failures</div></div>
+                <div class="metric"><div class="metric-value">54d</div><div class="metric-label">Training Duration</div></div>
+                <div class="metric"><div class="metric-value">30%</div><div class="metric-label">GPU Hardware Faults</div></div>
+                <div class="metric"><div class="metric-value">~3h</div><div class="metric-label">Mean Time Between</div></div>
+              </div>
+            </div>
+
+            <div class="detail-section">
+              <div class="detail-label">Checkpoint Strategies</div>
+              <div class="detail-text">
+                <p><strong>Synchronous checkpointing</strong>: pause training, write full model state to storage. Simple but adds 12-43% overhead at scale. <strong>Async checkpointing</strong> (ByteCheckpoint): snapshot to CPU/NVMe while training continues &mdash; <strong>529x speedup</strong> over synchronous. <span class="term" data-term="fsdp">FSDP2</span> sharded checkpoints: each GPU writes only its shard, parallel I/O.</p>
+              </div>
+            </div>
+
+            <div class="detail-section">
+              <div class="detail-label">Automated Recovery</div>
+              <div class="detail-text">
+                <p><strong>MegaScale</strong> (ByteDance): automated diagnosis and repair for &gt;90% of failures. Detects faulty GPUs, remaps workloads, and resumes from checkpoint without human intervention. At 16K+ GPU scale, manual recovery is impractical.</p>
+              </div>
+            </div>
+
+            <a href="training-economics.html#failure-costs" class="cross-link">&rarr; The cost of training failures</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ PHASE I ═══ -->
+    <div class="phase-divider" id="phase-i">
+      <div class="phase-divider-marker">I</div>
+      <div class="phase-divider-content">
+        <div class="phase-divider-name">Post-Training</div>
+        <div class="phase-divider-desc">Turning a base model into an aligned assistant</div>
+      </div>
+    </div>
+
+    <!-- I1: Supervised Fine-Tuning -->
+    <div class="pipeline-step reveal" data-step="sft" id="sft">
+      <div class="step-marker"><div class="step-dot"></div></div>
+      <div class="step-card">
+        <div class="step-header">
+          <span class="step-number">I1</span>
+          <span class="step-name">Supervised Fine-Tuning</span>
+          <span class="step-badge badge-logic">Logic</span>
+          <span class="step-expand-icon">+</span>
+        </div>
+        <div class="step-summary">Train on curated (instruction, response) pairs to establish format, tone, and instruction-following ability.</div>
+        <div class="step-detail">
+          <div class="detail-inner">
+            <div class="callout-box callout-takeaway">
+              <div class="callout-label">Key Takeaway</div>
+              <p>SFT bridges the gap between a base model (which just predicts next tokens) and an assistant (which follows instructions). Quality matters more than quantity &mdash; 10K excellent examples can outperform 1M mediocre ones.</p>
+            </div>
+            <div class="callout-box callout-analogy">
+              <div class="callout-label">Think of it like&hellip;</div>
+              <p>An apprenticeship after general education. The model already &ldquo;knows&rdquo; the language; SFT teaches it the manners and format of a helpful assistant.</p>
+            </div>
+
+            <div class="detail-section">
+              <div class="detail-label">Process</div>
+              <div class="detail-text">
+                <p>Train on <strong>10K-100K curated examples</strong> of (instruction, ideal response) pairs. The loss function only computes on the response tokens (masking the instruction). Typically 1-3 epochs to avoid overfitting.</p>
+                <p>Examples come from human annotators, distillation from stronger models, or synthetic generation with human filtering.</p>
+              </div>
+            </div>
+
+            <div class="detail-section">
+              <div class="detail-label">Full vs Parameter-Efficient</div>
+              <div class="detail-text">
+                <p><strong>Full fine-tuning</strong>: update all parameters. Best quality but expensive (~$50K per run for a 7B model on H100s).</p>
+                <p><strong>LoRA/QLoRA</strong>: freeze base weights, train small low-rank adapter matrices. <span class="term" data-term="lora">LoRA</span> adds &lt;1% parameters, achieves 90-95% of full fine-tuning quality at <strong>$300-$3,000 per run</strong>. QLoRA further quantizes the base model to 4-bit during training.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- I2: Alignment -->
+    <div class="pipeline-step reveal" data-step="alignment" id="alignment">
+      <div class="step-marker"><div class="step-dot"></div></div>
+      <div class="step-card">
+        <div class="step-header">
+          <span class="step-number">I2</span>
+          <span class="step-name">Alignment</span>
+          <span class="step-badge badge-logic">Logic</span>
+          <span class="step-expand-icon">+</span>
+        </div>
+        <div class="step-summary">Aligning model behavior with human preferences &mdash; from RLHF to <span class="term" data-term="grpo">GRPO</span>, the methods that make models helpful, harmless, and honest.</div>
+        <div class="step-detail">
+          <div class="detail-inner">
+            <div class="callout-box callout-takeaway">
+              <div class="callout-label">Key Takeaway</div>
+              <p>GRPO (DeepSeek R1) eliminated the need for reward models entirely by using verifiable rewards, jumping AIME 2024 scores from 15.6% to 71.0%. The field is rapidly moving away from the complexity of traditional RLHF.</p>
+            </div>
+
+            <div class="detail-section">
+              <div class="detail-label">Alignment Methods</div>
+              <div class="sub-topics">
+                <div class="sub-topic" onclick="toggleSubTopic(this)">
+                  <div class="sub-topic-header">
+                    <span class="sub-topic-name">RLHF Pipeline</span>
+                    <span class="sub-topic-icon">+</span>
+                  </div>
+                  <div class="sub-topic-preview">The original 3-stage approach</div>
+                  <div class="sub-topic-detail">
+                    <p><span class="term" data-term="rlhf">RLHF</span> (Reinforcement Learning from Human Feedback) has 3 stages: (1) SFT the base model, (2) train a reward model on human preference comparisons, (3) optimize the policy with PPO against the reward model.</p>
+                    <p>Requires <strong>4 models in memory simultaneously</strong> (policy, reference, reward, value). Complex, expensive, and sensitive to hyperparameters. Still used by OpenAI and Anthropic but increasingly supplemented by simpler methods.</p>
+                  </div>
+                </div>
+                <div class="sub-topic" onclick="toggleSubTopic(this)">
+                  <div class="sub-topic-header">
+                    <span class="sub-topic-name">DPO</span>
+                    <span class="sub-topic-icon">+</span>
+                  </div>
+                  <div class="sub-topic-preview">Direct preference optimization, no reward model</div>
+                  <div class="sub-topic-detail">
+                    <p><span class="term" data-term="dpo">DPO</span> (Direct Preference Optimization) reparameterizes the RLHF objective to directly optimize on preference pairs without training a separate reward model. Only needs <strong>2 models</strong> (policy + reference). Simpler pipeline, more stable training.</p>
+                    <p>Limitation: still requires pairwise comparisons (chosen/rejected responses), which are expensive to collect.</p>
+                  </div>
+                </div>
+                <div class="sub-topic" onclick="toggleSubTopic(this)">
+                  <div class="sub-topic-header">
+                    <span class="sub-topic-name">GRPO</span>
+                    <span class="sub-topic-icon">+</span>
+                  </div>
+                  <div class="sub-topic-preview">Group Relative Policy Optimization</div>
+                  <div class="sub-topic-detail">
+                    <p><span class="term" data-term="grpo">GRPO</span> (DeepSeek R1): no reward model, no value network. Generate multiple responses per prompt, use <strong>verifiable rewards</strong> (math correctness, code execution, format compliance) to rank them, then optimize the policy on the group-relative ranking.</p>
+                    <p>Result on AIME 2024: <strong>15.6% &rarr; 71.0%</strong>. Dramatically simpler and more scalable than RLHF for domains with verifiable outcomes.</p>
+                  </div>
+                </div>
+                <div class="sub-topic" onclick="toggleSubTopic(this)">
+                  <div class="sub-topic-header">
+                    <span class="sub-topic-name">Constitutional AI &amp; KTO</span>
+                    <span class="sub-topic-icon">+</span>
+                  </div>
+                  <div class="sub-topic-preview">AI judges and binary feedback</div>
+                  <div class="sub-topic-detail">
+                    <p><span class="term" data-term="constitutional-ai">Constitutional AI</span> (Anthropic): replace human preference annotators with AI judges that evaluate responses against a written constitution. Enables RLAIF (RL from AI Feedback) at much lower cost.</p>
+                    <p><span class="term" data-term="kto">KTO</span> (Kahneman-Tversky Optimization): uses only binary labels (good/bad) instead of pairwise comparisons. Easier to collect feedback &mdash; humans just rate individual responses as thumbs up or down.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- I3: Evaluation -->
+    <div class="pipeline-step reveal" data-step="evaluation" id="evaluation">
+      <div class="step-marker"><div class="step-dot"></div></div>
+      <div class="step-card">
+        <div class="step-header">
+          <span class="step-number">I3</span>
+          <span class="step-name">Evaluation</span>
+          <span class="step-badge badge-logic">Logic</span>
+          <span class="step-expand-icon">+</span>
+        </div>
+        <div class="step-summary">Measuring model capabilities across knowledge, code, math, and reasoning &mdash; while detecting contamination and gaming.</div>
+        <div class="step-detail">
+          <div class="detail-inner">
+            <div class="callout-box callout-takeaway">
+              <div class="callout-label">Key Takeaway</div>
+              <p>Static benchmarks saturate and leak into training data. The field is shifting to dynamic evaluation: LiveBench refreshes monthly, Chatbot Arena uses live ELO rankings from blind human comparisons.</p>
+            </div>
+
+            <div class="detail-section">
+              <div class="detail-label">Benchmark Suites</div>
+              <div class="sub-topics">
+                <div class="sub-topic" onclick="toggleSubTopic(this)">
+                  <div class="sub-topic-header">
+                    <span class="sub-topic-name">Knowledge &amp; Reasoning</span>
+                    <span class="sub-topic-icon">+</span>
+                  </div>
+                  <div class="sub-topic-preview">MMLU, MMLU-Pro, HellaSwag</div>
+                  <div class="sub-topic-detail">
+                    <p><span class="term" data-term="mmlu">MMLU</span> (57 subjects, multiple choice): essentially saturated at &gt;90% for frontier models. <strong>MMLU-Pro</strong>: 10-option multiple choice with harder questions, 16-33% more difficult. <strong>HellaSwag</strong>: commonsense reasoning about physical situations.</p>
+                  </div>
+                </div>
+                <div class="sub-topic" onclick="toggleSubTopic(this)">
+                  <div class="sub-topic-header">
+                    <span class="sub-topic-name">Code &amp; Math</span>
+                    <span class="sub-topic-icon">+</span>
+                  </div>
+                  <div class="sub-topic-preview">HumanEval, SWE-bench, AIME</div>
+                  <div class="sub-topic-detail">
+                    <p><strong>Code</strong>: HumanEval (function completion), LiveCodeBench (monthly-refreshed problems), SWE-bench (real GitHub issues &mdash; requires multi-file edits).</p>
+                    <p><strong>Math</strong>: GSM8K (grade school, largely saturated), MATH (competition-level), AIME (AMC competition &mdash; still challenging for frontier models).</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="detail-section">
+              <div class="detail-label">Contamination Detection</div>
+              <div class="detail-text">
+                <p><strong>Min-K% Prob</strong>: measures whether a model assigns suspiciously high probability to benchmark answers, suggesting memorization. <strong>CDD</strong> (Canonical Data Detection): checks if benchmark examples appear verbatim in training data. <strong>Perplexity-based</strong>: low perplexity on benchmark prompts suggests data leakage.</p>
+              </div>
+            </div>
+
+            <div class="detail-section">
+              <div class="detail-label">Dynamic Evaluation</div>
+              <div class="detail-text">
+                <p><strong>LiveBench</strong>: monthly refresh of questions with verifiable answers. Immune to contamination because questions didn&rsquo;t exist during training. <strong>Chatbot Arena</strong> (LMSYS): blind pairwise comparisons by real users, producing ELO rankings. Over 1M votes. The most trusted signal of real-world model quality.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /pipeline-flow -->
+</section>
+
+<!-- ─── FOOTER ─── -->
+<footer class="footer">
+  <p>LLM Training Anatomy &middot; A reference on how large language models are built</p>
+</footer>
+
+<script>
+/* ─── THEME TOGGLE ─── */
+var toggle = document.getElementById('theme-toggle');
+if (toggle) {
+  toggle.addEventListener('click', function() {
+    var current = document.documentElement.getAttribute('data-theme') || 'dark';
+    var next = current === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('theme', next);
+  });
+}
+
+/* ─── REVEAL ON SCROLL ─── */
+var revealObserver = new IntersectionObserver(function(entries) {
+  entries.forEach(function(entry) {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('visible');
+      revealObserver.unobserve(entry.target);
+    }
+  });
+}, { threshold: 0.1 });
+
+document.querySelectorAll('.reveal').forEach(function(el) {
+  revealObserver.observe(el);
+});
+
+/* ─── PIPELINE STEP TOGGLE ─── */
+document.querySelectorAll('.pipeline-step').forEach(function(step) {
+  step.querySelector('.step-header').addEventListener('click', function(e) {
+    if (e.target.closest('.term')) return;
+    step.classList.toggle('active');
+  });
+});
+
+/* ─── SUB-TOPIC TOGGLE ─── */
+window.toggleSubTopic = function(el) {
+  el.classList.toggle('expanded');
+};
+
+/* ─── TERM TOOLTIPS ─── */
+var activeTooltip = null;
+var activeTermEl = null;
+
+var termDefs = {
+  'data-quality': { def: 'The principle that training data quality (measured by relevance, accuracy, and diversity) has more impact on model capability than raw data quantity. DCLM demonstrated that keeping only 10% highest-quality data outperforms training on everything.' },
+  'fineweb': { def: 'A 15-trillion token curated dataset derived from CommonCrawl, designed for LLM pre-training. Developed by Hugging Face as a high-quality open training corpus.' },
+  'dclm': { def: 'DataComp for Language Models — a benchmark and dataset that curated 240T raw tokens down to 3.8T tokens using classifier-based quality filtering, demonstrating that aggressive data curation dramatically improves model quality.' },
+  'minhash': { def: 'MinHash Locality-Sensitive Hashing — an efficient algorithm for estimating Jaccard similarity between documents. Used in training data deduplication to find near-duplicate text at scale without pairwise comparison.' },
+  'bpe': { def: 'Byte-Pair Encoding — a tokenization algorithm that iteratively merges the most frequent adjacent byte/character pairs. Builds a vocabulary bottom-up from characters to subwords. Used by GPT-4 (tiktoken) and Llama 3 (SentencePiece).' },
+  'unigram-model': { def: 'A tokenization approach that starts with a large candidate vocabulary and iteratively removes tokens that least affect the training corpus likelihood. Tends to produce more linguistically meaningful subwords than BPE.' },
+  'rmsnorm': { def: 'Root Mean Square Layer Normalization — a simplified variant of LayerNorm that normalizes by RMS of activations only (no mean subtraction). Cheaper to compute and equally effective. Used in Llama, Gemma, and most modern LLMs.' },
+  'rope': { def: 'Rotary Position Embeddings — encodes position by rotating query/key vectors in 2D subspaces. Position information is relative by construction, and supports extrapolation to longer sequences via NTK-aware scaling or YaRN.' },
+  'swiglu': { def: 'SwiGLU activation — a gated linear unit using the SiLU (Swish) activation function. Replaces the standard 2-matrix FFN with a 3-matrix gated design, improving training efficiency at the cost of one additional weight matrix.' },
+  'gqa': { def: 'Grouped-Query Attention — a compromise between MHA (full KV heads) and MQA (single KV head). Query heads are grouped, and each group shares one K/V head. Llama 3 uses 8 KV heads for 64 query heads.' },
+  'mla': { def: 'Multi-head Latent Attention (DeepSeek V2/V3) — compresses keys and values into a low-rank latent space before caching, achieving 28x KV cache reduction with minimal quality loss.' },
+  'moe': { def: 'Mixture of Experts — replaces dense FFN layers with N expert FFN layers plus a learned router. Only a subset of experts activate per token, enabling larger total parameter counts with constant compute cost.' },
+  'adamw': { def: 'Adam optimizer with decoupled weight decay. The standard optimizer for LLM training — maintains first and second moment estimates of gradients, requiring 12 bytes of state per parameter.' },
+  'muon': { def: 'A 2025 optimizer that achieves 2x the efficiency of AdamW using momentum in the orthogonal complement of the gradient. Now included in PyTorch core. Uses 8 bytes of state per parameter.' },
+  'wsd': { def: 'Warmup-Stable-Decay learning rate schedule — warms up linearly, maintains a stable learning rate for most of training, then decays sharply at the end. Decouples the schedule from total training steps, enabling flexible checkpointing.' },
+  'zero': { def: 'Zero Redundancy Optimizer (Microsoft DeepSpeed) — partitions optimizer states (Stage 1), gradients (Stage 2), and parameters (Stage 3) across GPUs to eliminate redundancy. Enables training models much larger than single-GPU memory.' },
+  'fsdp': { def: 'Fully Sharded Data Parallelism (PyTorch) — native implementation of ZeRO Stage 3. Each GPU stores only a shard of parameters, gathering full parameters on-the-fly for computation. FSDP2 is the current version.' },
+  'tensor-parallelism': { def: 'A parallelism strategy that splits individual weight matrices across GPUs within the same node. Requires high-bandwidth interconnect (NVLink) for per-layer all-reduce synchronization. Typically TP=8 for one GPU per node.' },
+  'pipeline-parallelism': { def: 'A parallelism strategy that assigns different transformer layers to different nodes. Micro-batches flow through in a pipeline. 1F1B scheduling minimizes idle "bubble" time between forward and backward passes.' },
+  'mfu': { def: 'Model FLOPS Utilization — the fraction of theoretical peak GPU FLOPS actually used during training. Llama 3 achieved ~40% MFU on H100s. Values above 50% are considered exceptional.' },
+  'rlhf': { def: 'Reinforcement Learning from Human Feedback — a 3-stage alignment process: (1) supervised fine-tuning, (2) reward model training on human preferences, (3) PPO optimization. Requires 4 models in memory simultaneously.' },
+  'dpo': { def: 'Direct Preference Optimization — reparameterizes the RLHF objective to directly optimize on preference pairs without a separate reward model. Simpler and more stable than PPO, requiring only 2 models.' },
+  'grpo': { def: 'Group Relative Policy Optimization (DeepSeek R1) — generates multiple responses per prompt, uses verifiable rewards to rank them, and optimizes on group-relative rankings. No reward model or value network needed.' },
+  'constitutional-ai': { def: 'Anthropic\'s approach to alignment using AI judges that evaluate responses against a written constitution of principles. Enables RLAIF (RL from AI Feedback) at lower cost than human annotation.' },
+  'kto': { def: 'Kahneman-Tversky Optimization — an alignment method using only binary (good/bad) labels instead of pairwise comparisons. Named after prospect theory, it accounts for loss aversion in the optimization objective.' },
+  'lora': { def: 'Low-Rank Adaptation — freezes base model weights and trains small low-rank adapter matrices that are added to existing weight matrices. Adds <1% parameters while achieving 90-95% of full fine-tuning quality.' },
+  'mmlu': { def: 'Massive Multitask Language Understanding — a benchmark of 57 academic subjects testing broad knowledge. Essentially saturated at >90% for frontier models; MMLU-Pro adds harder 10-option questions.' }
+};
+
+function dismissTooltip() {
+  if (activeTooltip) { activeTooltip.remove(); activeTooltip = null; activeTermEl = null; }
+}
+
+function showTermTooltip(term) {
+  if (activeTermEl === term) { dismissTooltip(); return; }
+  dismissTooltip();
+  var key = term.getAttribute('data-term');
+  var def = termDefs[key];
+  if (!def) return;
+  activeTermEl = term;
+
+  var tip = document.createElement('div');
+  tip.className = 'term-tooltip';
+
+  var closeBtn = document.createElement('button');
+  closeBtn.className = 'term-tooltip-close';
+  closeBtn.textContent = '\u00D7';
+  closeBtn.addEventListener('click', function(e) { e.stopPropagation(); dismissTooltip(); });
+  tip.appendChild(closeBtn);
+
+  var title = document.createElement('div');
+  title.className = 'term-tooltip-title';
+  title.textContent = term.textContent;
+  tip.appendChild(title);
+
+  var body = document.createElement('div');
+  body.className = 'term-tooltip-body';
+  body.textContent = def.def;
+  tip.appendChild(body);
+
+  if (def.src) {
+    var src = document.createElement('a');
+    src.className = 'term-tooltip-source';
+    src.href = def.src;
+    src.target = '_blank';
+    src.rel = 'noopener';
+    src.textContent = 'Source \u2197';
+    tip.appendChild(src);
+  }
+
+  document.body.appendChild(tip);
+  activeTooltip = tip;
+
+  var r = term.getBoundingClientRect();
+  var tw = tip.offsetWidth;
+  var th = tip.offsetHeight;
+  var left = r.left + r.width / 2 - tw / 2;
+  var top = r.bottom + 8;
+
+  if (left < 8) left = 8;
+  if (left + tw > window.innerWidth - 8) left = window.innerWidth - tw - 8;
+  if (top + th > window.innerHeight - 8) top = r.top - th - 8;
+
+  tip.style.left = left + 'px';
+  tip.style.top = top + 'px';
+}
+
+document.querySelectorAll('.term').forEach(function(term) {
+  term.addEventListener('click', function(e) {
+    e.stopPropagation();
+    e.preventDefault();
+    showTermTooltip(term);
+  });
+});
+
+document.addEventListener('click', function(e) {
+  if (activeTooltip && !activeTooltip.contains(e.target) && !e.target.classList.contains('term')) {
+    dismissTooltip();
+  }
+});
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') dismissTooltip();
+});
+
+/* ─── MINIMAP ─── */
+var minimap = document.getElementById('minimap');
+var minimapItems = minimap.querySelectorAll('.minimap-item');
+var scrollLock = false;
+
+var minimapObserver = new IntersectionObserver(function(entries) {
+  if (scrollLock) return;
+  entries.forEach(function(entry) {
+    if (entry.isIntersecting) {
+      var id = entry.target.id;
+      minimapItems.forEach(function(item) {
+        item.classList.toggle('active', item.getAttribute('data-target') === id);
+      });
+    }
+  });
+}, { rootMargin: '-64px 0px -60% 0px', threshold: 0 });
+
+document.querySelectorAll('.pipeline-step[id], .phase-divider[id]').forEach(function(section) {
+  if (section.id) minimapObserver.observe(section);
+});
+
+minimapItems.forEach(function(item) {
+  item.addEventListener('click', function() {
+    var targetId = item.getAttribute('data-target');
+    var el = document.getElementById(targetId);
+    if (!el) return;
+
+    minimapItems.forEach(function(mi) { mi.classList.remove('active'); });
+    item.classList.add('active');
+    scrollLock = true;
+
+    window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 64, behavior: 'smooth' });
+
+    setTimeout(function() { scrollLock = false; }, 800);
+  });
+});
+
+/* Show minimap after hero */
+var heroSection = document.querySelector('.hero');
+var minimapShowObserver = new IntersectionObserver(function(entries) {
+  entries.forEach(function(entry) {
+    if (!entry.isIntersecting) {
+      minimap.classList.add('visible');
+    } else {
+      minimap.classList.remove('visible');
+    }
+  });
+}, { threshold: 0.5 });
+
+if (heroSection) minimapShowObserver.observe(heroSection);
+
+</script>
+
+</body>
+</html>

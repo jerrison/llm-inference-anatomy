@@ -1067,10 +1067,11 @@ body {
 
 /* ─── RESPONSIVE ─── */
 @media (max-width: 768px) {
-  .site-nav { padding: 0 1rem; }
+  .site-nav { padding: 0 0.75rem; }
   .nav-logo { font-size: 0.85rem; }
-  .nav-link { font-size: 0.55rem; letter-spacing: 0.1em; }
-  .nav-links { gap: 0.75rem; }
+  .nav-link { font-size: 0.5rem; letter-spacing: 0.08em; }
+  .nav-links { gap: 0.5rem; }
+  .nav-divider { height: 14px; }
   .pipeline-flow::before { left: 18px; }
   .pipeline-step { grid-template-columns: 36px 1fr; }
   .step-card { padding: 1rem; }
@@ -1202,6 +1203,13 @@ body {
 .nav-link.active {
   color: var(--accent);
   border-bottom: 1.5px solid var(--accent);
+}
+
+.nav-divider {
+  width: 1px;
+  height: 18px;
+  background: var(--border);
+  flex-shrink: 0;
 }
 
 [data-theme="light"] .site-nav {
@@ -1416,10 +1424,13 @@ body, .code-block, .journey-diagram, .callout-box, .metric, .journey-detail-pane
 <body>
 
 <nav class="site-nav">
-  <a href="index.html" class="nav-logo">LLM Inference Anatomy</a>
+  <a href="index.html" class="nav-logo">LLM Anatomy</a>
   <div class="nav-links">
-    <a href="index.html" class="nav-link active">Technical Pipeline</a>
-    <a href="economics.html" class="nav-link">Economics</a>
+    <a href="training.html" class="nav-link">Training</a>
+    <a href="training-economics.html" class="nav-link">Training Economics</a>
+    <span class="nav-divider"></span>
+    <a href="index.html" class="nav-link active">Inference</a>
+    <a href="economics.html" class="nav-link">Inference Economics</a>
     <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme"></button>
   </div>
 </nav>
@@ -1772,6 +1783,7 @@ body, .code-block, .journey-diagram, .callout-box, .metric, .journey-detail-pane
                     <p>Japanese users pay <strong>~2x more per word</strong> due to tokenizer inefficiency. Different models use different tokenizers, so the same text produces different token counts. Most providers charge input and output tokens separately because output tokens (sequential decode) cost more to serve.</p>
                   </div>
                 </div>
+                <a href="training.html#tokenizer" class="cross-link">&rarr; How tokenizers are trained</a>
               </div>
             </div>
           </div>
@@ -1844,6 +1856,7 @@ body, .code-block, .journey-diagram, .callout-box, .metric, .journey-detail-pane
                     <p>Google's <strong>Gemma 3N</strong> introduced PLE for mobile inference. Rather than one large initial embedding, PLE generates <strong>smaller, layer-specific embeddings</strong> cached to slower storage (flash memory) and loaded as each layer runs. This dramatically reduces active memory footprint for on-device models.</p>
                   </div>
                 </div>
+                <a href="training.html#architecture" class="cross-link">&rarr; How model architectures are designed</a>
               </div>
             </div>
           </div>
@@ -2567,6 +2580,7 @@ body, .code-block, .journey-diagram, .callout-box, .metric, .journey-detail-pane
       <div class="sub-topic-preview">For <span class="term" data-term="moe">MoE</span> models: route experts to GPUs</div>
       <div class="sub-topic-detail">
         <p>Specialised for <strong>Mixture of Experts</strong> models (DeepSeek-V3: 256 experts, Mixtral: 8). Different experts placed on different GPUs. Requires <strong>All-to-All communication</strong> to route tokens to correct expert GPU. Since only a fraction of experts activate per token (e.g., 2/64), each GPU does less work while the total model can be massive.</p>
+        <p style="margin-top:0.5rem"><a href="training.html#distributed" class="cross-link">&rarr; How parallelism works during training (4D parallelism, ZeRO, FSDP)</a></p>
       </div>
     </div>
     <div class="sub-topic" onclick="toggleSubTopic(this)">
