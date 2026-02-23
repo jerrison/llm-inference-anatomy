@@ -472,6 +472,9 @@ Minimap labels must be hidden at base CSS level (`opacity: 0; width: 0`), not in
 ### 14. Section Toggle Responsiveness
 For fast open/close behavior, avoid broad `transition: all` on pipeline step elements. Use targeted transitions around `0.18s` for `.step-dot`, `.step-card`, `.step-card::before`, and `.step-expand-icon`, and keep `.step-detail` at `max-height 0.18s ease-out` across all four pages.
 
+### 15. Search Responsiveness and Full-Content Matching
+Search must support fuzzy matching and body-content discovery, not just titles/descriptions. Build index text from section `textContent`, lazily fetch same-origin pages to enrich cross-page corpus, debounce input, and use event delegation for search result interactions. Avoid expensive search-overlay blur effects that cause interface jank.
+
 ## Deployment Verification
 
 After deploying, verify:

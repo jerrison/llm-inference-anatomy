@@ -456,6 +456,9 @@ When modifying interactions on any page:
 - [ ] Click the same term twice — verify it dismisses cleanly (no flash)
 - [ ] Click a term, then click elsewhere — verify tooltip closes
 - [ ] Click a term, then click a different term — verify first closes, second opens
+- [ ] Search modal opens via Cmd+K (Mac) / Ctrl+K (Windows) without visible lag
+- [ ] Fuzzy query tolerance works (e.g., minor typos still return intended section)
+- [ ] In-content search works (query from paragraph/detail text, not just section title, returns a hit)
 - [ ] Test at viewport < 768px — verify responsive layout
 - [ ] Verify no JS errors in console on all 4 pages
 
@@ -500,3 +503,5 @@ When modifying interactions on any page:
 11. **No unnecessary abstractions**: The single-file approach is intentional. Don't add build steps, CSS preprocessors, JS frameworks, or separate files.
 
 12. **Section toggle responsiveness**: Keep section expand/collapse interactions snappy. For `.pipeline-step` UI states, use targeted transitions (`border-color`, `background-color`, `opacity`, `transform`) around `0.18s` instead of broad `transition: all 0.3s`. Keep `.step-detail` at `max-height 0.18s ease-out` across all four pages for consistent feel.
+
+13. **Search responsiveness and quality**: Avoid expensive effects in search interactions (`backdrop-filter` blur, broad `transition: all`, per-render event listener binding). Keep search fast with debounced input, event delegation for result rows, and lazy cross-page content indexing so fuzzy matching can include section body text.

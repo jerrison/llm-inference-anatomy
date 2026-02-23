@@ -150,7 +150,7 @@ body {
   border-radius: 12px;
   padding: 1.5rem;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: border-color 0.18s ease, background-color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
   position: relative;
 }
 
@@ -537,7 +537,7 @@ body {
   border-radius: 8px;
   padding: 1rem;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: border-color 0.18s ease, background-color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
 }
 
 .sub-topic:hover {
@@ -1411,7 +1411,7 @@ body, .code-block, .journey-diagram, .callout-box, .metric, .journey-detail-pane
 }
 
 /* ─── SEARCH ─── */
-.search-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.55); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); z-index: 2000; display: flex; align-items: flex-start; justify-content: center; padding-top: 12vh; opacity: 0; pointer-events: none; transition: opacity 0.15s ease; }
+.search-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 2000; display: flex; align-items: flex-start; justify-content: center; padding-top: 12vh; opacity: 0; pointer-events: none; transition: opacity 0.15s ease; }
 .search-overlay.open { opacity: 1; pointer-events: auto; }
 .search-modal { background: var(--bg-card); border: 1px solid var(--border-active); border-radius: 12px; width: min(560px, calc(100vw - 2rem)); box-shadow: 0 24px 64px rgba(0,0,0,0.5); transform: translateY(-8px); transition: transform 0.15s ease; }
 .search-overlay.open .search-modal { transform: translateY(0); }
@@ -1420,7 +1420,7 @@ body, .code-block, .journey-diagram, .callout-box, .metric, .journey-detail-pane
 .search-input { flex: 1; background: none; border: none; outline: none; font-family: var(--font-body); font-size: 0.95rem; color: var(--text); }
 .search-input::placeholder { color: var(--text-muted); }
 .search-esc-hint { font-family: var(--font-mono); font-size: 0.6rem; color: var(--text-muted); background: var(--bg); border: 1px solid var(--border); border-radius: 4px; padding: 0.15rem 0.4rem; flex-shrink: 0; }
-.search-results { max-height: 380px; overflow-y: auto; padding: 0.4rem 0; }
+.search-results { max-height: 380px; overflow-y: auto; padding: 0.4rem 0; contain: content; }
 .search-group-header { font-family: var(--font-mono); font-size: 0.5rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text-muted); padding: 0.6rem 1rem 0.2rem; }
 .search-result { display: flex; align-items: center; gap: 0.75rem; padding: 0.55rem 1rem; cursor: pointer; transition: background 0.1s ease; }
 .search-result:hover, .search-result.selected { background: var(--bg-card-hover); }
@@ -4823,6 +4823,236 @@ var SEARCH_INDEX = [
 ];
 
 var searchSelectedIdx = -1;
+var searchSelectedEl = null;
+var searchFlatResults = [];
+var searchDebounceTimer = null;
+var searchCrossPageRequested = false;
+var SEARCH_PAGE_ORDER = ['Inference', 'Inference Economics', 'Training', 'Training Economics'];
+
+function normalizeSearchText(text) {
+  return (text || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function escapeHtml(text) {
+  return (text || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function tokenizeQuery(queryNorm) {
+  if (!queryNorm) return [];
+  return queryNorm.split(' ').filter(function(token) { return token.length > 1; });
+}
+
+function resolveAnchorTarget(root, anchor) {
+  if (!root || !anchor) return null;
+  var target = root.getElementById(anchor);
+  if (target) return target;
+  var stepKey = anchor.replace(/^step-/, '');
+  target = root.querySelector('.pipeline-step[data-step="' + stepKey + '"]');
+  if (target) return target;
+  return root.querySelector('[data-step="' + stepKey + '"]');
+}
+
+function extractSectionText(root, anchor) {
+  var target = resolveAnchorTarget(root, anchor);
+  if (!target) return '';
+  var text = (target.textContent || '').replace(/\s+/g, ' ').trim();
+  if (text.length > 5000) text = text.slice(0, 5000);
+  return text;
+}
+
+function rebuildSearchBlob(item) {
+  var base = [item.title, item.desc, item.pageLabel, item.anchor.replace(/[-_]/g, ' ')].join(' ');
+  item._titleNorm = normalizeSearchText(item.title);
+  item._descNorm = normalizeSearchText(item.desc);
+  item._contentNorm = normalizeSearchText(item._content || '');
+  item._blobNorm = normalizeSearchText(base + ' ' + (item._content || ''));
+}
+
+function prepareSearchIndex() {
+  SEARCH_INDEX.forEach(function(item) {
+    if (item.page === CURRENT_PAGE) {
+      item._content = extractSectionText(document, item.anchor);
+    } else {
+      item._content = item._content || '';
+    }
+    rebuildSearchBlob(item);
+  });
+}
+
+function fuzzySubsequenceScore(query, text) {
+  if (!query || !text) return 0;
+  var qi = 0;
+  var ti = 0;
+  var start = -1;
+  var last = -1;
+  var gapPenalty = 0;
+
+  while (qi < query.length && ti < text.length) {
+    if (query.charAt(qi) === text.charAt(ti)) {
+      if (start === -1) start = ti;
+      if (last !== -1 && ti > last + 1) gapPenalty += (ti - last - 1);
+      last = ti;
+      qi++;
+    }
+    ti++;
+  }
+
+  if (qi !== query.length || start === -1 || last === -1) return 0;
+
+  var span = last - start + 1;
+  var compactness = query.length / Math.max(span, 1);
+  var startBonus = start === 0 ? 0.2 : Math.max(0, 0.12 - start * 0.003);
+  var penalty = Math.min(0.45, gapPenalty * 0.01);
+  var score = compactness + startBonus - penalty;
+  return Math.max(0, Math.min(1, score));
+}
+
+function scoreSearchItem(item, queryNorm, tokens) {
+  if (!queryNorm) return 1;
+
+  var titleNorm = item._titleNorm || '';
+  var descNorm = item._descNorm || '';
+  var blobNorm = item._blobNorm || '';
+
+  var score = 0;
+  var matched = false;
+
+  if (titleNorm.indexOf(queryNorm) === 0) {
+    score += 140;
+    matched = true;
+  } else if (titleNorm.indexOf(queryNorm) !== -1) {
+    score += 110;
+    matched = true;
+  }
+
+  if (descNorm.indexOf(queryNorm) !== -1) {
+    score += 48;
+    matched = true;
+  }
+
+  if (blobNorm.indexOf(queryNorm) !== -1) {
+    score += 78;
+    matched = true;
+  }
+
+  var tokenHits = 0;
+  tokens.forEach(function(token) {
+    if (titleNorm.indexOf(token) !== -1) {
+      score += 34;
+      tokenHits += 1;
+      matched = true;
+      return;
+    }
+    if (blobNorm.indexOf(token) !== -1) {
+      score += 18;
+      tokenHits += 1;
+      matched = true;
+      return;
+    }
+
+    var fuzzyTitle = fuzzySubsequenceScore(token, titleNorm);
+    var fuzzyBlob = fuzzySubsequenceScore(token, blobNorm);
+    var fuzzyToken = Math.max(fuzzyTitle, fuzzyBlob * 0.9);
+    if (fuzzyToken >= 0.74) {
+      score += fuzzyToken * 16;
+      tokenHits += 0.6;
+      matched = true;
+    }
+  });
+
+  if (tokens.length) score += (tokenHits / tokens.length) * 20;
+
+  var fuzzyWhole = Math.max(
+    fuzzySubsequenceScore(queryNorm, titleNorm),
+    fuzzySubsequenceScore(queryNorm, blobNorm) * 0.88
+  );
+  if (fuzzyWhole >= 0.76) {
+    score += fuzzyWhole * 34;
+    matched = true;
+  }
+
+  if (!matched || score < 22) return 0;
+  if (item.page === CURRENT_PAGE) score += 6;
+  return score;
+}
+
+function buildSearchSnippet(item, queryNorm, tokens) {
+  var fallback = item.desc || '';
+  var content = (item._content || '').replace(/\s+/g, ' ').trim();
+  if (!content) return fallback;
+
+  var lower = content.toLowerCase();
+  var hit = -1;
+
+  for (var i = 0; i < tokens.length; i++) {
+    if (tokens[i].length < 3) continue;
+    hit = lower.indexOf(tokens[i]);
+    if (hit !== -1) break;
+  }
+
+  if (hit === -1 && queryNorm.length >= 3) {
+    hit = lower.indexOf(queryNorm);
+  }
+
+  if (hit === -1) {
+    return content.length > 160 ? content.slice(0, 160).trim() + '…' : content;
+  }
+
+  var start = Math.max(0, hit - 64);
+  var end = Math.min(content.length, hit + 120);
+  var prefix = start > 0 ? '…' : '';
+  var suffix = end < content.length ? '…' : '';
+  return prefix + content.slice(start, end).trim() + suffix;
+}
+
+function getSearchResults(query) {
+  var queryNorm = normalizeSearchText(query);
+  var tokens = tokenizeQuery(queryNorm);
+
+  if (!queryNorm) {
+    return SEARCH_INDEX.map(function(item) {
+      return {
+        item: item,
+        score: item.page === CURRENT_PAGE ? 1 : 0,
+        snippet: item.desc
+      };
+    }).sort(function(a, b) {
+      if (b.score !== a.score) return b.score - a.score;
+      var pageDelta = SEARCH_PAGE_ORDER.indexOf(a.item.pageLabel) - SEARCH_PAGE_ORDER.indexOf(b.item.pageLabel);
+      if (pageDelta !== 0) return pageDelta;
+      return a.item.title.localeCompare(b.item.title);
+    });
+  }
+
+  var matches = [];
+  SEARCH_INDEX.forEach(function(item) {
+    var score = scoreSearchItem(item, queryNorm, tokens);
+    if (score <= 0) return;
+    matches.push({
+      item: item,
+      score: score,
+      snippet: buildSearchSnippet(item, queryNorm, tokens)
+    });
+  });
+
+  matches.sort(function(a, b) {
+    if (b.score !== a.score) return b.score - a.score;
+    var pageDelta = SEARCH_PAGE_ORDER.indexOf(a.item.pageLabel) - SEARCH_PAGE_ORDER.indexOf(b.item.pageLabel);
+    if (pageDelta !== 0) return pageDelta;
+    return a.item.title.localeCompare(b.item.title);
+  });
+
+  return matches.slice(0, 120);
+}
 
 function openSearch() {
   var overlay = document.getElementById('search-overlay');
@@ -4832,7 +5062,9 @@ function openSearch() {
   input.value = '';
   input.focus();
   searchSelectedIdx = -1;
+  searchSelectedEl = null;
   renderSearchResults('');
+  warmCrossPageContent();
 }
 
 function closeSearch() {
@@ -4840,69 +5072,137 @@ function closeSearch() {
   if (overlay) overlay.classList.remove('open');
 }
 
+function setSearchSelected(idx) {
+  if (idx < 0 || idx >= searchFlatResults.length) return;
+  if (searchSelectedIdx === idx) return;
+
+  if (searchSelectedEl) searchSelectedEl.classList.remove('selected');
+
+  searchSelectedIdx = idx;
+  var container = document.getElementById('search-results');
+  searchSelectedEl = container ? container.querySelector('.search-result[data-idx="' + idx + '"]') : null;
+  if (searchSelectedEl) searchSelectedEl.classList.add('selected');
+}
+
 function renderSearchResults(query) {
   var container = document.getElementById('search-results');
   if (!container) return;
-  var q = query.toLowerCase().trim();
-  var filtered = q ? SEARCH_INDEX.filter(function(item) {
-    return item.title.toLowerCase().indexOf(q) !== -1 ||
-           item.desc.toLowerCase().indexOf(q) !== -1 ||
-           item.pageLabel.toLowerCase().indexOf(q) !== -1;
-  }) : SEARCH_INDEX;
+
+  var results = getSearchResults(query || '');
+  searchFlatResults = results;
   searchSelectedIdx = -1;
-  if (filtered.length === 0) {
-    container.innerHTML = '<div class="search-no-results">No results for &ldquo;' + query + '&rdquo;</div>';
+  searchSelectedEl = null;
+
+  if (!results.length) {
+    container.innerHTML = '<div class="search-no-results">No results for &ldquo;' + escapeHtml(query || '') + '&rdquo;</div>';
     return;
   }
-  var groups = {};
-  var pageOrder = ['Inference','Inference Economics','Training','Training Economics'];
-  filtered.forEach(function(item) {
-    if (!groups[item.pageLabel]) groups[item.pageLabel] = [];
-    groups[item.pageLabel].push(item);
+
+  var grouped = {};
+  results.forEach(function(entry, idx) {
+    var label = entry.item.pageLabel;
+    if (!grouped[label]) grouped[label] = [];
+    grouped[label].push({ entry: entry, idx: idx });
   });
+
+  var labels = SEARCH_PAGE_ORDER.slice();
+  Object.keys(grouped).forEach(function(label) {
+    if (labels.indexOf(label) === -1) labels.push(label);
+  });
+
   var html = '';
-  var idx = 0;
-  pageOrder.forEach(function(label) {
-    if (!groups[label]) return;
-    html += '<div class="search-group-header">' + label + '</div>';
-    groups[label].forEach(function(item) {
-      html += '<div class="search-result" data-idx="' + idx + '" data-page="' + item.page + '" data-anchor="' + item.anchor + '">' +
+  labels.forEach(function(label) {
+    if (!grouped[label] || !grouped[label].length) return;
+    html += '<div class="search-group-header">' + escapeHtml(label) + '</div>';
+
+    grouped[label].forEach(function(row) {
+      var item = row.entry.item;
+      var snippet = row.entry.snippet || item.desc || '';
+      html += '<div class="search-result" data-idx="' + row.idx + '" data-page="' + item.page + '" data-anchor="' + item.anchor + '">' +
         '<div class="search-result-dot"></div>' +
-        '<div class="search-result-body"><div class="search-result-title">' + item.title + '</div>' +
-        '<div class="search-result-desc">' + item.desc + '</div></div>' +
+        '<div class="search-result-body"><div class="search-result-title">' + escapeHtml(item.title) + '</div>' +
+        '<div class="search-result-desc">' + escapeHtml(snippet) + '</div></div>' +
         '<span class="search-result-badge">' + (item.page === CURRENT_PAGE ? 'this page' : item.pageLabel.toLowerCase()) + '</span>' +
       '</div>';
-      idx++;
     });
   });
+
   container.innerHTML = html;
-  container.querySelectorAll('.search-result').forEach(function(el) {
-    el.addEventListener('click', function() { navigateToResult(el); });
-    el.addEventListener('mouseenter', function() { setSearchSelected(parseInt(el.dataset.idx)); });
-  });
 }
 
-function setSearchSelected(idx) {
-  searchSelectedIdx = idx;
-  document.querySelectorAll('.search-result').forEach(function(r, i) { r.classList.toggle('selected', i === idx); });
+function scheduleSearchRender(query) {
+  if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
+  searchDebounceTimer = setTimeout(function() {
+    renderSearchResults(query);
+  }, 70);
 }
 
 function navigateToResult(el) {
-  var page = el.dataset.page;
-  var anchor = el.dataset.anchor;
+  var page = el.getAttribute('data-page');
+  var anchor = el.getAttribute('data-anchor');
+  if (!page || !anchor) return;
+
   closeSearch();
+
   if (page === CURRENT_PAGE) {
-    var target = document.getElementById(anchor) || document.querySelector('.pipeline-step[data-step="' + anchor.replace(/^step-/, '') + '"]');
+    var target = resolveAnchorTarget(document, anchor);
     if (target) {
-      if (target.classList.contains('pipeline-step') && !target.classList.contains('active')) target.classList.add('active');
-      setTimeout(function() {
-        window.scrollTo({ top: target.getBoundingClientRect().top + window.scrollY - 64, behavior: 'smooth' });
-      }, 50);
+      if (target.classList.contains('pipeline-step') && !target.classList.contains('active')) {
+        target.classList.add('active');
+      }
+      window.scrollTo({ top: target.getBoundingClientRect().top + window.scrollY - 64, behavior: 'smooth' });
     }
   } else {
     window.location.href = page + '#' + anchor;
   }
 }
+
+function warmCrossPageContent() {
+  if (searchCrossPageRequested || typeof fetch !== 'function' || typeof DOMParser === 'undefined') return;
+  searchCrossPageRequested = true;
+
+  var pages = [];
+  var seen = {};
+  SEARCH_INDEX.forEach(function(item) {
+    if (item.page === CURRENT_PAGE || seen[item.page]) return;
+    seen[item.page] = true;
+    pages.push(item.page);
+  });
+
+  if (!pages.length) {
+    return;
+  }
+
+  Promise.allSettled(pages.map(function(page) {
+    return fetch(page, { cache: 'force-cache', credentials: 'same-origin' })
+      .then(function(response) {
+        if (!response.ok) return '';
+        return response.text();
+      })
+      .then(function(html) {
+        if (!html) return;
+        var parser = new DOMParser();
+        var doc = parser.parseFromString(html, 'text/html');
+        SEARCH_INDEX.forEach(function(item) {
+          if (item.page !== page) return;
+          var extracted = extractSectionText(doc, item.anchor);
+          if (extracted) {
+            item._content = extracted;
+            rebuildSearchBlob(item);
+          }
+        });
+      })
+      .catch(function() {});
+  })).then(function() {
+    var overlay = document.getElementById('search-overlay');
+    var input = document.getElementById('search-input');
+    if (overlay && overlay.classList.contains('open') && input && input.value.trim()) {
+      renderSearchResults(input.value);
+    }
+  });
+}
+
+prepareSearchIndex();
 
 document.addEventListener('keydown', function(e) {
   if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
@@ -4912,35 +5212,67 @@ document.addEventListener('keydown', function(e) {
     if (overlay.classList.contains('open')) { closeSearch(); } else { openSearch(); }
     return;
   }
+
   var overlay = document.getElementById('search-overlay');
   if (!overlay || !overlay.classList.contains('open')) return;
-  var results = document.querySelectorAll('.search-result');
-  if (e.key === 'Escape') { closeSearch(); }
-  else if (e.key === 'ArrowDown') {
+
+  if (e.key === 'Escape') {
+    closeSearch();
+    return;
+  }
+
+  if (!searchFlatResults.length) return;
+
+  if (e.key === 'ArrowDown') {
     e.preventDefault();
-    var next = searchSelectedIdx < 0 ? 0 : Math.min(searchSelectedIdx + 1, results.length - 1);
+    var next = searchSelectedIdx < 0 ? 0 : Math.min(searchSelectedIdx + 1, searchFlatResults.length - 1);
     setSearchSelected(next);
-    if (results[searchSelectedIdx]) results[searchSelectedIdx].scrollIntoView({ block: 'nearest' });
+    if (searchSelectedEl) searchSelectedEl.scrollIntoView({ block: 'nearest' });
   } else if (e.key === 'ArrowUp') {
     e.preventDefault();
-    var prev = Math.max(searchSelectedIdx - 1, 0);
+    var prev = searchSelectedIdx <= 0 ? 0 : searchSelectedIdx - 1;
     setSearchSelected(prev);
-    if (results[searchSelectedIdx]) results[searchSelectedIdx].scrollIntoView({ block: 'nearest' });
+    if (searchSelectedEl) searchSelectedEl.scrollIntoView({ block: 'nearest' });
   } else if (e.key === 'Enter') {
     e.preventDefault();
-    var target = results[searchSelectedIdx] || results[0];
+    var idx = searchSelectedIdx >= 0 ? searchSelectedIdx : 0;
+    var container = document.getElementById('search-results');
+    var target = container ? container.querySelector('.search-result[data-idx="' + idx + '"]') : null;
     if (target) navigateToResult(target);
   }
 });
 
 var searchInputEl = document.getElementById('search-input');
 if (searchInputEl) {
-  searchInputEl.addEventListener('input', function(e) { renderSearchResults(e.target.value); });
+  searchInputEl.addEventListener('input', function(e) {
+    scheduleSearchRender(e.target.value);
+  });
 }
+
+var searchResultsEl = document.getElementById('search-results');
+if (searchResultsEl) {
+  searchResultsEl.addEventListener('click', function(e) {
+    var resultEl = e.target.closest('.search-result');
+    if (!resultEl || !searchResultsEl.contains(resultEl)) return;
+    navigateToResult(resultEl);
+  });
+
+  searchResultsEl.addEventListener('mouseover', function(e) {
+    var resultEl = e.target.closest('.search-result');
+    if (!resultEl || !searchResultsEl.contains(resultEl)) return;
+    var idx = parseInt(resultEl.getAttribute('data-idx'), 10);
+    if (isNaN(idx)) return;
+    setSearchSelected(idx);
+  });
+}
+
 var searchOverlayEl = document.getElementById('search-overlay');
 if (searchOverlayEl) {
-  searchOverlayEl.addEventListener('click', function(e) { if (e.target === searchOverlayEl) closeSearch(); });
+  searchOverlayEl.addEventListener('click', function(e) {
+    if (e.target === searchOverlayEl) closeSearch();
+  });
 }
+
 var searchTriggerEl = document.getElementById('search-trigger');
 if (searchTriggerEl) {
   searchTriggerEl.addEventListener('click', function() { openSearch(); });
@@ -4960,12 +5292,13 @@ if (searchTriggerEl) {
   if (!window.location.hash) return;
   var anchor = window.location.hash.slice(1);
   setTimeout(function() {
-    var target = document.getElementById(anchor) || document.querySelector('.pipeline-step[data-step="' + anchor.replace(/^step-/, '') + '"]');
+    var target = resolveAnchorTarget(document, anchor);
     if (!target) return;
     if (target.classList.contains('pipeline-step') && !target.classList.contains('active')) target.classList.add('active');
     window.scrollTo({ top: target.getBoundingClientRect().top + window.scrollY - 64, behavior: 'smooth' });
-  }, 350);
+  }, 180);
 })();
+
 </script>
 
 <!-- ─── SEARCH MODAL ─── -->

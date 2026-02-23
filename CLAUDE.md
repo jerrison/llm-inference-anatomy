@@ -469,3 +469,6 @@ Two issues with minimap navigation: (1) `scrollIntoView({ block: 'start' })` scr
 
 ### Section Toggle Responsiveness
 For pipeline section expansion/collapse, avoid `transition: all` on step interaction elements. Keep transitions targeted and short across all four pages: step dot/card/icon around `0.18s` and `.step-detail` at `max-height 0.18s ease-out`. This prevents the UI from feeling laggy when opening and closing sections repeatedly.
+
+### Search Responsiveness and Coverage
+Search should not be limited to section headers. Index section body content (`textContent`) for the current page and lazily enrich with same-origin page fetches for cross-page matches. Use fuzzy scoring (token + subsequence matching), debounce input (~70ms), and delegate result-row events from the container to avoid per-render listener churn and sluggish typing/navigation.
