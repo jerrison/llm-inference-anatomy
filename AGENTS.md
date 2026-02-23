@@ -459,6 +459,8 @@ When modifying interactions on any page:
 - [ ] Search modal opens via Cmd+K (Mac) / Ctrl+K (Windows) without visible lag
 - [ ] Fuzzy query tolerance works (e.g., minor typos still return intended section)
 - [ ] In-content search works (query from paragraph/detail text, not just section title, returns a hit)
+- [ ] Knowledge download button exports a `.md` file without console errors
+- [ ] Exported markdown includes content from all four pages (spot check one phrase from each page body)
 - [ ] Test at viewport < 768px — verify responsive layout
 - [ ] Verify no JS errors in console on all 4 pages
 
@@ -476,6 +478,7 @@ When modifying interactions on any page:
 - [ ] Light/dark theme: all 4 pages adapt correctly
 - [ ] Minimap navigation: click EVERY minimap item on all 4 pages and verify correct section
 - [ ] Training page uses amber accent (#E69F00), distinct from inference blue
+- [ ] Knowledge markdown download works on all 4 pages and reflects latest live content
 - [ ] No console errors on any page
 
 ## Common Pitfalls
@@ -505,3 +508,5 @@ When modifying interactions on any page:
 12. **Section toggle responsiveness**: Keep section expand/collapse interactions snappy. For `.pipeline-step` UI states, use targeted transitions (`border-color`, `background-color`, `opacity`, `transform`) around `0.18s` instead of broad `transition: all 0.3s`. Keep `.step-detail` at `max-height 0.18s ease-out` across all four pages for consistent feel.
 
 13. **Search responsiveness and quality**: Avoid expensive effects in search interactions (`backdrop-filter` blur, broad `transition: all`, per-render event listener binding). Keep search fast with debounced input, event delegation for result rows, and lazy cross-page content indexing so fuzzy matching can include section body text.
+
+14. **Knowledge export freshness**: Do not maintain a static checked-in knowledge markdown snapshot. Generate markdown on demand from live page HTML (same-origin fetch + parsing) so downloads always reflect the latest deployed content.

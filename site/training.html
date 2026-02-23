@@ -890,6 +890,7 @@ body, .callout-box, .metric, .site-nav, .minimap-phase { transition: background-
 .search-trigger svg { width: 12px; height: 12px; fill: none; }
 .search-trigger .search-trigger-label { white-space: nowrap; }
 .search-trigger kbd { font-family: var(--font-mono); font-size: 0.5rem; color: var(--text-muted); background: var(--bg); border: 1px solid var(--border); border-radius: 3px; padding: 0.05rem 0.3rem; }
+.knowledge-trigger[disabled] { opacity: 0.65; cursor: wait; }
 [data-theme="light"] .search-overlay { background: rgba(0,0,0,0.25); }
 [data-theme="light"] .search-modal { box-shadow: 0 24px 64px rgba(0,0,0,0.15); }
 @media (max-width: 768px) {
@@ -922,6 +923,11 @@ body, .callout-box, .metric, .site-nav, .minimap-phase { transition: background-
       <svg viewBox="0 0 16 16" stroke="currentColor" stroke-width="1.5"><circle cx="6.5" cy="6.5" r="4.5"></circle><path stroke-linecap="round" d="m10 10 3.5 3.5"></path></svg>
       <span class="search-trigger-label">Search</span>
       <kbd id="search-key-hint">&#8984;K</kbd>
+    </button>
+    <button class="search-trigger knowledge-trigger" id="download-knowledge" aria-label="Download website knowledge as Markdown">
+      <svg viewBox="0 0 16 16" stroke="currentColor" stroke-width="1.5" fill="none"><path stroke-linecap="round" stroke-linejoin="round" d="M8 2.5v7"></path><path stroke-linecap="round" stroke-linejoin="round" d="m5.5 7.5 2.5 2.5 2.5-2.5"></path><path stroke-linecap="round" stroke-linejoin="round" d="M3 12.5h10"></path></svg>
+      <span class="search-trigger-label">Knowledge</span>
+      <kbd>.md</kbd>
     </button>
     <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme"></button>
   </div>
@@ -2704,6 +2710,308 @@ if (searchTriggerEl) {
   }, 180);
 })();
 
+</script>
+
+<script>
+// ─── KNOWLEDGE MARKDOWN DOWNLOAD ───
+(function() {
+  var downloadBtn = document.getElementById('download-knowledge');
+  if (!downloadBtn) return;
+
+  var KNOWLEDGE_PAGES = [
+    { path: 'index.html', label: 'Inference Technical Pipeline' },
+    { path: 'economics.html', label: 'Inference Economics' },
+    { path: 'training.html', label: 'Training Technical Pipeline' },
+    { path: 'training-economics.html', label: 'Training Economics' }
+  ];
+
+  function normalizeWhitespace(text) {
+    return (text || '').replace(/\s+/g, ' ').trim();
+  }
+
+  function resolveHref(href, baseUrl) {
+    if (!href) return '';
+    if (href.charAt(0) === '#') return baseUrl + href;
+    try {
+      return new URL(href, baseUrl).href;
+    } catch (err) {
+      return href;
+    }
+  }
+
+  function inlineFromNode(node, baseUrl) {
+    if (!node) return '';
+    if (node.nodeType === Node.TEXT_NODE) return node.nodeValue || '';
+    if (node.nodeType !== Node.ELEMENT_NODE) return '';
+
+    var tag = node.tagName.toLowerCase();
+    if (tag === 'br') return '  \n';
+
+    var childText = '';
+    node.childNodes.forEach(function(child) {
+      childText += inlineFromNode(child, baseUrl);
+    });
+
+    childText = normalizeWhitespace(childText);
+
+    if (!childText && tag !== 'a') return '';
+    if (tag === 'strong' || tag === 'b') return '**' + childText + '**';
+    if (tag === 'em' || tag === 'i') return '*' + childText + '*';
+    if (tag === 'code') return '`' + childText.replace(/`/g, '\\`') + '`';
+    if (tag === 'a') {
+      var href = resolveHref(node.getAttribute('href') || '', baseUrl);
+      var label = childText || href;
+      return href ? '[' + label + '](' + href + ')' : label;
+    }
+
+    return childText;
+  }
+
+  function inlineText(element, baseUrl) {
+    if (!element) return '';
+    var text = '';
+    element.childNodes.forEach(function(child) {
+      text += inlineFromNode(child, baseUrl) + ' ';
+    });
+    return normalizeWhitespace(text);
+  }
+
+  function markdownFromList(listEl, baseUrl, depth) {
+    var level = depth || 0;
+    var isOrdered = listEl.tagName.toLowerCase() === 'ol';
+    var lines = [];
+
+    Array.from(listEl.children).forEach(function(li, idx) {
+      if (!li || li.tagName.toLowerCase() !== 'li') return;
+
+      var itemTextParts = [];
+      li.childNodes.forEach(function(node) {
+        if (node.nodeType === Node.ELEMENT_NODE) {
+          var tag = node.tagName.toLowerCase();
+          if (tag === 'ul' || tag === 'ol') return;
+        }
+        itemTextParts.push(inlineFromNode(node, baseUrl));
+      });
+
+      var itemText = normalizeWhitespace(itemTextParts.join(' '));
+      if (!itemText) itemText = '(item)';
+      var prefix = isOrdered ? ((idx + 1) + '.') : '-';
+      lines.push(Array(level + 1).join('  ') + prefix + ' ' + itemText);
+
+      Array.from(li.children).forEach(function(child) {
+        var childTag = child.tagName.toLowerCase();
+        if (childTag === 'ul' || childTag === 'ol') {
+          var nested = markdownFromList(child, baseUrl, level + 1);
+          if (nested) lines.push(nested);
+        }
+      });
+    });
+
+    return lines.join('\n');
+  }
+
+  function escapeTableCell(text) {
+    return (text || '').replace(/\|/g, '\\|');
+  }
+
+  function markdownFromTable(tableEl, baseUrl) {
+    var rows = Array.from(tableEl.querySelectorAll('tr')).map(function(tr) {
+      return Array.from(tr.children)
+        .filter(function(cell) {
+          var tag = cell.tagName.toLowerCase();
+          return tag === 'th' || tag === 'td';
+        })
+        .map(function(cell) {
+          return escapeTableCell(inlineText(cell, baseUrl));
+        });
+    }).filter(function(row) {
+      return row.length > 0;
+    });
+
+    if (!rows.length) return '';
+
+    var colCount = rows.reduce(function(max, row) {
+      return Math.max(max, row.length);
+    }, 0);
+
+    rows = rows.map(function(row) {
+      var copy = row.slice(0);
+      while (copy.length < colCount) copy.push('');
+      return copy;
+    });
+
+    var header = rows[0];
+    var body = rows.slice(1);
+    var sep = [];
+    for (var i = 0; i < colCount; i++) sep.push('---');
+
+    var md = [];
+    md.push('| ' + header.join(' | ') + ' |');
+    md.push('| ' + sep.join(' | ') + ' |');
+    body.forEach(function(row) {
+      md.push('| ' + row.join(' | ') + ' |');
+    });
+
+    return md.join('\n');
+  }
+
+  function shouldSkipBlock(el) {
+    if (!el) return true;
+    if (el.closest('nav, .minimap, .search-overlay, .footer, .journey-detail-panel, .term-tooltip')) return true;
+    return false;
+  }
+
+  function sectionToMarkdown(section, baseUrl, headingToSkip) {
+    var blocks = section.querySelectorAll('h1,h2,h3,h4,h5,p,ul,ol,pre,table');
+    var out = [];
+    var previous = '';
+
+    blocks.forEach(function(el) {
+      if (el === headingToSkip) return;
+      if (shouldSkipBlock(el)) return;
+
+      var tag = el.tagName.toLowerCase();
+      var chunk = '';
+
+      if ((tag === 'p' && el.closest('li')) || (tag === 'p' && el.closest('table'))) return;
+      if ((tag === 'ul' || tag === 'ol') && el.closest('li')) return;
+      if ((tag === 'pre' || tag === 'code') && el.closest('table')) return;
+
+      if (tag === 'h1' || tag === 'h2' || tag === 'h3' || tag === 'h4' || tag === 'h5') {
+        var headingText = inlineText(el, baseUrl);
+        if (!headingText) return;
+        var level = parseInt(tag.charAt(1), 10) + 2;
+        if (level > 6) level = 6;
+        chunk = Array(level + 1).join('#') + ' ' + headingText;
+      } else if (tag === 'p') {
+        chunk = inlineText(el, baseUrl);
+      } else if (tag === 'ul' || tag === 'ol') {
+        chunk = markdownFromList(el, baseUrl, 0);
+      } else if (tag === 'pre') {
+        var codeText = (el.textContent || '').trim();
+        if (codeText) chunk = '```\n' + codeText + '\n```';
+      } else if (tag === 'table') {
+        chunk = markdownFromTable(el, baseUrl);
+      }
+
+      chunk = (chunk || '').replace(/\n\s+\n/g, '\n\n').replace(/\n{3,}/g, '\n\n').trim();
+      if (!chunk || chunk === previous) return;
+      out.push(chunk);
+      previous = chunk;
+    });
+
+    return out.join('\n\n').trim();
+  }
+
+  function parsePageToMarkdown(html, pageMeta, pageUrl) {
+    var parser = new DOMParser();
+    var doc = parser.parseFromString(html, 'text/html');
+    var lines = [];
+
+    lines.push('## ' + pageMeta.label);
+    lines.push('Source: [' + pageMeta.path + '](' + pageUrl + ')');
+
+    var heroTitleEl = doc.querySelector('.hero h1');
+    var heroTitle = heroTitleEl ? inlineText(heroTitleEl, pageUrl) : normalizeWhitespace(doc.title || pageMeta.label);
+    if (heroTitle) lines.push('### ' + heroTitle);
+
+    var heroSubEl = doc.querySelector('.hero-sub') || doc.querySelector('.hero p');
+    var heroSub = heroSubEl ? inlineText(heroSubEl, pageUrl) : '';
+    if (heroSub) lines.push(heroSub);
+
+    var sections = Array.from(doc.querySelectorAll('section'));
+    sections.forEach(function(section) {
+      if (section.classList.contains('hero')) return;
+      if (shouldSkipBlock(section)) return;
+
+      var sectionHeadingEl = section.querySelector('h2,h3');
+      var sectionHeading = sectionHeadingEl ? inlineText(sectionHeadingEl, pageUrl) : '';
+      if (!sectionHeading && section.id) sectionHeading = section.id.replace(/[-_]/g, ' ');
+      if (sectionHeading) lines.push('### ' + sectionHeading);
+
+      var sectionBody = sectionToMarkdown(section, pageUrl, sectionHeadingEl);
+      if (sectionBody) lines.push(sectionBody);
+    });
+
+    return lines.join('\n\n').replace(/\n{3,}/g, '\n\n').trim();
+  }
+
+  async function buildKnowledgeMarkdown() {
+    var generatedAt = new Date();
+    var parts = [];
+
+    parts.push('# LLM Anatomy Knowledge Base');
+    parts.push('');
+    parts.push('Generated: ' + generatedAt.toISOString());
+    parts.push('Origin: ' + window.location.origin);
+    parts.push('');
+    parts.push('This markdown file is generated from the live website at download time.');
+    parts.push('');
+
+    for (var i = 0; i < KNOWLEDGE_PAGES.length; i++) {
+      var page = KNOWLEDGE_PAGES[i];
+      var pageUrl = new URL(page.path, window.location.href).href;
+
+      try {
+        var response = await fetch(pageUrl, { cache: 'no-store', credentials: 'same-origin' });
+        if (!response.ok) throw new Error('HTTP ' + response.status);
+
+        var html = await response.text();
+        var pageMd = parsePageToMarkdown(html, page, pageUrl);
+        parts.push(pageMd || ('## ' + page.label + '\n\nSource: [' + page.path + '](' + pageUrl + ')\n\n_No extractable content found._'));
+      } catch (err) {
+        parts.push('## ' + page.label);
+        parts.push('Source: [' + page.path + '](' + pageUrl + ')');
+        parts.push('');
+        parts.push('_Failed to fetch this page while generating knowledge markdown: ' + (err && err.message ? err.message : 'Unknown error') + '._');
+      }
+
+      if (i < KNOWLEDGE_PAGES.length - 1) {
+        parts.push('');
+        parts.push('---');
+        parts.push('');
+      }
+    }
+
+    return parts.join('\n').replace(/\n{3,}/g, '\n\n').trim() + '\n';
+  }
+
+  function downloadMarkdown(content) {
+    var stamp = new Date().toISOString().replace(/:/g, '-').replace(/\.\d+Z$/, 'Z');
+    var fileName = 'llm-anatomy-knowledge-' + stamp + '.md';
+
+    var blob = new Blob([content], { type: 'text/markdown;charset=utf-8' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  downloadBtn.addEventListener('click', async function() {
+    if (downloadBtn.disabled) return;
+
+    var labelEl = downloadBtn.querySelector('.search-trigger-label');
+    var originalLabel = labelEl ? labelEl.textContent : '';
+
+    downloadBtn.disabled = true;
+    if (labelEl) labelEl.textContent = 'Preparing...';
+
+    try {
+      var markdown = await buildKnowledgeMarkdown();
+      downloadMarkdown(markdown);
+    } catch (err) {
+      console.error('Knowledge markdown generation failed:', err);
+      window.alert('Failed to generate knowledge markdown. Please try again.');
+    } finally {
+      downloadBtn.disabled = false;
+      if (labelEl) labelEl.textContent = originalLabel;
+    }
+  });
+})();
 </script>
 
 <!-- ─── SEARCH MODAL ─── -->

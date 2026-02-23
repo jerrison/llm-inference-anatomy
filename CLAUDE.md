@@ -472,3 +472,6 @@ For pipeline section expansion/collapse, avoid `transition: all` on step interac
 
 ### Search Responsiveness and Coverage
 Search should not be limited to section headers. Index section body content (`textContent`) for the current page and lazily enrich with same-origin page fetches for cross-page matches. Use fuzzy scoring (token + subsequence matching), debounce input (~70ms), and delegate result-row events from the container to avoid per-render listener churn and sluggish typing/navigation.
+
+### Knowledge Markdown Export Freshness
+The knowledge download should be generated at click time from live page HTML, not from a static repository file. Fetch all four same-origin pages, parse their visible instructional sections, and export a single markdown blob so the downloaded file always tracks the latest deployed website state.

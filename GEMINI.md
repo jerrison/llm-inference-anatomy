@@ -475,6 +475,9 @@ For fast open/close behavior, avoid broad `transition: all` on pipeline step ele
 ### 15. Search Responsiveness and Full-Content Matching
 Search must support fuzzy matching and body-content discovery, not just titles/descriptions. Build index text from section `textContent`, lazily fetch same-origin pages to enrich cross-page corpus, debounce input, and use event delegation for search result interactions. Avoid expensive search-overlay blur effects that cause interface jank.
 
+### 16. Knowledge Markdown Export Freshness
+Do not rely on a static markdown snapshot for site knowledge. Generate markdown dynamically from the live HTML of all four pages at download time so exported knowledge stays aligned with the latest deployed content.
+
 ## Deployment Verification
 
 After deploying, verify:
