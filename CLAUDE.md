@@ -319,6 +319,7 @@ No build step needed. The `site/` directory is deployed directly.
 - [ ] All ~58 term tooltips work (46 technical + 12 economics) — click show/dismiss
 - [ ] Responsive at 768px: nav adapts, minimap hides, content stacks
 - [ ] Light/dark theme: both pages adapt correctly
+- [ ] Minimap navigation: click EVERY minimap item on both pages and verify the correct section header is visible below the nav bar — especially sections near the bottom of the page (e.g., Data Centers, Contracted Revenue, Stage by Stage on economics; Sampling, Streaming on index). The minimap dot must highlight the clicked section, not a neighboring one.
 - [ ] No console errors on either page
 
 ## WCAG AA Compliance
@@ -365,5 +366,5 @@ Interactive visuals that create DOM elements via `innerHTML` (like the breakeven
 ### Theme Sync Across Pages
 Both pages use the same `localStorage.getItem('theme')` key and the same theme-init script in `<head>` (before body renders) to prevent FOUC. Any new page must include this exact init pattern.
 
-### Minimap Scroll Offset
-`scrollIntoView({ block: 'start' })` scrolls the target behind the fixed nav bar, and `block: 'center'` fails for sections near the bottom of the page (not enough content below to scroll further). Use `window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 64, behavior: 'smooth' })` to position the header just below the nav bar — works reliably for all sections regardless of position on the page.
+### Minimap Scroll and Highlight
+Two issues with minimap navigation: (1) `scrollIntoView({ block: 'start' })` scrolls behind the nav, and `block: 'center'` fails for bottom-of-page sections. Fix: `window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 64, behavior: 'smooth' })`. (2) The scroll-based minimap highlight observer fires during smooth scroll, detecting the wrong section as active (collapsed sections are short, so the next section's top crosses the threshold). Fix: immediately set the clicked item as active, and use a `scrollLock` timeout (800ms) to suppress the observer during the smooth scroll animation. See index.html's minimap handler for the reference pattern.

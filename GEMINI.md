@@ -338,8 +338,8 @@ Interactive visuals that create DOM elements via `innerHTML` (like the breakeven
 ### 11. Theme Sync Across Pages
 Both pages use the same `localStorage` key `'theme'` and the same init script in `<head>` (before body renders). Any new page must include this exact pattern to prevent FOUC and maintain theme continuity.
 
-### 12. Minimap Scroll Offset
-`scrollIntoView({ block: 'start' })` scrolls the target behind the fixed nav bar, and `block: 'center'` fails for sections near the bottom of the page (not enough content below to scroll further). Use `window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 64, behavior: 'smooth' })` — the fixed 64px offset (nav height + padding) works reliably for all sections regardless of position.
+### 12. Minimap Scroll and Highlight
+Two issues with minimap navigation: (1) `scrollIntoView` with `block: 'start'` scrolls behind the nav, and `block: 'center'` fails for bottom-of-page sections. Fix: `window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 64, behavior: 'smooth' })`. (2) The scroll-based minimap highlight observer fires during smooth scroll, detecting the wrong section as active (collapsed sections are short, so the next section's top crosses the threshold). Fix: immediately set the clicked item as active, and use a `scrollLock` timeout (800ms) to suppress the observer during the smooth scroll animation.
 
 ## Deployment Verification
 
@@ -354,4 +354,5 @@ After deploying, verify:
 8. Phase overview cards scroll to correct anchors on both pages
 9. Responsive at 768px: nav adapts, minimap hides, content stacks
 10. Light/dark theme: both pages render correctly in both modes
-11. No console errors on either page
+11. Minimap navigation: click EVERY minimap item on both pages and verify the correct section header is visible below the nav bar — especially sections near the bottom of the page (e.g., Data Centers, Contracted Revenue, Stage by Stage on economics; Sampling, Streaming on index). The minimap dot must highlight the clicked section, not a neighboring one.
+12. No console errors on either page

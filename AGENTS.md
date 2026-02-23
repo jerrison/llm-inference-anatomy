@@ -326,6 +326,7 @@ When modifying interactions on either page:
 - [ ] All ~58 term tooltips work (46 technical + 12 economics) — click show/dismiss
 - [ ] Responsive at 768px: nav adapts, minimap hides, content stacks
 - [ ] Light/dark theme: both pages adapt correctly
+- [ ] Minimap navigation: click EVERY minimap item on both pages and verify the correct section header is visible below the nav bar — especially sections near the bottom of the page (e.g., Data Centers, Contracted Revenue, Stage by Stage on economics; Sampling, Streaming on index). The minimap dot must highlight the clicked section, not a neighboring one.
 - [ ] No console errors on either page
 
 ## Common Pitfalls
@@ -346,7 +347,7 @@ When modifying interactions on either page:
 
 8. **Dynamic DOM + event binding**: Elements created via `innerHTML` miss initial event listener setup. Bind handlers manually after insertion.
 
-9. **Minimap scroll offset**: `scrollIntoView({ block: 'start' })` scrolls the target behind the fixed nav bar, and `block: 'center'` fails for sections near the bottom of the page (not enough content below). Use `window.scrollTo` with a fixed offset (64px) to position headers just below the nav bar — works for all sections regardless of page position.
+9. **Minimap scroll and highlight**: Two issues: (1) `scrollIntoView` with `block: 'start'` or `block: 'center'` fails (behind nav, or can't center bottom sections). Use `window.scrollTo` with 64px offset. (2) The scroll-based minimap observer fires during smooth scroll, highlighting the wrong section (collapsed sections are short). Fix: immediately set clicked item as active + use a `scrollLock` timeout (800ms) to suppress the observer during animation.
 
 9. **Theme FOUC**: The theme init script must be in `<head>` (before body renders). If adding a new page, include the exact same init pattern.
 

@@ -1408,6 +1408,7 @@ body, .code-block, .callout-box, .metric, .site-nav, .minimap-phase { transition
   var minimap = document.getElementById('minimap');
   var minimapItems = document.querySelectorAll('.minimap-item[data-target]');
   var stepSections = {};
+  var scrollLock = null;
 
   minimapItems.forEach(function(item) {
     var target = item.getAttribute('data-target');
@@ -1416,6 +1417,12 @@ body, .code-block, .callout-box, .metric, .site-nav, .minimap-phase { transition
     item.addEventListener('click', function(e) {
       e.preventDefault();
       if (el) {
+        // Immediately highlight clicked item
+        minimapItems.forEach(function(i) { i.classList.remove('active'); });
+        item.classList.add('active');
+        // Suppress observer during smooth scroll
+        clearTimeout(scrollLock);
+        scrollLock = setTimeout(function() { scrollLock = null; }, 800);
         var top = el.getBoundingClientRect().top + window.scrollY - 64;
         window.scrollTo({ top: top, behavior: 'smooth' });
       }
@@ -1430,6 +1437,9 @@ body, .code-block, .callout-box, .metric, .site-nav, .minimap-phase { transition
     // Show/hide
     if (scrollY > vh * 0.6) { minimap.classList.add('visible'); }
     else { minimap.classList.remove('visible'); }
+
+    // Skip highlight update during click-initiated scroll
+    if (scrollLock) return;
 
     // Active item
     var activeTarget = null;
