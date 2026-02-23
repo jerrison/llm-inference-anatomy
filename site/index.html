@@ -1455,6 +1455,10 @@ body, .code-block, .journey-diagram, .callout-box, .metric, .journey-detail-pane
     <a class="minimap-item" href="#" data-target="sampling"><span class="minimap-dot"></span><span class="minimap-label">Sampling</span></a>
     <a class="minimap-item" href="#" data-target="streaming"><span class="minimap-dot"></span><span class="minimap-label">Streaming</span></a>
   </div>
+  <div class="minimap-phase">
+    <div class="minimap-phase-label">&bull;</div>
+    <a class="minimap-item" href="#" data-target="inference-metrics"><span class="minimap-dot"></span><span class="minimap-label">Metrics</span></a>
+  </div>
 </nav>
 
 <!-- ═══════════ HERO ═══════════ -->
@@ -2534,6 +2538,139 @@ body, .code-block, .journey-diagram, .callout-box, .metric, .journey-detail-pane
   </div><!-- /pipeline-flow -->
 </section>
 
+<!-- ═══════════ INFERENCE METRICS ═══════════ -->
+<section class="pipeline-section" id="inference-metrics">
+  <div class="section-label reveal">What End Users Measure</div>
+  <h2 class="section-title reveal">Inference Metrics</h2>
+  <p class="section-desc reveal">The numbers that matter when evaluating LLM inference quality, cost, and reliability &mdash; from latency SLOs to GPU utilization.</p>
+
+  <div class="sub-topics reveal">
+    <div class="sub-topic" onclick="toggleSubTopic(this)">
+      <div class="sub-topic-header">
+        <span class="sub-topic-name">Latency Metrics</span>
+        <span class="sub-topic-icon">+</span>
+      </div>
+      <div class="sub-topic-preview">TTFT, TPOT, ITL, E2E latency, queue time</div>
+      <div class="sub-topic-detail">
+        <table class="data-table">
+          <thead><tr><th>Metric</th><th>What It Measures</th><th>Typical Target</th></tr></thead>
+          <tbody>
+            <tr><td><span class="term" data-term="ttft">TTFT</span></td><td>Time from request to first token. Dominated by prefill compute + queue wait time.</td><td>&lt;200ms (8B), &lt;800ms (70B)</td></tr>
+            <tr><td><span class="term" data-term="tpot">TPOT</span></td><td>Average time between consecutive output tokens during decode.</td><td>&lt;30ms (streaming feel)</td></tr>
+            <tr><td><strong>ITL</strong></td><td>Inter-Token Latency &mdash; actual time between each pair of consecutive tokens. Unlike TPOT (average), ITL captures variance and jitter from batching interference.</td><td>p99 &lt;50ms</td></tr>
+            <tr><td><strong>E2E Latency</strong></td><td>Total wall-clock time from request send to final token received. E2E = TTFT + (output_tokens &times; TPOT) + network overhead.</td><td>Varies by use case</td></tr>
+            <tr><td><strong>Queue Time</strong></td><td>Time spent waiting before prefill begins. Spikes when GPU capacity is saturated. Two queues: prefill queue and generation queue.</td><td>&lt;50ms at p99</td></tr>
+          </tbody>
+        </table>
+        <div class="callout-box callout-takeaway" style="margin-top:0.75rem">
+          <div class="callout-label">Key Insight</div>
+          <p>TTFT and TPOT measure different bottlenecks: TTFT is <strong>compute-bound</strong> (prefill), TPOT is <strong>memory-bandwidth-bound</strong> (decode). Optimizing one often trades off against the other &mdash; batching more requests improves throughput but increases individual TTFT.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="sub-topic" onclick="toggleSubTopic(this)">
+      <div class="sub-topic-header">
+        <span class="sub-topic-name">Throughput Metrics</span>
+        <span class="sub-topic-icon">+</span>
+      </div>
+      <div class="sub-topic-preview">Tokens/sec, requests/sec, concurrent requests</div>
+      <div class="sub-topic-detail">
+        <table class="data-table">
+          <thead><tr><th>Metric</th><th>What It Measures</th><th>Why It Matters</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Tokens/sec (Output)</strong></td><td>Total output tokens generated per second across all concurrent requests on a deployment.</td><td>The primary capacity metric. Directly determines revenue per GPU-hour at per-token pricing.</td></tr>
+            <tr><td><strong>Tokens/sec (Prompt)</strong></td><td>Input tokens processed per second. Higher during prefill bursts. Includes cached prompt tokens processed from prefix cache hits.</td><td>Shows prefill throughput and prefix cache effectiveness.</td></tr>
+            <tr><td><strong>Requests/sec</strong></td><td>Completed inference requests per second. A function of concurrent batch size and average generation length.</td><td>Key for capacity planning and autoscaling triggers.</td></tr>
+            <tr><td><strong>Concurrent Requests</strong></td><td>Number of in-flight requests being processed simultaneously. Bounded by KV cache memory.</td><td>Directly correlates with GPU utilization and revenue.</td></tr>
+          </tbody>
+        </table>
+        <p style="font-size:0.85rem;color:var(--text-dim);margin-top:0.5rem"><strong>Throughput vs latency tradeoff</strong>: increasing batch size (more concurrent requests) improves tokens/sec but increases per-request TTFT and ITL. The art of inference optimization is finding the batch size that maximizes throughput while meeting latency SLOs.</p>
+      </div>
+    </div>
+
+    <div class="sub-topic" onclick="toggleSubTopic(this)">
+      <div class="sub-topic-header">
+        <span class="sub-topic-name">Resource Utilization</span>
+        <span class="sub-topic-icon">+</span>
+      </div>
+      <div class="sub-topic-preview">GPU utilization, KV cache, memory, model forward time</div>
+      <div class="sub-topic-detail">
+        <table class="data-table">
+          <thead><tr><th>Metric</th><th>What It Measures</th><th>Healthy Range</th></tr></thead>
+          <tbody>
+            <tr><td><strong>GPU Compute Utilization</strong></td><td>Fraction of GPU FLOPS actually used. Low during decode (memory-bound), high during prefill (compute-bound).</td><td>40-70% sustained</td></tr>
+            <tr><td><strong>KV Cache Utilization</strong></td><td>Fraction of allocated KV cache blocks/slots in use. When 100% is reached, new requests must wait (queue) or be rejected.</td><td>70-90% (headroom for bursts)</td></tr>
+            <tr><td><strong>HBM Usage</strong></td><td>Total GPU memory consumed: model weights + KV cache + activations + CUDA overhead.</td><td>&lt;90% of HBM capacity</td></tr>
+            <tr><td><strong>Model Forward Time</strong></td><td>Duration of the actual model forward pass (excluding scheduling and communication overhead).</td><td>Varies by model size</td></tr>
+            <tr><td><strong>Prefix Cache TTL</strong></td><td>How long cached prompt KV states remain available for reuse. Longer TTL = more cache hits = lower TTFT for repeated prefixes.</td><td>Deployment-dependent</td></tr>
+          </tbody>
+        </table>
+        <p style="font-size:0.85rem;color:var(--text-dim);margin-top:0.5rem">KV cache utilization is the most actionable metric: it determines how many concurrent requests you can serve. When KV cache fills up, you&rsquo;re either dropping requests or queuing them &mdash; both hurt revenue or SLOs.</p>
+      </div>
+    </div>
+
+    <div class="sub-topic" onclick="toggleSubTopic(this)">
+      <div class="sub-topic-header">
+        <span class="sub-topic-name">Reliability &amp; SLOs</span>
+        <span class="sub-topic-icon">+</span>
+      </div>
+      <div class="sub-topic-preview">Error rates, percentiles, availability, SLO frameworks</div>
+      <div class="sub-topic-detail">
+        <table class="data-table">
+          <thead><tr><th>Metric</th><th>What It Measures</th><th>Typical SLO</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Error Rate</strong></td><td>Fraction of requests returning HTTP 4xx/5xx. Broken down by error type: rate-limited (429), server error (500), timeout (504), context too long (413).</td><td>&lt;0.1% for 5xx</td></tr>
+            <tr><td><strong>p50/p95/p99 Latency</strong></td><td>Latency at the 50th, 95th, and 99th percentile. p99 captures tail latency that averages hide &mdash; one slow request in 100 still frustrates users.</td><td>p99 TTFT &lt;2x median</td></tr>
+            <tr><td><strong>Availability</strong></td><td>Percentage of time the endpoint returns successful responses. Downtime includes both outages and periods of &gt;100% error rate.</td><td>99.9% (8.7h/yr downtime)</td></tr>
+            <tr><td><strong>Goodput</strong></td><td>Successful tokens generated per second &mdash; throughput minus wasted work (errors, preempted requests, speculative decoding rejections).</td><td>Track ratio to raw throughput</td></tr>
+          </tbody>
+        </table>
+        <div class="callout-box callout-takeaway" style="margin-top:0.75rem">
+          <div class="callout-label">SLO Framework</div>
+          <p>Production inference SLOs typically specify: (1) <strong>TTFT p99 &lt; X ms</strong> for responsiveness, (2) <strong>TPOT p99 &lt; Y ms</strong> for streaming smoothness, (3) <strong>Error rate &lt; Z%</strong> for reliability, and (4) <strong>Availability &gt; 99.9%</strong>. These four metrics together define the quality of service contract. NVIDIA Dynamo&rsquo;s &ldquo;SLO-driven&rdquo; scheduling automatically adjusts batching to meet these targets.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="sub-topic" onclick="toggleSubTopic(this)">
+      <div class="sub-topic-header">
+        <span class="sub-topic-name">Cost &amp; Efficiency Metrics</span>
+        <span class="sub-topic-icon">+</span>
+      </div>
+      <div class="sub-topic-preview">Cost per token, GPU-hours per request, cache hit rate</div>
+      <div class="sub-topic-detail">
+        <table class="data-table">
+          <thead><tr><th>Metric</th><th>What It Measures</th><th>Why It Matters</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Cost per 1M Tokens</strong></td><td>Total infrastructure cost divided by tokens served. The fundamental unit economics metric.</td><td>Determines gross margin at per-token pricing.</td></tr>
+            <tr><td><strong>GPU-hours per Request</strong></td><td>Compute time consumed per inference request. Varies 100x+ depending on prompt length and output tokens.</td><td>Base for per-request cost accounting.</td></tr>
+            <tr><td><strong>Prefix Cache Hit Rate</strong></td><td>Fraction of prompt tokens served from KV cache vs. recomputed from scratch. Higher = lower TTFT and lower compute cost.</td><td>System prompts and multi-turn conversations benefit most.</td></tr>
+            <tr><td><strong>Tokens per GPU-hour</strong></td><td>Total output tokens generated per hour of GPU time. The supply-side efficiency metric.</td><td>Determines how many customers one GPU can serve.</td></tr>
+          </tbody>
+        </table>
+        <a href="economics.html#throughput" class="cross-link">&rarr; How throughput optimization creates 3-5x cost variance</a>
+      </div>
+    </div>
+
+    <div class="sub-topic" onclick="toggleSubTopic(this)">
+      <div class="sub-topic-header">
+        <span class="sub-topic-name">Observability in Practice</span>
+        <span class="sub-topic-icon">+</span>
+      </div>
+      <div class="sub-topic-preview">Prometheus, Grafana, alerting, and provider dashboards</div>
+      <div class="sub-topic-detail">
+        <p>Production inference deployments export metrics via <strong>Prometheus</strong> endpoints and visualize with <strong>Grafana</strong> dashboards. Key metric categories from providers like Fireworks AI:</p>
+        <p><strong>Rate metrics</strong> (counters, per-second): request rate, error rate by HTTP status, prompt tokens/sec, cached tokens/sec.</p>
+        <p><strong>Latency histograms</strong> (buckets): TTFT distribution, TPOT distribution, queue time distribution, overall E2E latency. Histograms enable computing arbitrary percentiles (p50, p95, p99) without pre-aggregation.</p>
+        <p><strong>Resource gauges</strong> (point-in-time): KV cache block utilization, KV cache slot utilization, concurrent request count, model forward time, prefix cache TTL.</p>
+        <p><strong>Token distributions</strong>: generated tokens per request and prompt tokens per request &mdash; essential for understanding workload mix and capacity planning.</p>
+        <p style="margin-top:0.5rem"><strong>Alerting best practice</strong>: alert on <em>SLO burn rate</em> (error budget consumption speed) rather than raw thresholds. A brief latency spike that stays within your monthly error budget doesn&rsquo;t need to wake someone up at 3 AM.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- ═══════════ CROSS-CUTTING OPTIMIZATIONS ═══════════ -->
 <section class="pipeline-section" id="cross-cutting">
   <div class="section-label reveal">Applied Across All Phases</div>
@@ -3225,10 +3362,10 @@ document.addEventListener('click', function(e) {
     item.addEventListener('click', function(e) {
       e.preventDefault();
       var target = item.getAttribute('data-target');
-      var stepEl = document.querySelector('.pipeline-step[data-step="' + target + '"]');
+      var stepEl = document.querySelector('.pipeline-step[data-step="' + target + '"]') || document.getElementById(target);
       if (stepEl) {
-        // Toggle section expand/collapse
-        stepEl.classList.toggle('active');
+        // Toggle section expand/collapse (only for pipeline steps)
+        if (stepEl.classList.contains('pipeline-step')) stepEl.classList.toggle('active');
         // Immediately highlight clicked item
         items.forEach(function(i) { i.classList.remove('active'); });
         item.classList.add('active');
