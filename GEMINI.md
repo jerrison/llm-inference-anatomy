@@ -1,5 +1,16 @@
 # LLM Inference Anatomy — Gemini Agent Instructions
 
+## Post-Change Workflow (MANDATORY)
+
+After every code change, you MUST complete ALL of these steps — no exceptions:
+
+1. **Commit** the change with a descriptive message
+2. **Push** to the remote repository
+3. **Deploy** to Cloudflare Pages: `npx wrangler pages deploy ./site --project-name=llm-inference-anatomy`
+4. **Update agent markdown files** (AGENTS.md, CLAUDE.md, GEMINI.md) with any new lessons learned, updated documentation, or testing requirements resulting from the change
+
+Do not wait for the user to ask. Do not skip any step. This applies to every change, every session.
+
 ## What This Project Is
 
 A two-page interactive educational site that explains every stage of LLM inference — from HTTP request to streamed token response (Technical Pipeline) — and the business economics behind it (Economics). Both pages use progressive disclosure: hero → phase overview → clickable sections → expandable sub-topics → clickable term definitions.
