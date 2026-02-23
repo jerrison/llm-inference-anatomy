@@ -715,6 +715,52 @@ body {
   line-height: 1.6;
 }
 
+.term-tooltip-close {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  width: 1.25rem;
+  height: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-muted);
+  font-size: 0.65rem;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  transition: color 0.15s, border-color 0.15s;
+}
+.term-tooltip-close:hover {
+  color: var(--text-dim);
+  border-color: var(--border-active);
+}
+
+.term-tooltip-footer {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+  padding-top: 0.4rem;
+  border-top: 1px solid var(--border);
+}
+
+.term-tooltip-nav {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  color: var(--accent-dim);
+  opacity: 0.7;
+  text-decoration: none;
+  letter-spacing: 0.05em;
+  transition: opacity 0.2s ease;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.term-tooltip-nav:hover { opacity: 1; color: var(--accent); }
+
 @keyframes tooltipIn {
   from { opacity: 0; transform: translateY(4px); }
   to { opacity: 1; transform: translateY(0); }
@@ -1095,6 +1141,9 @@ body {
   background: #ffffff;
   box-shadow: 0 8px 32px rgba(0,0,0,0.12);
 }
+[data-theme="light"] .term-tooltip-close { border-color: rgba(0,0,0,0.15); color: rgba(0,0,0,0.3); }
+[data-theme="light"] .term-tooltip-close:hover { border-color: rgba(0,0,0,0.3); color: rgba(0,0,0,0.5); }
+[data-theme="light"] .term-tooltip-footer { border-top-color: rgba(0,0,0,0.08); }
 
 [data-theme="light"] .callout-takeaway { background: rgba(26,122,181,0.06); }
 [data-theme="light"] .callout-analogy { background: rgba(168,93,135,0.06); }
@@ -2811,18 +2860,80 @@ const termDefs = {
   'eos': { def: 'End of Sequence \u2014 a special token signaling the model has finished generating its response.', src: 'https://en.wikipedia.org/wiki/End-of-text_character' },
 };
 
+// Term-to-step navigation map
+const termStepMap = {
+  'kv-cache': { step: 'kvcache', label: '07 KV Cache' },
+  'ttft': { step: 'prefill', label: '06 Prefill' },
+  'tpot': { step: 'decode', label: '09 Decode Loop' },
+  'bpe': { step: 'tokenization', label: '03 Tokenization' },
+  'rope': { step: 'embedding', label: '04 Embedding' },
+  'gqa': { step: 'attention', label: '08 Attention' },
+  'mha': { step: 'attention', label: '08 Attention' },
+  'mqa': { step: 'attention', label: '08 Attention' },
+  'mla': { step: 'attention', label: '08 Attention' },
+  'flashattention': { step: 'attention', label: '08 Attention' },
+  'pagedattention': { step: 'kvcache', label: '07 KV Cache' },
+  'prefill': { step: 'prefill', label: '06 Prefill' },
+  'decode': { step: 'decode', label: '09 Decode Loop' },
+  'tp': { id: 'cross-cutting', label: 'Parallelism' },
+  'pp': { id: 'cross-cutting', label: 'Parallelism' },
+  'ep': { id: 'cross-cutting', label: 'Parallelism' },
+  'hbm': { step: 'kvcache', label: '07 KV Cache' },
+  'sram': { step: 'attention', label: '08 Attention' },
+  'nvlink': { id: 'cross-cutting', label: 'Parallelism' },
+  'rdma': { id: 'cross-cutting', label: 'Networking' },
+  'sse': { step: 'streaming', label: '11 Streaming' },
+  'fp16': { id: 'cross-cutting', label: 'Quantization' },
+  'fp8': { id: 'cross-cutting', label: 'Quantization' },
+  'int4': { id: 'cross-cutting', label: 'Quantization' },
+  'lora': { step: 'routing', label: '01 Routing' },
+  'moe': { step: 'attention', label: '08 Attention' },
+  'softmax': { step: 'sampling', label: '10 Sampling' },
+  'logits': { step: 'sampling', label: '10 Sampling' },
+  'autoregressive': { step: 'decode', label: '09 Decode Loop' },
+  'speculative-decoding': { step: 'decode', label: '09 Decode Loop' },
+  'continuous-batching': { step: 'scheduling', label: '05 Scheduling' },
+  'prefix-caching': { step: 'kvcache', label: '07 KV Cache' },
+  'awq': { id: 'cross-cutting', label: 'Quantization' },
+  'gptq': { id: 'cross-cutting', label: 'Quantization' },
+  'gguf': { id: 'cross-cutting', label: 'Quantization' },
+  'alibi': { step: 'embedding', label: '04 Embedding' },
+  'arithmetic-intensity': { step: 'decode', label: '09 Decode Loop' },
+  'infiniband': { id: 'cross-cutting', label: 'Networking' },
+  'cold-start': { step: 'scheduling', label: '05 Scheduling' },
+  'disaggregated-serving': { step: 'prefill', label: '06 Prefill' },
+  'fsm-decoding': { step: 'sampling', label: '10 Sampling' },
+  'chunked-prefill': { step: 'prefill', label: '06 Prefill' },
+  'min-p': { step: 'sampling', label: '10 Sampling' },
+  'top-p': { step: 'sampling', label: '10 Sampling' },
+  'top-k': { step: 'sampling', label: '10 Sampling' },
+  'eos': { step: 'streaming', label: '11 Streaming' },
+};
+
+function dismissTooltip() {
+  if (activeTooltip) { activeTooltip.remove(); activeTooltip = null; activeTermEl = null; }
+}
+
+function navigateToStep(mapping) {
+  dismissTooltip();
+  var el;
+  if (mapping.step) {
+    el = document.querySelector('.pipeline-step[data-step="' + mapping.step + '"]');
+    if (el && !el.classList.contains('active')) el.classList.add('active');
+  } else if (mapping.id) {
+    el = document.getElementById(mapping.id);
+  }
+  if (el) {
+    window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 64, behavior: 'smooth' });
+  }
+}
+
 // Tooltip handler — direct handlers on .term to stop propagation before parent toggles
 let activeTooltip = null;
 let activeTermEl = null;
 
 function showTermTooltip(term) {
-  // Toggle off if clicking the same term
-  if (activeTermEl === term && activeTooltip) {
-    activeTooltip.remove();
-    activeTooltip = null;
-    activeTermEl = null;
-    return;
-  }
+  if (activeTermEl === term && activeTooltip) { dismissTooltip(); return; }
   if (activeTooltip) { activeTooltip.remove(); activeTooltip = null; }
   var key = term.dataset.term;
   var entry = termDefs[key];
@@ -2830,13 +2941,27 @@ function showTermTooltip(term) {
   activeTermEl = term;
   var tooltip = document.createElement('div');
   tooltip.className = 'term-tooltip';
-  var html = '<div class="term-tooltip-title">' + term.textContent + '</div><div class="term-tooltip-body">' + entry.def + '</div>';
-  if (entry.src) {
-    html += '<a class="term-tooltip-source" href="' + entry.src + '" target="_blank" rel="noopener noreferrer">Source \u2197</a>';
+  var html = '<button class="term-tooltip-close" aria-label="Close">\u00d7</button>';
+  html += '<div class="term-tooltip-title">' + term.textContent + '</div><div class="term-tooltip-body">' + entry.def + '</div>';
+  var mapping = termStepMap[key];
+  if (entry.src || mapping) {
+    html += '<div class="term-tooltip-footer">';
+    if (entry.src) html += '<a class="term-tooltip-source" href="' + entry.src + '" target="_blank" rel="noopener noreferrer">Source \u2197</a>';
+    if (mapping) html += '<a class="term-tooltip-nav" data-nav-key="' + key + '">\u2192 ' + mapping.label + '</a>';
+    html += '</div>';
   }
   tooltip.innerHTML = html;
+  tooltip.querySelector('.term-tooltip-close').addEventListener('click', function(e) { e.stopPropagation(); dismissTooltip(); });
   var srcLink = tooltip.querySelector('.term-tooltip-source');
   if (srcLink) { srcLink.addEventListener('click', function(e) { e.stopPropagation(); }); }
+  var navLink = tooltip.querySelector('.term-tooltip-nav');
+  if (navLink) {
+    navLink.addEventListener('click', function(e) {
+      e.stopPropagation(); e.preventDefault();
+      var m = termStepMap[navLink.getAttribute('data-nav-key')];
+      if (m) navigateToStep(m);
+    });
+  }
   document.body.appendChild(tooltip);
   var rect = term.getBoundingClientRect();
   var ttRect = tooltip.getBoundingClientRect();
@@ -2862,9 +2987,7 @@ document.querySelectorAll('.term').forEach(function(t) {
 // Close tooltip when clicking anywhere else
 document.addEventListener('click', function(e) {
   if (activeTooltip && !e.target.closest('.term-tooltip') && !e.target.closest('.term')) {
-    activeTooltip.remove();
-    activeTooltip = null;
-    activeTermEl = null;
+    dismissTooltip();
   }
 });
 
@@ -3260,6 +3383,8 @@ document.addEventListener('click', function(e) {
     ];
     var assembled = false;
 
+    var stat = el('div', 'sv-stat', 'Hover layers to see token counts');
+
     layers.forEach(function(l, i) {
       var box = el('div', 'sv-node');
       box.innerHTML = '<strong>' + l.label + '</strong><br><span style="font-size:0.55rem;color:var(--text-muted)">' + l.tokens + '</span>';
@@ -3269,7 +3394,16 @@ document.addEventListener('click', function(e) {
       box.style.textAlign = 'center';
       box.style.borderColor = l.color;
       box.style.transition = 'top 0.6s ease, left 0.6s ease';
+      box.style.cursor = 'pointer';
       l.el = box;
+      box.addEventListener('mouseenter', function() {
+        box.classList.add('highlight');
+        stat.textContent = l.label + ': ' + l.tokens;
+      });
+      box.addEventListener('mouseleave', function() {
+        box.classList.remove('highlight');
+        stat.textContent = 'Hover layers to see token counts';
+      });
       c.appendChild(box);
     });
 
@@ -3293,7 +3427,6 @@ document.addEventListener('click', function(e) {
     result.style.cssText = 'left:62%;top:30%;width:120px;text-align:center;opacity:0;transition:opacity 0.5s;border-color:var(--accent)';
     c.appendChild(result);
 
-    var stat = el('div', 'sv-stat', 'Hover layers to see token counts');
     c.appendChild(stat);
 
     var ctrl = el('div', 'sv-controls');
