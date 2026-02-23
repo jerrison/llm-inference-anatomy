@@ -466,3 +466,6 @@ Both pages use the same `localStorage.getItem('theme')` key and the same theme-i
 
 ### Minimap Scroll and Highlight
 Two issues with minimap navigation: (1) `scrollIntoView({ block: 'start' })` scrolls behind the nav, and `block: 'center'` fails for bottom-of-page sections. Fix: `window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 64, behavior: 'smooth' })`. (2) The scroll-based minimap highlight observer fires during smooth scroll, detecting the wrong section as active (collapsed sections are short, so the next section's top crosses the threshold). Fix: immediately set the clicked item as active, and use a `scrollLock` timeout (800ms) to suppress the observer during the smooth scroll animation. See index.html's minimap handler for the reference pattern.
+
+### Section Toggle Responsiveness
+For pipeline section expansion/collapse, avoid `transition: all` on step interaction elements. Keep transitions targeted and short across all four pages: step dot/card/icon around `0.18s` and `.step-detail` at `max-height 0.18s ease-out`. This prevents the UI from feeling laggy when opening and closing sections repeatedly.

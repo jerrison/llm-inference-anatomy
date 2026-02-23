@@ -469,6 +469,9 @@ Two issues with minimap navigation: (1) `scrollIntoView` with `block: 'start'` s
 ### 13. Minimap Collapse by Default
 Minimap labels must be hidden at base CSS level (`opacity: 0; width: 0`), not inside a media query. Revealed via `.minimap:hover .minimap-label`. Previously, labels were inside `@media (max-width: 1440px)` which left them always visible on wider screens.
 
+### 14. Section Toggle Responsiveness
+For fast open/close behavior, avoid broad `transition: all` on pipeline step elements. Use targeted transitions around `0.18s` for `.step-dot`, `.step-card`, `.step-card::before`, and `.step-expand-icon`, and keep `.step-detail` at `max-height 0.18s ease-out` across all four pages.
+
 ## Deployment Verification
 
 After deploying, verify:

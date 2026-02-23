@@ -498,3 +498,5 @@ When modifying interactions on any page:
 10. **Theme FOUC**: The theme init script must be in `<head>` (before body renders). If adding a new page, include the exact same init pattern.
 
 11. **No unnecessary abstractions**: The single-file approach is intentional. Don't add build steps, CSS preprocessors, JS frameworks, or separate files.
+
+12. **Section toggle responsiveness**: Keep section expand/collapse interactions snappy. For `.pipeline-step` UI states, use targeted transitions (`border-color`, `background-color`, `opacity`, `transform`) around `0.18s` instead of broad `transition: all 0.3s`. Keep `.step-detail` at `max-height 0.18s ease-out` across all four pages for consistent feel.

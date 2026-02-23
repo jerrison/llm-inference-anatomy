@@ -264,7 +264,7 @@ body {
   border: 2px solid var(--border);
   background: var(--bg);
   margin-top: 1.5rem;
-  transition: all 0.3s ease;
+  transition: border-color 0.18s ease, background-color 0.18s ease, box-shadow 0.18s ease;
   flex-shrink: 0;
 }
 
@@ -281,7 +281,7 @@ body {
   border-radius: 12px;
   padding: 1.25rem 1.5rem;
   margin: 0.5rem 0;
-  transition: all 0.3s ease;
+  transition: border-color 0.18s ease, background-color 0.18s ease;
   position: relative;
   overflow: hidden;
 }
@@ -292,7 +292,7 @@ body {
   inset: 0;
   background: linear-gradient(135deg, var(--accent-glow) 0%, transparent 50%);
   opacity: 0;
-  transition: opacity 0.3s ease;
+  transition: opacity 0.18s ease;
 }
 
 .pipeline-step:hover .step-card,
@@ -343,7 +343,7 @@ body {
 .step-expand-icon {
   color: var(--text-muted);
   font-size: 1.2rem;
-  transition: transform 0.3s ease;
+  transition: transform 0.18s ease;
   font-family: var(--font-mono);
 }
 
@@ -353,7 +353,7 @@ body {
 .step-detail {
   max-height: 0;
   overflow: hidden;
-  transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: max-height 0.18s ease-out;
   position: relative;
   z-index: 1;
 }
@@ -859,6 +859,43 @@ body {
 
 body, .callout-box, .metric, .site-nav, .minimap-phase { transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease; }
 
+
+/* ─── SEARCH ─── */
+.search-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.55); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); z-index: 2000; display: flex; align-items: flex-start; justify-content: center; padding-top: 12vh; opacity: 0; pointer-events: none; transition: opacity 0.15s ease; }
+.search-overlay.open { opacity: 1; pointer-events: auto; }
+.search-modal { background: var(--bg-card); border: 1px solid var(--border-active); border-radius: 12px; width: min(560px, calc(100vw - 2rem)); box-shadow: 0 24px 64px rgba(0,0,0,0.5); transform: translateY(-8px); transition: transform 0.15s ease; }
+.search-overlay.open .search-modal { transform: translateY(0); }
+.search-input-wrap { display: flex; align-items: center; gap: 0.75rem; padding: 0.875rem 1rem; border-bottom: 1px solid var(--border); }
+.search-icon-svg { width: 16px; height: 16px; color: var(--text-muted); flex-shrink: 0; fill: none; }
+.search-input { flex: 1; background: none; border: none; outline: none; font-family: var(--font-body); font-size: 0.95rem; color: var(--text); }
+.search-input::placeholder { color: var(--text-muted); }
+.search-esc-hint { font-family: var(--font-mono); font-size: 0.6rem; color: var(--text-muted); background: var(--bg); border: 1px solid var(--border); border-radius: 4px; padding: 0.15rem 0.4rem; flex-shrink: 0; }
+.search-results { max-height: 380px; overflow-y: auto; padding: 0.4rem 0; }
+.search-group-header { font-family: var(--font-mono); font-size: 0.5rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text-muted); padding: 0.6rem 1rem 0.2rem; }
+.search-result { display: flex; align-items: center; gap: 0.75rem; padding: 0.55rem 1rem; cursor: pointer; transition: background 0.1s ease; }
+.search-result:hover, .search-result.selected { background: var(--bg-card-hover); }
+.search-result-dot { width: 6px; height: 6px; border-radius: 50%; border: 1.5px solid var(--border-active); background: transparent; flex-shrink: 0; transition: background 0.1s ease, border-color 0.1s ease; }
+.search-result.selected .search-result-dot { background: var(--accent); border-color: var(--accent); }
+.search-result-body { flex: 1; min-width: 0; }
+.search-result-title { font-size: 0.85rem; color: var(--text-dim); }
+.search-result.selected .search-result-title { color: var(--text); }
+.search-result-desc { font-size: 0.7rem; color: var(--text-muted); margin-top: 0.05rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.search-result-badge { font-family: var(--font-mono); font-size: 0.45rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent-dim); border: 1px solid rgba(86,180,233,0.25); border-radius: 3px; padding: 0.1rem 0.3rem; flex-shrink: 0; }
+.search-no-results { padding: 2.5rem 1rem; text-align: center; color: var(--text-muted); font-size: 0.85rem; }
+.search-footer { display: flex; gap: 1.5rem; padding: 0.5rem 1rem; border-top: 1px solid var(--border); justify-content: flex-end; align-items: center; }
+.search-footer-hint { font-family: var(--font-mono); font-size: 0.5rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.3rem; }
+.search-footer-key { background: var(--bg); border: 1px solid var(--border); border-radius: 3px; padding: 0.1rem 0.3rem; }
+.search-trigger { background: none; border: 1px solid var(--border); border-radius: 6px; display: flex; align-items: center; gap: 0.4rem; padding: 0.25rem 0.6rem; cursor: pointer; color: var(--text-muted); font-family: var(--font-mono); font-size: 0.55rem; letter-spacing: 0.05em; transition: border-color 0.2s ease, color 0.2s ease; }
+.search-trigger:hover { border-color: var(--border-active); color: var(--text-dim); }
+.search-trigger svg { width: 12px; height: 12px; fill: none; }
+.search-trigger .search-trigger-label { white-space: nowrap; }
+.search-trigger kbd { font-family: var(--font-mono); font-size: 0.5rem; color: var(--text-muted); background: var(--bg); border: 1px solid var(--border); border-radius: 3px; padding: 0.05rem 0.3rem; }
+[data-theme="light"] .search-overlay { background: rgba(0,0,0,0.25); }
+[data-theme="light"] .search-modal { box-shadow: 0 24px 64px rgba(0,0,0,0.15); }
+@media (max-width: 768px) {
+  .search-trigger .search-trigger-label, .search-trigger kbd { display: none; }
+  .search-trigger { padding: 0.35rem; }
+}
 </style>
 <script>
 (function(){
@@ -881,6 +918,11 @@ body, .callout-box, .metric, .site-nav, .minimap-phase { transition: background-
     <span class="nav-divider"></span>
     <a href="index.html" class="nav-link">Inference</a>
     <a href="economics.html" class="nav-link">Inference Economics</a>
+    <button class="search-trigger" id="search-trigger" aria-label="Search all pages">
+      <svg viewBox="0 0 16 16" stroke="currentColor" stroke-width="1.5"><circle cx="6.5" cy="6.5" r="4.5"></circle><path stroke-linecap="round" d="m10 10 3.5 3.5"></path></svg>
+      <span class="search-trigger-label">Search</span>
+      <kbd id="search-key-hint">&#8984;K</kbd>
+    </button>
     <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme"></button>
   </div>
 </nav>
@@ -1445,10 +1487,35 @@ body, .callout-box, .metric, .site-nav, .minimap-phase { transition: background-
             </div>
 
             <div class="detail-section">
+              <div class="detail-label">Production SFT Modes (Fireworks)</div>
+              <div class="detail-text">
+                <table class="data-table">
+                  <thead><tr><th>Mode</th><th>What You Train</th><th>Key Dataset Shape</th></tr></thead>
+                  <tbody>
+                    <tr><td>Supervised text</td><td>Single-turn text completions</td><td><code>text</code> (and optional <code>loss_mask</code>) fields</td></tr>
+                    <tr><td>Supervised chat</td><td>Multi-message assistants</td><td><code>messages[]</code> with role/content</td></tr>
+                    <tr><td>Supervised vision</td><td>Multimodal chat + tools</td><td>Chat messages with text/image content arrays</td></tr>
+                  </tbody>
+                </table>
+                <p>Fireworks recommends starting with LoRA adapters for most enterprise fine-tuning, then escalating to heavier strategies only if quality targets are not met.</p>
+              </div>
+            </div>
+
+            <div class="detail-section">
+              <div class="detail-label">Dataset Controls</div>
+              <div class="detail-text">
+                <p><span class="term" data-term="loss-mask">Loss mask</span> lets you train only on selected spans in supervised text examples. In chat mode, <span class="term" data-term="loss-role">loss role</span> training keeps optimization focused on assistant turns instead of user/tool turns.</p>
+                <p>For vision and tool-using fine-tunes, Fireworks supports preserving tool-call structure so fine-tuned models remain function-calling compatible in production.</p>
+                <p>Enterprise deployments increasingly require secure fine-tuning boundaries (customer-controlled buckets and explicit retention controls) before regulated data can enter training pipelines.</p>
+              </div>
+            </div>
+
+            <div class="detail-section">
               <div class="detail-label">Full vs Parameter-Efficient</div>
               <div class="detail-text">
                 <p><strong>Full fine-tuning</strong>: update all parameters. Best quality but expensive (~$50K per run for a 7B model on H100s).</p>
                 <p><strong>LoRA/QLoRA</strong>: freeze base weights, train small low-rank adapter matrices. <span class="term" data-term="lora">LoRA</span> adds &lt;1% parameters, achieves 90-95% of full fine-tuning quality at <strong>$300-$3,000 per run</strong>. QLoRA further quantizes the base model to 4-bit during training.</p>
+                <p>Fireworks defaults for LoRA SFT are deliberately conservative (rank 32, alpha 64, context 16K, ~3 epochs), then tuned from there. A major deployment advantage is multi-adapter serving: up to <strong>100 LoRA adapters</strong> can share one base model deployment, dramatically improving utilization for long-tail custom models.</p>
               </div>
             </div>
           </div>
@@ -1497,6 +1564,17 @@ body, .callout-box, .metric, .site-nav, .minimap-phase { transition: background-
                   <div class="sub-topic-detail">
                     <p><span class="term" data-term="dpo">DPO</span> (Direct Preference Optimization) reparameterizes the RLHF objective to directly optimize on preference pairs without training a separate reward model. Only needs <strong>2 models</strong> (policy + reference). Simpler pipeline, more stable training.</p>
                     <p>Limitation: still requires pairwise comparisons (chosen/rejected responses), which are expensive to collect.</p>
+                  </div>
+                </div>
+                <div class="sub-topic" onclick="toggleSubTopic(this)">
+                  <div class="sub-topic-header">
+                    <span class="sub-topic-name">DPO Data Contracts (Fireworks)</span>
+                    <span class="sub-topic-icon">+</span>
+                  </div>
+                  <div class="sub-topic-preview">Prompt + preferred/non-preferred outputs, with optional tool context</div>
+                  <div class="sub-topic-detail">
+                    <p>Fireworks DPO expects explicit triplets: <span class="term" data-term="dpo-triplet">prompt</span>, preferred output, and non-preferred output. This makes preference data portable across experiments and easier to audit.</p>
+                    <p>When workflows depend on function calling, datasets can include tool definitions and tool-call traces so preference optimization teaches both quality and tool-use behavior.</p>
                   </div>
                 </div>
                 <div class="sub-topic" onclick="toggleSubTopic(this)">
@@ -1559,6 +1637,14 @@ body, .callout-box, .metric, .site-nav, .minimap-phase { transition: background-
             </div>
 
             <div class="detail-section">
+              <div class="detail-label">Operational RFT Workflow (Fireworks)</div>
+              <div class="detail-text">
+                <p>Fireworks RFT formalizes the loop into four assets: (1) an evaluator model or rubric, (2) a runtime environment for verification, (3) parameter tuning (rollouts/learning rate/steps), and (4) tracing for step-level debugging.</p>
+                <p>This turns RFT from a one-off experiment into a repeatable production workflow: train &rarr; evaluate &rarr; tune &rarr; retrain, with cost estimators and telemetry at each stage.</p>
+              </div>
+            </div>
+
+            <div class="detail-section">
               <div class="detail-label">RFT Methods</div>
               <div class="sub-topics">
                 <div class="sub-topic" onclick="toggleSubTopic(this)">
@@ -1604,6 +1690,7 @@ body, .callout-box, .metric, .site-nav, .minimap-phase { transition: background-
                   <div class="sub-topic-detail">
                     <p><strong>OpenAI RFT</strong> (2024-2025): enterprise product that fine-tunes o1/o3 models with customer-provided grading rubrics. Customers report 10-30% improvement on domain-specific tasks vs. prompting alone. Requires 50-500 graded examples.</p>
                     <p><strong>Google Gemini RFT</strong>: similar offering through Vertex AI, focusing on code generation and structured reasoning tasks.</p>
+                    <p><strong>Fireworks RFT</strong>: integrates evaluator models, environment hooks, and secure fine-tuning options (including customer-controlled storage boundaries) for regulated use cases.</p>
                     <p>The business model: RFT is premium fine-tuning &mdash; higher margin than standard SFT because it produces genuinely differentiated models that reason better in the customer&rsquo;s domain.</p>
                   </div>
                 </div>
@@ -1684,6 +1771,13 @@ body, .callout-box, .metric, .site-nav, .minimap-phase { transition: background-
               <div class="detail-label">Dynamic Evaluation</div>
               <div class="detail-text">
                 <p><strong>LiveBench</strong>: monthly refresh of questions with verifiable answers. Immune to contamination because questions didn&rsquo;t exist during training. <strong>Chatbot Arena</strong> (LMSYS): blind pairwise comparisons by real users, producing ELO rankings. Over 1M votes. The most trusted signal of real-world model quality.</p>
+              </div>
+            </div>
+            <div class="detail-section">
+              <div class="detail-label">Reasoning-Mode Regression Tests</div>
+              <div class="detail-text">
+                <p>For reasoning-capable models, evaluate at multiple runtime policies: low/high reasoning effort, budget-capped thinking, and preserved-history on/off. A model that looks strong in one policy can fail latency or quality targets in another.</p>
+                <p>This is now part of production release criteria: benchmark quality plus policy-specific inference behavior.</p>
               </div>
             </div>
           </div>
@@ -1771,7 +1865,10 @@ var termDefs = {
   'lora': { def: 'Low-Rank Adaptation — freezes base model weights and trains small low-rank adapter matrices that are added to existing weight matrices. Adds <1% parameters while achieving 90-95% of full fine-tuning quality.' },
   'mmlu': { def: 'Massive Multitask Language Understanding — a benchmark of 57 academic subjects testing broad knowledge. Essentially saturated at >90% for frontier models; MMLU-Pro adds harder 10-option questions.' },
   'rft': { def: 'Reinforcement Fine-Tuning — applies reinforcement learning with domain-specific, verifiable rewards after SFT to teach models specialized reasoning. Uses expert-designed rubrics or automated verification rather than general human preferences.' },
-  'prm': { def: 'Process Reward Model — scores each intermediate reasoning step rather than just the final answer. Provides richer training signal than Outcome Reward Models (ORMs), significantly reducing hallucinated reasoning chains.' }
+  'prm': { def: 'Process Reward Model — scores each intermediate reasoning step rather than just the final answer. Provides richer training signal than Outcome Reward Models (ORMs), significantly reducing hallucinated reasoning chains.' },
+  'loss-mask': { def: 'A per-token training mask that decides which text spans contribute to fine-tuning loss. Useful for training only completion spans in mixed-format records.', src: 'https://docs.fireworks.ai/fine-tuning/supervised-fine-tuning' },
+  'loss-role': { def: 'Role-aware chat fine-tuning that applies loss only to selected roles (typically assistant turns), preventing user/tool messages from being optimized as targets.', src: 'https://docs.fireworks.ai/fine-tuning/supervised-fine-tuning' },
+  'dpo-triplet': { def: 'DPO dataset schema with prompt + preferred_output + non_preferred_output. Encodes explicit preference comparisons for direct optimization.', src: 'https://docs.fireworks.ai/fine-tuning/direct-preference-optimization' }
 };
 
 function dismissTooltip() {
@@ -2080,6 +2177,218 @@ initOptimizerCompare();
 initParallelism();
 
 </script>
+
+
+<script>
+// ─── SEARCH ───
+var CURRENT_PAGE = 'training.html';
+var SEARCH_INDEX = [
+  {page:'index.html',pageLabel:'Inference',anchor:'step-routing',title:'Request Routing',desc:'Load balancing, KV cache-aware routing, geo-aware, gateway frameworks'},
+  {page:'index.html',pageLabel:'Inference',anchor:'step-preprocessing',title:'Preprocessing',desc:'Prompt templates, RAG retrieval, rate limiting, input validation'},
+  {page:'index.html',pageLabel:'Inference',anchor:'step-tokenization',title:'Tokenization',desc:'BPE, SentencePiece, vocabulary sizes, tiktoken'},
+  {page:'index.html',pageLabel:'Inference',anchor:'step-embedding',title:'Embedding & Position',desc:'Token embeddings, RoPE, ALiBi, positional encoding'},
+  {page:'index.html',pageLabel:'Inference',anchor:'step-scheduling',title:'Scheduling & Batching',desc:'Continuous batching, chunked prefill, thinking model scheduling'},
+  {page:'index.html',pageLabel:'Inference',anchor:'step-prefill',title:'Prefill Phase',desc:'Parallel forward pass, TTFT, prefix caching, KV-Runahead'},
+  {page:'index.html',pageLabel:'Inference',anchor:'step-kvcache',title:'KV Cache & Memory',desc:'PagedAttention, KV compression, MLA, memory management'},
+  {page:'index.html',pageLabel:'Inference',anchor:'step-attention',title:'Attention Mechanisms',desc:'MHA, GQA, MQA, FlashAttention, MLA'},
+  {page:'index.html',pageLabel:'Inference',anchor:'step-decode',title:'Decode Phase',desc:'Autoregressive loop, speculative decoding, thinking model decode'},
+  {page:'index.html',pageLabel:'Inference',anchor:'step-sampling',title:'Sampling & Selection',desc:'Temperature, top-k, top-p, min-p, repetition penalties'},
+  {page:'index.html',pageLabel:'Inference',anchor:'step-streaming',title:'Detokenization & Streaming',desc:'UTF-8 buffering, SSE protocol, streaming pipeline'},
+  {page:'index.html',pageLabel:'Inference',anchor:'inference-metrics',title:'Inference Metrics',desc:'TTFT, TPOT, throughput, GPU utilization, SLOs, cost per token'},
+  {page:'index.html',pageLabel:'Inference',anchor:'cross-cutting',title:'Quantization & Parallelism',desc:'FP8, AWQ, GPTQ, tensor/pipeline/expert parallelism, LoRA serving'},
+  {page:'index.html',pageLabel:'Inference',anchor:'frameworks',title:'Serving Frameworks',desc:'vLLM, SGLang, TensorRT-LLM, NVIDIA Dynamo'},
+  {page:'economics.html',pageLabel:'Inference Economics',anchor:'cost-stack',title:'The Cost Stack',desc:'GPU CapEx, power, data center, networking, operations'},
+  {page:'economics.html',pageLabel:'Inference Economics',anchor:'throughput',title:'Throughput as Margin',desc:'3-5x throughput variance; thinking model throughput impact'},
+  {page:'economics.html',pageLabel:'Inference Economics',anchor:'pricing',title:'Pricing Structures',desc:'Per-token, per-GPU-hour, reserved, batch, thinking token pricing'},
+  {page:'economics.html',pageLabel:'Inference Economics',anchor:'managed-vs-rental',title:'Managed vs GPU Rental',desc:'Statistical multiplexing, outcomes vs infrastructure'},
+  {page:'economics.html',pageLabel:'Inference Economics',anchor:'buy-vs-rent',title:'Buy vs Rent GPUs',desc:'Ownership cost model, breakeven calculator'},
+  {page:'economics.html',pageLabel:'Inference Economics',anchor:'data-centers',title:'Data Centers',desc:'Power costs, PUE, facility economics'},
+  {page:'economics.html',pageLabel:'Inference Economics',anchor:'equity-vs-debt',title:'Equity vs Debt',desc:'Risk, information asymmetry, tax shields'},
+  {page:'economics.html',pageLabel:'Inference Economics',anchor:'contracted-revenue',title:'Contracted Revenue',desc:'How pricing decisions unlock debt capacity'},
+  {page:'economics.html',pageLabel:'Inference Economics',anchor:'stage-by-stage',title:'Stage-by-Stage Capital',desc:'Series A to public capital structure evolution'},
+  {page:'training.html',pageLabel:'Training',anchor:'data-pipeline',title:'Data Pipeline',desc:'Collection, filtering, dedup, mixing; DCLM, FineWeb'},
+  {page:'training.html',pageLabel:'Training',anchor:'tokenizer',title:'Tokenizer Training',desc:'BPE, SentencePiece, vocabulary sizes, 128K tokens'},
+  {page:'training.html',pageLabel:'Training',anchor:'architecture',title:'Model Architecture',desc:'Attention variants, SwiGLU, MoE, RoPE, RMSNorm'},
+  {page:'training.html',pageLabel:'Training',anchor:'optimization',title:'Optimization',desc:'AdamW, Muon, WSD schedule, mixed precision, FP8'},
+  {page:'training.html',pageLabel:'Training',anchor:'distributed',title:'Distributed Training',desc:'ZeRO, tensor/pipeline/4D parallelism, Megatron-LM'},
+  {page:'training.html',pageLabel:'Training',anchor:'monitoring',title:'Monitoring & Recovery',desc:'MFU, loss spikes, checkpointing, failure recovery'},
+  {page:'training.html',pageLabel:'Training',anchor:'sft',title:'Supervised Fine-Tuning',desc:'LoRA, supervised text/chat/vision, loss masking, instruction tuning'},
+  {page:'training.html',pageLabel:'Training',anchor:'alignment',title:'Alignment',desc:'RLHF, DPO triplets, GRPO, Constitutional AI, KTO, thinking models'},
+  {page:'training.html',pageLabel:'Training',anchor:'rft',title:'Reinforcement Fine-Tuning',desc:'Evaluator-driven RFT, environment hooks, parameter tuning, o1/o3/R1'},
+  {page:'training.html',pageLabel:'Training',anchor:'evaluation',title:'Evaluation',desc:'MMLU, benchmarks, contamination detection, LiveBench'},
+  {page:'training-economics.html',pageLabel:'Training Economics',anchor:'hardware-costs',title:'Hardware & Compute Costs',desc:'GPU pricing, cloud rental decline, cost benchmarks'},
+  {page:'training-economics.html',pageLabel:'Training Economics',anchor:'scaling-laws',title:'Scaling Laws & Efficiency',desc:'Chinchilla, over-training, test-time compute scaling'},
+  {page:'training-economics.html',pageLabel:'Training Economics',anchor:'failure-costs',title:'Failure & Wasted Compute',desc:'Training failures, wasted GPU-hours, checkpoint overhead'},
+  {page:'training-economics.html',pageLabel:'Training Economics',anchor:'build-vs-buy',title:'Build vs Fine-Tune vs API',desc:'When to train, fine-tune, or use API — cost comparison'},
+  {page:'training-economics.html',pageLabel:'Training Economics',anchor:'training-providers',title:'Training Providers',desc:'Foundation model companies, training-as-a-service'},
+  {page:'training-economics.html',pageLabel:'Training Economics',anchor:'cloud-vs-onprem',title:'Cloud vs On-Premise',desc:'Cloud advantages, on-prem breakeven, hidden costs'},
+  {page:'training-economics.html',pageLabel:'Training Economics',anchor:'gpu-financing',title:'GPU Financing',desc:'CoreWeave debt, sale-leaseback, GPU depreciation'},
+  {page:'training-economics.html',pageLabel:'Training Economics',anchor:'model-funding',title:'Foundation Model Funding',desc:'Mega-rounds, Big Tech infrastructure spend'},
+  {page:'training-economics.html',pageLabel:'Training Economics',anchor:'training-vs-inference',title:'Training vs Inference Spend',desc:'Spend ratio shift 2023–2026, revenue gap'},
+];
+
+var searchSelectedIdx = -1;
+
+function openSearch() {
+  var overlay = document.getElementById('search-overlay');
+  var input = document.getElementById('search-input');
+  if (!overlay || !input) return;
+  overlay.classList.add('open');
+  input.value = '';
+  input.focus();
+  searchSelectedIdx = -1;
+  renderSearchResults('');
+}
+
+function closeSearch() {
+  var overlay = document.getElementById('search-overlay');
+  if (overlay) overlay.classList.remove('open');
+}
+
+function renderSearchResults(query) {
+  var container = document.getElementById('search-results');
+  if (!container) return;
+  var q = query.toLowerCase().trim();
+  var filtered = q ? SEARCH_INDEX.filter(function(item) {
+    return item.title.toLowerCase().indexOf(q) !== -1 ||
+           item.desc.toLowerCase().indexOf(q) !== -1 ||
+           item.pageLabel.toLowerCase().indexOf(q) !== -1;
+  }) : SEARCH_INDEX;
+  searchSelectedIdx = -1;
+  if (filtered.length === 0) {
+    container.innerHTML = '<div class="search-no-results">No results for &ldquo;' + query + '&rdquo;</div>';
+    return;
+  }
+  var groups = {};
+  var pageOrder = ['Inference','Inference Economics','Training','Training Economics'];
+  filtered.forEach(function(item) {
+    if (!groups[item.pageLabel]) groups[item.pageLabel] = [];
+    groups[item.pageLabel].push(item);
+  });
+  var html = '';
+  var idx = 0;
+  pageOrder.forEach(function(label) {
+    if (!groups[label]) return;
+    html += '<div class="search-group-header">' + label + '</div>';
+    groups[label].forEach(function(item) {
+      html += '<div class="search-result" data-idx="' + idx + '" data-page="' + item.page + '" data-anchor="' + item.anchor + '">' +
+        '<div class="search-result-dot"></div>' +
+        '<div class="search-result-body"><div class="search-result-title">' + item.title + '</div>' +
+        '<div class="search-result-desc">' + item.desc + '</div></div>' +
+        '<span class="search-result-badge">' + (item.page === CURRENT_PAGE ? 'this page' : item.pageLabel.toLowerCase()) + '</span>' +
+      '</div>';
+      idx++;
+    });
+  });
+  container.innerHTML = html;
+  container.querySelectorAll('.search-result').forEach(function(el) {
+    el.addEventListener('click', function() { navigateToResult(el); });
+    el.addEventListener('mouseenter', function() { setSearchSelected(parseInt(el.dataset.idx)); });
+  });
+}
+
+function setSearchSelected(idx) {
+  searchSelectedIdx = idx;
+  document.querySelectorAll('.search-result').forEach(function(r, i) { r.classList.toggle('selected', i === idx); });
+}
+
+function navigateToResult(el) {
+  var page = el.dataset.page;
+  var anchor = el.dataset.anchor;
+  closeSearch();
+  if (page === CURRENT_PAGE) {
+    var target = document.getElementById(anchor) || document.querySelector('.pipeline-step[data-step="' + anchor.replace(/^step-/, '') + '"]');
+    if (target) {
+      if (target.classList.contains('pipeline-step') && !target.classList.contains('active')) target.classList.add('active');
+      setTimeout(function() {
+        window.scrollTo({ top: target.getBoundingClientRect().top + window.scrollY - 64, behavior: 'smooth' });
+      }, 50);
+    }
+  } else {
+    window.location.href = page + '#' + anchor;
+  }
+}
+
+document.addEventListener('keydown', function(e) {
+  if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+    e.preventDefault();
+    var overlay = document.getElementById('search-overlay');
+    if (!overlay) return;
+    if (overlay.classList.contains('open')) { closeSearch(); } else { openSearch(); }
+    return;
+  }
+  var overlay = document.getElementById('search-overlay');
+  if (!overlay || !overlay.classList.contains('open')) return;
+  var results = document.querySelectorAll('.search-result');
+  if (e.key === 'Escape') { closeSearch(); }
+  else if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    var next = searchSelectedIdx < 0 ? 0 : Math.min(searchSelectedIdx + 1, results.length - 1);
+    setSearchSelected(next);
+    if (results[searchSelectedIdx]) results[searchSelectedIdx].scrollIntoView({ block: 'nearest' });
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    var prev = Math.max(searchSelectedIdx - 1, 0);
+    setSearchSelected(prev);
+    if (results[searchSelectedIdx]) results[searchSelectedIdx].scrollIntoView({ block: 'nearest' });
+  } else if (e.key === 'Enter') {
+    e.preventDefault();
+    var target = results[searchSelectedIdx] || results[0];
+    if (target) navigateToResult(target);
+  }
+});
+
+var searchInputEl = document.getElementById('search-input');
+if (searchInputEl) {
+  searchInputEl.addEventListener('input', function(e) { renderSearchResults(e.target.value); });
+}
+var searchOverlayEl = document.getElementById('search-overlay');
+if (searchOverlayEl) {
+  searchOverlayEl.addEventListener('click', function(e) { if (e.target === searchOverlayEl) closeSearch(); });
+}
+var searchTriggerEl = document.getElementById('search-trigger');
+if (searchTriggerEl) {
+  searchTriggerEl.addEventListener('click', function() { openSearch(); });
+}
+
+// Update shortcut label for non-Mac
+(function() {
+  var isMac = /Mac|iPhone|iPad|iPod/.test(navigator.platform || navigator.userAgent);
+  if (!isMac) {
+    var hint = document.getElementById('search-key-hint');
+    if (hint) hint.textContent = 'Ctrl+K';
+  }
+})();
+
+// Handle hash anchor from cross-page search navigation
+(function() {
+  if (!window.location.hash) return;
+  var anchor = window.location.hash.slice(1);
+  setTimeout(function() {
+    var target = document.getElementById(anchor) || document.querySelector('.pipeline-step[data-step="' + anchor.replace(/^step-/, '') + '"]');
+    if (!target) return;
+    if (target.classList.contains('pipeline-step') && !target.classList.contains('active')) target.classList.add('active');
+    window.scrollTo({ top: target.getBoundingClientRect().top + window.scrollY - 64, behavior: 'smooth' });
+  }, 350);
+})();
+</script>
+
+<!-- ─── SEARCH MODAL ─── -->
+<div class="search-overlay" id="search-overlay" role="dialog" aria-modal="true" aria-label="Site search">
+  <div class="search-modal">
+    <div class="search-input-wrap">
+      <svg class="search-icon-svg" viewBox="0 0 16 16" stroke="currentColor" stroke-width="1.5"><circle cx="6.5" cy="6.5" r="4.5"/><path stroke-linecap="round" d="m10 10 3.5 3.5"/></svg>
+      <input type="text" class="search-input" id="search-input" placeholder="Search sections, topics, terms..." autocomplete="off" spellcheck="false">
+      <kbd class="search-esc-hint">ESC</kbd>
+    </div>
+    <div class="search-results" id="search-results"></div>
+    <div class="search-footer">
+      <span class="search-footer-hint"><span class="search-footer-key">&#x2191;&#x2193;</span>&nbsp;navigate</span>
+      <span class="search-footer-hint"><span class="search-footer-key">&#x23CE;</span>&nbsp;select</span>
+      <span class="search-footer-hint"><span class="search-footer-key">ESC</span>&nbsp;close</span>
+    </div>
+  </div>
+</div>
 
 </body>
 </html>
