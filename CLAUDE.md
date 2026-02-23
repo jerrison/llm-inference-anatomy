@@ -29,7 +29,7 @@ A four-page interactive reference site covering LLM training and inference. Two 
 └── site/
     ├── index.html                   ← Inference Technical Pipeline (~4,553 lines)
     ├── economics.html               ← Inference Economics (~1,752 lines)
-    ├── training.html                ← Training Technical Pipeline (~1,982 lines)
+    ├── training.html                ← Training Technical Pipeline (~2,084 lines)
     └── training-economics.html      ← Training Economics (~1,195 lines)
 ```
 
@@ -111,7 +111,8 @@ Three Phases:
 - **Phase I — Post-Training** (`id="phase-i"`)
   - I1: Supervised Fine-Tuning (`id="sft"`) — LoRA, full fine-tuning
   - I2: Alignment (`id="alignment"`) — RLHF, DPO, GRPO, Constitutional AI, KTO
-  - I3: Evaluation (`id="evaluation"`) — MMLU, benchmarks, contamination detection
+  - I3: Reinforcement Fine-Tuning (`id="rft"`) — expert-guided RFT, verifiable rewards, process vs outcome rewards, RFT as product
+  - I4: Evaluation (`id="evaluation"`) — MMLU, benchmarks, contamination detection
 
 ~30 term definitions in termDefs object.
 
