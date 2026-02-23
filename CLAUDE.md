@@ -27,10 +27,10 @@ A four-page interactive reference site covering LLM training and inference. Two 
 ├── CLAUDE.md                        ← Claude Code instructions (this file)
 ├── GEMINI.md                        ← Gemini agent instructions
 └── site/
-    ├── index.html                   ← Inference Technical Pipeline (~4,540 lines)
-    ├── economics.html               ← Inference Economics (~1,750 lines)
-    ├── training.html                ← Training Technical Pipeline (~1,700 lines)
-    └── training-economics.html      ← Training Economics (~830 lines)
+    ├── index.html                   ← Inference Technical Pipeline (~4,553 lines)
+    ├── economics.html               ← Inference Economics (~1,752 lines)
+    ├── training.html                ← Training Technical Pipeline (~1,982 lines)
+    └── training-economics.html      ← Training Economics (~1,195 lines)
 ```
 
 No build step, no framework, no dependencies beyond Google Fonts. Each HTML file is fully self-contained.
@@ -115,6 +115,14 @@ Three Phases:
 
 ~30 term definitions in termDefs object.
 
+Interactive Visuals (training.html):
+
+| Visual | Container ID | Init Function | Interaction |
+|--------|-------------|---------------|-------------|
+| Data funnel | `visual-data-funnel` | `initDataFunnel()` | Animated pipeline showing data volume shrinking at each stage |
+| Optimizer comparison | `visual-optimizer-compare` | `initOptimizerCompare()` | Bar charts comparing convergence speed and memory usage |
+| Parallelism diagram | `visual-parallelism` | `initParallelism()` | 4x4 GPU grid with mode toggle buttons (DP/TP/PP/4D) |
+
 ### training-economics.html — Training Economics
 
 Uses inference blue accent (same as economics.html) for consistency.
@@ -132,6 +140,15 @@ Three Phases:
   - L1: GPU Financing (`id="gpu-financing"`)
   - L2: Foundation Model Funding (`id="model-funding"`)
   - L3: Training vs Inference Spend (`id="training-vs-inference"`)
+
+Interactive Visuals (training-economics.html):
+
+| Visual | Container ID | Init Function | Interaction |
+|--------|-------------|---------------|-------------|
+| Training cost waterfall | `visual-training-waterfall` | `initTrainingWaterfall()` | Stacked bar breakdown + model cost comparison |
+| Scaling curve | `visual-scaling-curve` | `initScalingCurve()` | Log-scale over-training comparison bars |
+| Cost calculator | `visual-cost-calc` | `initCostCalc()` | Two sliders (model size, tokens) update 4 cost results |
+| Spend timeline | `visual-spend-timeline` | `initSpendTimeline()` | Stacked bars showing training/inference spend shift 2023-2026 |
 
 ## Shared Navigation System
 
