@@ -1055,10 +1055,12 @@ body {
 }
 
 @media (max-width: 1440px) {
+  .minimap { right: 1rem; padding: 0.5rem; border-radius: 8px; transition: opacity 0.35s ease, background 0.2s ease; }
   .minimap-label { opacity: 0; width: 0; overflow: hidden; transition: opacity 0.2s ease, width 0.2s ease; }
+  .minimap:hover { background: var(--bg); box-shadow: -4px 0 16px rgba(0,0,0,0.3); border: 1px solid var(--border); }
   .minimap:hover .minimap-label { opacity: 1; width: auto; }
-  .minimap { right: 1rem; }
 }
+[data-theme="light"] .minimap:hover { box-shadow: -4px 0 16px rgba(0,0,0,0.08); }
 @media (max-width: 768px) {
   .minimap { display: none; }
 }
@@ -3338,6 +3340,15 @@ document.addEventListener('click', function(e) {
     // Animated packet
     var packet = el('div', 'sv-packet');
     c.appendChild(packet);
+    // Legend
+    var legend = el('div', '');
+    legend.style.cssText = 'position:absolute;left:8%;bottom:22%;display:flex;align-items:center;gap:10px;font-size:0.45rem;color:var(--text-muted)';
+    var kvSwatch = el('div', '');
+    kvSwatch.style.cssText = 'width:24px;height:6px;background:var(--accent);border-radius:2px';
+    legend.appendChild(kvSwatch);
+    legend.appendChild(el('span', '', 'KV Cache Usage'));
+    c.appendChild(legend);
+
     var stat = el('div', 'sv-stat', 'Route to lowest KV usage');
     c.appendChild(stat);
 
@@ -3603,7 +3614,7 @@ document.addEventListener('click', function(e) {
     });
     c.appendChild(rightCol);
 
-    var stat = el('div', 'sv-stat', 'Hover a token');
+    var stat = el('div', 'sv-stat', 'Hover or click a token');
     c.appendChild(stat);
 
     function highlightToken(idx) {
@@ -3815,6 +3826,19 @@ document.addEventListener('click', function(e) {
     }
     gridContainer.appendChild(grid);
 
+    // Legend
+    var legend = el('div', '');
+    legend.style.cssText = 'position:absolute;right:12%;top:6%;display:flex;align-items:center;gap:12px;font-size:0.45rem;color:var(--text-muted)';
+    var litSwatch = el('div', '');
+    litSwatch.style.cssText = 'width:10px;height:10px;background:var(--accent);border:1px solid var(--accent-dim);border-radius:2px';
+    legend.appendChild(litSwatch);
+    legend.appendChild(el('span', '', 'Computed'));
+    var emSwatch = el('div', '');
+    emSwatch.style.cssText = 'width:10px;height:10px;background:transparent;border:1px solid var(--border);border-radius:2px';
+    legend.appendChild(emSwatch);
+    legend.appendChild(el('span', '', 'Masked (causal)'));
+    c.appendChild(legend);
+
     var stat = el('div', 'sv-stat');
     c.appendChild(stat);
 
@@ -3982,6 +4006,19 @@ document.addEventListener('click', function(e) {
       })(t);
     }
 
+    // Legend
+    var legend = el('div', '');
+    legend.style.cssText = 'position:absolute;left:8%;bottom:20%;display:flex;align-items:center;gap:12px;font-size:0.45rem;color:var(--text-muted)';
+    var logSw = el('div', '');
+    logSw.style.cssText = 'width:10px;height:10px;border:1px solid var(--border-active);border-radius:3px';
+    legend.appendChild(logSw);
+    legend.appendChild(el('span', '', 'Logical (sequential)'));
+    var physSw = el('div', '');
+    physSw.style.cssText = 'width:10px;height:10px;border:1px solid var(--accent);background:var(--accent-glow);border-radius:3px';
+    legend.appendChild(physSw);
+    legend.appendChild(el('span', '', 'Physical (scattered)'));
+    c.appendChild(legend);
+
     var stat = el('div', 'sv-stat', numTokens + ' tokens \u2022 ' + numTokens + ' blocks allocated');
     c.appendChild(stat);
 
@@ -4057,6 +4094,12 @@ document.addEventListener('click', function(e) {
       vizDiv.appendChild(kvRow);
     }
 
+    // Legend
+    var legend = el('div', '');
+    legend.style.cssText = 'position:absolute;left:5%;bottom:18%;font-size:0.45rem;color:var(--text-muted)';
+    legend.textContent = 'Matching colors = shared KV head group';
+    c.appendChild(legend);
+
     var ctrl = el('div', 'sv-controls');
     ['MHA', 'GQA', 'MQA'].forEach(function(m) {
       var btn = el('button', 'sv-btn' + (m === mode ? ' active' : ''), m);
@@ -4112,6 +4155,20 @@ document.addEventListener('click', function(e) {
     note.style.cssText = 'position:absolute;left:50%;bottom:36%;transform:translateX(-50%);font-size:0.5rem;color:var(--text-muted);text-align:center;width:120px';
     note.textContent = 'Weight loading dominates (~80% of time)';
     c.appendChild(note);
+
+    // Legend
+    var legend = el('div', '');
+    legend.style.cssText = 'position:absolute;left:5%;bottom:18%;display:flex;flex-wrap:wrap;gap:8px;font-size:0.45rem;color:var(--text-muted)';
+    steps.forEach(function(s) {
+      var item = el('span', '');
+      item.style.cssText = 'display:inline-flex;align-items:center;gap:3px';
+      var dot = el('span', '');
+      dot.style.cssText = 'width:8px;height:8px;border-radius:50%;border:' + (s.thick ? '2px' : '1px') + ' solid ' + s.color;
+      item.appendChild(dot);
+      item.appendChild(el('span', '', s.label));
+      legend.appendChild(item);
+    });
+    c.appendChild(legend);
 
     // Packet
     var packet = el('div', 'sv-packet');
@@ -4202,6 +4259,19 @@ document.addEventListener('click', function(e) {
     var titleDiv = el('div', 'sv-label');
     titleDiv.style.cssText = 'position:absolute;left:5%;top:5%';
     c.appendChild(titleDiv);
+
+    // Legend
+    var legend = el('div', '');
+    legend.style.cssText = 'position:absolute;right:5%;top:5%;display:flex;align-items:center;gap:10px;font-size:0.45rem;color:var(--text-muted)';
+    var actSw = el('div', '');
+    actSw.style.cssText = 'width:16px;height:6px;background:var(--accent);border-radius:2px';
+    legend.appendChild(actSw);
+    legend.appendChild(el('span', '', 'Candidate'));
+    var filtSw = el('div', '');
+    filtSw.style.cssText = 'width:16px;height:6px;background:var(--border);opacity:0.5;border-radius:2px';
+    legend.appendChild(filtSw);
+    legend.appendChild(el('span', '', 'Filtered out'));
+    c.appendChild(legend);
 
     var stat = el('div', 'sv-stat');
     c.appendChild(stat);
@@ -4326,6 +4396,19 @@ document.addEventListener('click', function(e) {
     sseLabel.textContent = 'SSE CONNECTION';
     sseLabel.style.cssText = 'position:absolute;left:50%;top:25%;transform:translateX(-50%)';
     c.appendChild(sseLabel);
+
+    // Legend
+    var legend = el('div', '');
+    legend.style.cssText = 'position:absolute;left:50%;top:8%;transform:translateX(-50%);display:flex;align-items:center;gap:12px;font-size:0.45rem;color:var(--text-muted)';
+    var srvSw = el('div', '');
+    srvSw.style.cssText = 'width:10px;height:10px;border:1px solid var(--compute);border-radius:2px';
+    legend.appendChild(srvSw);
+    legend.appendChild(el('span', '', 'GPU Server'));
+    var cliSw = el('div', '');
+    cliSw.style.cssText = 'width:10px;height:10px;border:1px solid var(--accent);border-radius:2px';
+    legend.appendChild(cliSw);
+    legend.appendChild(el('span', '', 'Client'));
+    c.appendChild(legend);
 
     // TTFT marker
     var ttftMarker = el('div', '');

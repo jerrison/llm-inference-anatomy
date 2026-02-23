@@ -287,7 +287,13 @@ body {
 .reveal.visible { opacity: 1; transform: translateY(0); }
 
 /* ─── RESPONSIVE ─── */
-@media (max-width: 1440px) { .minimap-label { opacity: 0; width: 0; overflow: hidden; transition: opacity 0.2s ease, width 0.2s ease; } .minimap:hover .minimap-label { opacity: 1; width: auto; } .minimap { right: 1rem; } }
+@media (max-width: 1440px) {
+  .minimap { right: 1rem; padding: 0.5rem; border-radius: 8px; transition: opacity 0.35s ease, background 0.2s ease; }
+  .minimap-label { opacity: 0; width: 0; overflow: hidden; transition: opacity 0.2s ease, width 0.2s ease; }
+  .minimap:hover { background: var(--bg); box-shadow: -4px 0 16px rgba(0,0,0,0.3); border: 1px solid var(--border); }
+  .minimap:hover .minimap-label { opacity: 1; width: auto; }
+}
+[data-theme="light"] .minimap:hover { box-shadow: -4px 0 16px rgba(0,0,0,0.08); }
 @media (max-width: 768px) {
   .minimap { display: none; }
   .site-nav { padding: 0 1rem; }
