@@ -1055,7 +1055,8 @@ body {
 }
 
 @media (max-width: 1440px) {
-  .minimap-label { display: none; }
+  .minimap-label { opacity: 0; width: 0; overflow: hidden; transition: opacity 0.2s ease, width 0.2s ease; }
+  .minimap:hover .minimap-label { opacity: 1; width: auto; }
   .minimap { right: 1rem; }
 }
 @media (max-width: 768px) {
