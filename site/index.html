@@ -2747,12 +2747,7 @@ document.querySelectorAll('.pipeline-step').forEach(step => {
 
 // ─── Sub-topic toggle ───
 function toggleSubTopic(el) {
-  const wasExpanded = el.classList.contains('expanded');
-  // Close siblings
-  el.parentElement.querySelectorAll('.sub-topic.expanded').forEach(s => {
-    if (s !== el) s.classList.remove('expanded');
-  });
-  el.classList.toggle('expanded', !wasExpanded);
+  el.classList.toggle('expanded');
 }
 
 // ─── Scroll reveal ───

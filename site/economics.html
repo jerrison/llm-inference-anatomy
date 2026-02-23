@@ -1337,11 +1337,7 @@ body, .code-block, .callout-box, .metric, .site-nav, .minimap-phase { transition
 
   /* ─── SUB-TOPIC TOGGLE ─── */
   window.toggleSubTopic = function(el) {
-    var wasExpanded = el.classList.contains('expanded');
-    // Close siblings
-    var parent = el.parentElement;
-    if (parent) parent.querySelectorAll('.sub-topic.expanded').forEach(function(s) { s.classList.remove('expanded'); });
-    if (!wasExpanded) el.classList.add('expanded');
+    el.classList.toggle('expanded');
   };
 
   /* ─── TERM TOOLTIPS ─── */

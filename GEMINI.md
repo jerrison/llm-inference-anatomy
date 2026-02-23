@@ -262,8 +262,8 @@ Always verify the target `id` exists in the target file before creating.
 The site has three levels of clickable elements, nested inside each other:
 
 ```
-.pipeline-step  →  click .step-card to toggle .active (shows/hides detail, multiple can be open)
-  └─ .sub-topic  →  onclick="toggleSubTopic(this)" (accordion within step)
+.pipeline-step  →  click .step-card to toggle .active (multiple can be open, no accordion)
+  └─ .sub-topic  →  onclick="toggleSubTopic(this)" (multiple can be open, no accordion)
        └─ .term  →  direct addEventListener with stopPropagation (tooltip)
 ```
 
@@ -361,7 +361,7 @@ After deploying, verify:
 4. Theme toggle works on both pages, persists across navigation
 5. Interactive visuals: cost waterfall hover, breakeven sliders work, deflation timeline animates, capital bars expand
 6. All ~58 term tooltips work (46 technical + 12 economics) — click show/dismiss
-7. Sub-topics within steps work as accordions
+7. Sub-topics within steps toggle independently (no accordion — multiple can be open)
 8. Phase overview cards scroll to correct anchors on both pages
 9. Responsive at 768px: nav adapts, minimap hides, content stacks
 10. Light/dark theme: both pages render correctly in both modes

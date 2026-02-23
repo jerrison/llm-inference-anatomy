@@ -263,8 +263,8 @@ Verify the target `id` exists before creating.
 ## JavaScript Patterns
 
 ### Three Interaction Layers
-1. **Step toggle**: `.step-card` click → toggles `.active` on `.pipeline-step` → reveals `.step-detail` via `max-height`. Multiple sections can be open simultaneously — no accordion behavior.
-2. **Sub-topic accordion**: `onclick="toggleSubTopic(this)"` → toggles `.expanded`, closes siblings
+1. **Step toggle**: `.step-card` click → toggles `.active` on `.pipeline-step` → reveals `.step-detail` via `max-height`. Multiple sections can be open simultaneously — no accordion.
+2. **Sub-topic toggle**: `onclick="toggleSubTopic(this)"` → toggles `.expanded`. Multiple sub-topics can be open simultaneously — no accordion.
 3. **Term tooltip**: Direct click handler on each `.term` with `stopPropagation()` → shows/toggles floating tooltip
 
 ### Event Propagation Rule
