@@ -27,7 +27,7 @@ A four-page interactive reference site covering LLM training and inference. Two 
 ├── CLAUDE.md                        ← Claude Code instructions (this file)
 ├── GEMINI.md                        ← Gemini agent instructions
 └── site/
-    ├── index.html                   ← Inference Technical Pipeline (~4,553 lines)
+    ├── index.html                   ← Inference Technical Pipeline (~4,689 lines)
     ├── economics.html               ← Inference Economics (~1,752 lines)
     ├── training.html                ← Training Technical Pipeline (~2,084 lines)
     └── training-economics.html      ← Training Economics (~1,195 lines)
@@ -45,10 +45,11 @@ Page structure (top to bottom):
 3. **Hero** — full-viewport intro with animated fade-up
 4. **Phase Overview** — 3-card grid (A/B/C) linking to phase anchors
 5. **Pipeline Section** — 11 steps grouped into 3 phases with vertical timeline
-6. **Cross-Cutting Optimizations** — Quantization + Parallelism (not a sequential step)
-7. **Serving Frameworks** — vLLM, SGLang, TensorRT-LLM, Dynamo
-8. **Journey Diagram** — interactive end-to-end summary with clickable phases
-9. **Footer**
+6. **Inference Metrics** (`id="inference-metrics"`) — Latency, throughput, resource utilization, SLOs, cost metrics, observability
+7. **Cross-Cutting Optimizations** — Quantization + Parallelism (not a sequential step)
+8. **Serving Frameworks** — vLLM, SGLang, TensorRT-LLM, Dynamo
+9. **Journey Diagram** — interactive end-to-end summary with clickable phases
+10. **Footer**
 
 Three Phases:
 - **Phase A (steps 01-04)**: Request Preparation — routing, preprocessing, tokenization, embedding
