@@ -152,7 +152,7 @@ body {
 .step-card::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, var(--accent-glow) 0%, transparent 50%); opacity: 0; transition: opacity 0.3s ease; }
 .pipeline-step:hover .step-card, .pipeline-step.active .step-card { border-color: var(--border-active); background: var(--bg-card-hover); }
 .pipeline-step:hover .step-card::before, .pipeline-step.active .step-card::before { opacity: 1; }
-.step-header { display: flex; align-items: center; gap: 0.75rem; position: relative; z-index: 1; }
+.step-header { display: flex; align-items: center; gap: 0.75rem; position: relative; z-index: 1; cursor: pointer; }
 .step-number { font-family: var(--font-mono); font-size: 0.6rem; color: var(--accent-dim); letter-spacing: 0.1em; min-width: 24px; }
 .step-name { font-family: var(--font-display); font-size: 1.4rem; flex: 1; }
 .step-badge { font-family: var(--font-mono); font-size: 0.55rem; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.2rem 0.5rem; border-radius: 4px; border: 1px solid; }
@@ -1352,11 +1352,10 @@ body, .code-block, .callout-box, .metric, .site-nav, .minimap-phase { transition
     });
   }
 
-  /* ─── PIPELINE STEP TOGGLE ─── */
-  document.querySelectorAll('.step-card').forEach(function(card) {
-    card.addEventListener('click', function(e) {
-      if (e.target.closest('.sub-topic') || e.target.closest('.term') || e.target.closest('.cross-link') || e.target.closest('a')) return;
-      var step = card.closest('.pipeline-step');
+  /* ─── PIPELINE STEP TOGGLE (header only) ─── */
+  document.querySelectorAll('.pipeline-step').forEach(function(step) {
+    step.querySelector('.step-header').addEventListener('click', function(e) {
+      if (e.target.closest('.term')) return;
       step.classList.toggle('active');
     });
   });
@@ -1463,6 +1462,9 @@ body, .code-block, .callout-box, .metric, .site-nav, .minimap-phase { transition
     item.addEventListener('click', function(e) {
       e.preventDefault();
       if (el) {
+        // Toggle section expand/collapse
+        var step = el.closest('.pipeline-step');
+        if (step) step.classList.toggle('active');
         // Immediately highlight clicked item
         minimapItems.forEach(function(i) { i.classList.remove('active'); });
         item.classList.add('active');

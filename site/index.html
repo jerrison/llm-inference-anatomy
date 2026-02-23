@@ -363,6 +363,7 @@ body {
   gap: 0.75rem;
   position: relative;
   z-index: 1;
+  cursor: pointer;
 }
 
 .step-number {
@@ -2785,10 +2786,9 @@ body, .code-block, .journey-diagram, .callout-box, .metric, .journey-detail-pane
 </footer>
 
 <script>
-// ─── Pipeline step toggle ───
+// ─── Pipeline step toggle (header only) ───
 document.querySelectorAll('.pipeline-step').forEach(step => {
-  step.querySelector('.step-card').addEventListener('click', (e) => {
-    if (e.target.closest('.sub-topic')) return;
+  step.querySelector('.step-header').addEventListener('click', (e) => {
     if (e.target.closest('.term')) return;
     step.classList.toggle('active');
   });
@@ -3177,20 +3177,23 @@ document.addEventListener('click', function(e) {
 
   steps.forEach(function(step) { stepObs.observe(step); });
 
-  // 3. Click handler — smooth scroll + immediate highlight
+  // 3. Click handler — smooth scroll + toggle expand/collapse + immediate highlight
   items.forEach(function(item) {
     item.addEventListener('click', function(e) {
       e.preventDefault();
       var target = item.getAttribute('data-target');
       var stepEl = document.querySelector('.pipeline-step[data-step="' + target + '"]');
       if (stepEl) {
+        // Toggle section expand/collapse
+        stepEl.classList.toggle('active');
         // Immediately highlight clicked item
         items.forEach(function(i) { i.classList.remove('active'); });
         item.classList.add('active');
         // Suppress observer during smooth scroll
         clearTimeout(scrollLock);
         scrollLock = setTimeout(function() { scrollLock = null; }, 800);
-        stepEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        var top = stepEl.getBoundingClientRect().top + window.scrollY - 64;
+        window.scrollTo({ top: top, behavior: 'smooth' });
       }
     });
   });
