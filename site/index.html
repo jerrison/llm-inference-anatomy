@@ -3617,7 +3617,6 @@ document.addEventListener('click', function(e) {
 
   // ═══ 05 SCHEDULING ═══
   visualInits.scheduling = function(c) {
-    var w = c.offsetWidth;
     var cols = 12, rows = 4;
     var mode = 'static';
 
@@ -3634,61 +3633,121 @@ document.addEventListener('click', function(e) {
       [1,1,1,1,1,1,1,1,1,1,1,1]
     ];
 
+    var colorMap = {
+      1: { bg: 'var(--accent)', border: 'var(--accent-dim)', label: 'Request A' },
+      3: { bg: 'var(--io)', border: 'var(--io)', label: 'Request B' },
+      5: { bg: 'var(--logic)', border: 'var(--logic)', label: 'Request C' }
+    };
+
     function calcUtil(data) {
       var total = 0, used = 0;
       data.forEach(function(r) { r.forEach(function(v) { total++; if (v > 0) used++; }); });
       return Math.round(used / total * 100);
     }
 
-    // Labels
+    // Title
     var titleL = el('div', 'sv-label');
     titleL.style.cssText = 'position:absolute;left:5%;top:6%';
     c.appendChild(titleL);
 
-    var gridDiv = el('div', '');
-    gridDiv.style.cssText = 'position:absolute;left:5%;top:18%;right:5%';
-    c.appendChild(gridDiv);
-
     var stat = el('div', 'sv-stat');
     c.appendChild(stat);
 
-    // Time axis
-    var timeLabel = el('div', 'sv-label');
-    timeLabel.style.cssText = 'position:absolute;left:50%;bottom:14%;transform:translateX(-50%)';
+    // Grid area: slot labels (left) + grid (right) using CSS grid
+    var gridArea = el('div', '');
+    gridArea.style.cssText = 'position:absolute;left:5%;top:18%;right:5%;bottom:28%';
+    c.appendChild(gridArea);
+
+    // Inner table: slot label col + grid cols
+    var tableDiv = el('div', '');
+    tableDiv.style.cssText = 'display:grid;grid-template-columns:auto 1fr;gap:0 6px;width:100%;height:100%';
+    gridArea.appendChild(tableDiv);
+
+    // Slot labels container (left column)
+    var slotLabels = el('div', '');
+    slotLabels.style.cssText = 'display:grid;grid-template-rows:repeat(' + rows + ',1fr);gap:2px;align-items:stretch';
+    tableDiv.appendChild(slotLabels);
+    for (var si = 0; si < rows; si++) {
+      var slbl = el('div', '');
+      slbl.style.cssText = 'display:flex;align-items:center;font-family:var(--font-mono);font-size:0.45rem;color:var(--text-muted);white-space:nowrap;padding-right:2px';
+      slbl.textContent = 'Slot ' + si;
+      slotLabels.appendChild(slbl);
+    }
+
+    // Grid container (right column)
+    var gridDiv = el('div', '');
+    gridDiv.style.cssText = 'display:grid;grid-template-columns:repeat(' + cols + ',1fr);grid-template-rows:repeat(' + rows + ',1fr);gap:2px';
+    tableDiv.appendChild(gridDiv);
+
+    // Time axis below grid
+    var timeLabel = el('div', '');
+    timeLabel.style.cssText = 'text-align:center;font-family:var(--font-mono);font-size:0.45rem;letter-spacing:0.15em;color:var(--text-muted);margin-top:4px';
     timeLabel.textContent = 'TIME \u2192';
-    c.appendChild(timeLabel);
+    gridArea.appendChild(timeLabel);
+
+    // Legend container (below time axis)
+    var legendDiv = el('div', '');
+    legendDiv.style.cssText = 'display:none;justify-content:center;gap:0.75rem;margin-top:4px';
+    gridArea.appendChild(legendDiv);
 
     function render() {
       var data = mode === 'static' ? staticData : contData;
       titleL.textContent = (mode === 'static' ? 'STATIC' : 'CONTINUOUS') + ' BATCHING';
       stat.textContent = 'GPU Util: ' + calcUtil(data) + '%';
       gridDiv.innerHTML = '';
-      var grid = el('div', 'sv-grid');
-      grid.style.gridTemplateColumns = 'repeat(' + cols + ', 1fr)';
-      grid.style.width = '100%';
-      data.forEach(function(row, ri) {
-        row.forEach(function(val, ci) {
-          var cell = el('div', 'sv-cell');
-          cell.style.width = '100%';
-          cell.style.paddingBottom = '100%';
-          cell.style.height = '0';
-          if (val === 0) cell.classList.add('waste');
-          else if (val === 1) cell.classList.add('lit');
-          else if (val === 3) { cell.classList.add('lit'); cell.style.background = 'var(--io)'; cell.style.borderColor = 'var(--io)'; }
-          else if (val === 5) { cell.classList.add('lit'); cell.style.background = 'var(--logic)'; cell.style.borderColor = 'var(--logic)'; }
-          grid.appendChild(cell);
+      data.forEach(function(row) {
+        row.forEach(function(val) {
+          var cell = el('div', '');
+          cell.style.cssText = 'border-radius:2px;border:1px solid var(--border);transition:background 0.15s';
+          if (val === 0) { cell.style.background = 'rgba(213,94,0,0.25)'; cell.style.borderColor = 'rgba(213,94,0,0.4)'; }
+          else { var cm = colorMap[val]; cell.style.background = cm.bg; cell.style.borderColor = cm.border; }
+          gridDiv.appendChild(cell);
         });
       });
-      // Row labels
-      var labelCol = el('div', '');
-      labelCol.style.cssText = 'position:absolute;right:2%;top:18%;font-size:0.45rem;color:var(--text-muted);line-height:2.5';
-      labelCol.innerHTML = 'Slot 0<br>Slot 1<br>Slot 2<br>Slot 3';
-      // Remove old labels
-      var old = c.querySelector('.slot-labels');
-      if (old) old.remove();
-      labelCol.className = 'slot-labels';
-      c.appendChild(labelCol);
-      gridDiv.appendChild(grid);
+
+      // Legend: show for continuous mode (multiple request colors)
+      legendDiv.innerHTML = '';
+      if (mode === 'continuous') {
+        legendDiv.style.display = 'flex';
+        var usedVals = {};
+        data.forEach(function(r) { r.forEach(function(v) { if (v > 0) usedVals[v] = true; }); });
+        Object.keys(usedVals).sort().forEach(function(v) {
+          var cm = colorMap[parseInt(v)];
+          if (!cm) return;
+          var item = el('div', '');
+          item.style.cssText = 'display:flex;align-items:center;gap:4px;font-family:var(--font-mono);font-size:0.45rem;color:var(--text-muted)';
+          var swatch = el('div', '');
+          swatch.style.cssText = 'width:10px;height:10px;border-radius:2px;background:' + cm.bg;
+          item.appendChild(swatch);
+          item.appendChild(document.createTextNode(cm.label));
+          legendDiv.appendChild(item);
+        });
+        // Add waste swatch
+        var wasteItem = el('div', '');
+        wasteItem.style.cssText = 'display:flex;align-items:center;gap:4px;font-family:var(--font-mono);font-size:0.45rem;color:var(--text-muted)';
+        var wasteSwatch = el('div', '');
+        wasteSwatch.style.cssText = 'width:10px;height:10px;border-radius:2px;background:rgba(213,94,0,0.25);border:1px solid rgba(213,94,0,0.4)';
+        wasteItem.appendChild(wasteSwatch);
+        wasteItem.appendChild(document.createTextNode('Idle'));
+        legendDiv.appendChild(wasteItem);
+      } else {
+        legendDiv.style.display = 'flex';
+        // Static mode: show 2-color legend
+        var activeItem = el('div', '');
+        activeItem.style.cssText = 'display:flex;align-items:center;gap:4px;font-family:var(--font-mono);font-size:0.45rem;color:var(--text-muted)';
+        var activeSwatch = el('div', '');
+        activeSwatch.style.cssText = 'width:10px;height:10px;border-radius:2px;background:var(--accent)';
+        activeItem.appendChild(activeSwatch);
+        activeItem.appendChild(document.createTextNode('Active'));
+        legendDiv.appendChild(activeItem);
+        var idleItem = el('div', '');
+        idleItem.style.cssText = 'display:flex;align-items:center;gap:4px;font-family:var(--font-mono);font-size:0.45rem;color:var(--text-muted)';
+        var idleSwatch = el('div', '');
+        idleSwatch.style.cssText = 'width:10px;height:10px;border-radius:2px;background:rgba(213,94,0,0.25);border:1px solid rgba(213,94,0,0.4)';
+        idleItem.appendChild(idleSwatch);
+        idleItem.appendChild(document.createTextNode('Idle (wasted)'));
+        legendDiv.appendChild(idleItem);
+      }
     }
 
     var ctrl = el('div', 'sv-controls');
