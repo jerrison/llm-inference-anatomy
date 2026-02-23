@@ -1,4 +1,4 @@
-# LLM Inference Anatomy — Codex Agent Instructions
+# LLM Anatomy — Codex Agent Instructions
 
 ## Post-Change Workflow (MANDATORY)
 
@@ -13,9 +13,9 @@ Do not wait for the user to ask. Do not skip any step. This applies to every cha
 
 ## Project Summary
 
-Two-page interactive reference site: a Technical Pipeline explaining the 11 stages of LLM inference, and a Business Economics page covering unit economics, business models, and capital structure. Dark/light theme, editorial design, progressive disclosure. No framework, no build step — two self-contained HTML files with inline CSS and JS.
+A four-page interactive reference site covering LLM training and inference. Two pages cover the technical pipeline (training + inference), two cover business economics (training + inference). Dark/light theme, editorial design, progressive disclosure. No framework, no build step — four self-contained HTML files with inline CSS and JS.
 
-- **Files**: `site/index.html` (~4,246 lines), `site/economics.html` (~1,694 lines)
+- **Files**: `site/index.html` (~4,689 lines), `site/economics.html` (~1,752 lines), `site/training.html` (~2,084 lines), `site/training-economics.html` (~1,195 lines)
 - **Hosting**: Cloudflare Pages (`llm-inference-anatomy`)
 - **Deploy**: `npx wrangler pages deploy ./site --project-name=llm-inference-anatomy`
 - **Live**: https://llm-inference-anatomy.pages.dev
@@ -35,19 +35,21 @@ npx wrangler pages deploy ./site --project-name=llm-inference-anatomy
 ## File Structure
 
 ```
-05-ai-infrastructure-inference/
+08-ai-infrastructure-inference/
 ├── AGENTS.md                        ← You are here (Codex instructions)
 ├── ai-inference-knowledge-base.md   ← Source research document
 ├── CLAUDE.md                        ← Claude Code instructions
 ├── GEMINI.md                        ← Gemini instructions
 └── site/
-    ├── index.html                   ← Technical Pipeline (HTML + CSS + JS inline, ~4,246 lines)
-    └── economics.html               ← Business Economics (HTML + CSS + JS inline, ~1,694 lines)
+    ├── index.html                   ← Inference Technical Pipeline (~4,689 lines)
+    ├── economics.html               ← Inference Economics (~1,752 lines)
+    ├── training.html                ← Training Technical Pipeline (~2,084 lines)
+    └── training-economics.html      ← Training Economics (~1,195 lines)
 ```
 
 ## Architecture
 
-### index.html — Technical Pipeline
+### index.html — Inference Technical Pipeline
 
 Self-contained single file:
 - **Lines 10-1352**: `<style>` block (all CSS)
@@ -55,21 +57,22 @@ Self-contained single file:
 - **Lines 1365-1395**: Site nav + minimap
 - **Lines 1398-1441**: Hero section
 - **Lines 1442-2447**: Pipeline section (11 steps in 3 phases)
-- **Lines 2448-2605**: Cross-cutting optimizations
-- **Lines 2606-2659**: Serving frameworks
-- **Lines 2660-2732**: Journey diagram (interactive)
-- **Lines 2734-2737**: Footer
-- **Lines 2738-4243**: `<script>` block (all JS)
+- **Lines ~2448-2605**: Inference Metrics section (`id="inference-metrics"`)
+- **Lines ~2606-2760**: Cross-cutting optimizations
+- **Lines ~2761-2814**: Serving frameworks
+- **Lines ~2815-2887**: Journey diagram (interactive)
+- **Lines ~2889-2892**: Footer
+- **Lines ~2893-4689**: `<script>` block (all JS)
 
-### Page Hierarchy — Technical Pipeline
+### Page Hierarchy — Inference Technical Pipeline
 ```
-Site Nav (fixed top bar)
-Minimap (fixed right sidebar)
+Site Nav (fixed top bar — 4 links + divider + theme toggle)
+Minimap (fixed right sidebar, collapsed by default, expands on hover)
 Hero
 Phase Overview (3 cards: A, B, C)
 Pipeline (11 steps)
   Phase A: Request Preparation
-    01 Request Routing [network]
+    01 Request Routing [network]     — includes Geo-Aware Routing sub-topic
     02 Preprocessing [logic]
     03 Tokenization [logic]
     04 Embedding & Position [memory]
@@ -82,20 +85,27 @@ Pipeline (11 steps)
   Phase C: Output & Delivery
     10 Sampling & Selection [logic]
     11 Detokenization & Streaming [io]
+Inference Metrics (id="inference-metrics")
+  — Latency Metrics (TTFT, TPOT, ITL, E2E, Queue Time)
+  — Throughput Metrics (tokens/sec, req/sec, concurrent requests)
+  — Resource Utilization (GPU, KV cache, HBM, forward time, prefix cache)
+  — Reliability & SLOs (error rate, percentiles, availability, goodput)
+  — Cost & Efficiency Metrics (cost/1M tokens, GPU-hours/req, cache hit rate)
+  — Observability in Practice (Prometheus, Grafana, alerting)
 Cross-Cutting Optimizations (quantization, parallelism)
 Serving Frameworks (vLLM, SGLang, TRT-LLM, Dynamo)
 Journey Diagram
 Footer
 ```
 
-### economics.html — Business Economics
+### economics.html — Inference Economics
 
 Self-contained single file with the same component patterns as index.html.
 
-### Page Hierarchy — Economics
+### Page Hierarchy — Inference Economics
 ```
-Site Nav (fixed top bar, "Economics" link active)
-Minimap (fixed right sidebar)
+Site Nav (fixed top bar, "Inference Economics" link active)
+Minimap (fixed right sidebar, collapsed by default)
 Hero — "From Token to Balance Sheet" (green accent tint)
 Phase Overview (3 cards: D, E, F)
 Pipeline (9 sections)
@@ -114,25 +124,112 @@ Pipeline (9 sections)
 Footer
 ```
 
+### training.html — Training Technical Pipeline
+
+Color accent: `--accent: #E69F00` (Wong amber), distinct from inference blue (`#56B4E9`).
+
+### Page Hierarchy — Training Technical Pipeline
+```
+Site Nav (fixed top bar, "Training" link active)
+Minimap (fixed right sidebar, collapsed by default)
+Hero — "Anatomy of LLM Training" (amber accent tint)
+Phase Overview (3 cards: G, H, I)
+Pipeline (10 sections)
+  Phase G: Data & Architecture
+    G1 Data Pipeline [io]               id="data-pipeline"
+    G2 Tokenizer Training [logic]       id="tokenizer"
+    G3 Model Architecture [compute]     id="architecture"
+  Phase H: Training Process
+    H1 Optimization [compute]           id="optimization"
+    H2 Distributed Training [network]   id="distributed"
+    H3 Monitoring & Recovery [logic]    id="monitoring"
+  Phase I: Post-Training
+    I1 Supervised Fine-Tuning [logic]   id="sft"
+    I2 Alignment [logic]               id="alignment"
+    I3 Reinforcement Fine-Tuning [logic] id="rft"
+    I4 Evaluation [logic]              id="evaluation"
+Footer
+```
+
+### training-economics.html — Training Economics
+
+### Page Hierarchy — Training Economics
+```
+Site Nav (fixed top bar, "Training Economics" link active)
+Minimap (fixed right sidebar, collapsed by default)
+Hero — "From GPU to Balance Sheet" (green accent tint)
+Phase Overview (3 cards: J, K, L)
+Pipeline (9 sections)
+  Phase J: Training Cost Stack
+    J1 Hardware & Compute Costs [economics]  id="hardware-costs"
+    J2 Scaling Laws & Efficiency [economics] id="scaling-laws"
+    J3 Failure & Wasted Compute [economics]  id="failure-costs"
+  Phase K: Business Models
+    K1 Build vs Fine-Tune vs API [economics]  id="build-vs-buy"
+    K2 Training Providers [economics]         id="training-providers"
+    K3 Cloud vs On-Premise [economics]        id="cloud-vs-onprem"
+  Phase L: Capital & Market
+    L1 GPU Financing [economics]              id="gpu-financing"
+    L2 Foundation Model Funding [economics]   id="model-funding"
+    L3 Training vs Inference Spend [economics] id="training-vs-inference"
+Footer
+```
+
 ## Shared Navigation System
 
-Both pages have an identical `<nav class="site-nav">` with:
-- Logo link to index.html
-- "Technical Pipeline" link (active on index.html)
-- "Economics" link (active on economics.html)
+All four pages have an identical `<nav class="site-nav">` with:
+- Logo link "LLM Anatomy" to index.html
+- "Training" link (active on training.html)
+- "Training Economics" link (active on training-economics.html)
+- Vertical `nav-divider` separating training from inference
+- "Inference" link (active on index.html)
+- "Inference Economics" link (active on economics.html)
 - Theme toggle button (synced via `localStorage` key `'theme'`)
+
+```html
+<nav class="site-nav">
+  <a href="index.html" class="nav-logo">LLM Anatomy</a>
+  <div class="nav-links">
+    <a href="training.html" class="nav-link">Training</a>
+    <a href="training-economics.html" class="nav-link">Training Economics</a>
+    <span class="nav-divider"></span>
+    <a href="index.html" class="nav-link active">Inference</a>
+    <a href="economics.html" class="nav-link">Inference Economics</a>
+    <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme"></button>
+  </div>
+</nav>
+```
 
 The nav uses `backdrop-filter: blur(12px)` which creates a stacking context. Do not nest `position: fixed` elements inside it.
 
+### Theme System
+- **Init script** runs in `<head>` before body renders (prevents FOUC)
+- Reads `localStorage.getItem('theme')`, falls back to `prefers-color-scheme`
+- Sets `data-theme` attribute on `<html>` element
+- All four pages share the same `localStorage` key `'theme'`
+- Any new page must include the exact same init pattern
+
+### Minimap Behavior
+- Collapsed by default on all pages (labels hidden with `opacity: 0; width: 0`)
+- Expands on hover (`.minimap:hover .minimap-label { opacity: 1; width: auto; }`)
+- Hidden entirely below 1440px viewport width
+- Click handler uses `window.scrollTo` with 64px offset (to avoid nav overlap)
+- `scrollLock` timeout (800ms) suppresses the IntersectionObserver during smooth scroll
+
 ## Cross-Link System
 
-### Technical → Economics (4 content links)
+### Inference Technical → Inference Economics (4 content links)
 - Step 09 (decode) → `economics.html#throughput`
 - Step 11 (streaming) → `economics.html#pricing`
 - Cross-cutting (optimization) → `economics.html#throughput`
 - Cross-cutting (networking) → `economics.html#cost-stack`
 
-### Economics → Technical (6 content links)
+### Inference Technical → Training (3 content links)
+- Step 03 (Tokenization) → `training.html#tokenizer`
+- Step 04 (Embedding) → `training.html#architecture`
+- Cross-cutting (Parallelism) → `training.html#distributed`
+
+### Inference Economics → Inference Technical (6 content links)
 - D1 (cost stack) → `index.html#cross-cutting`
 - D2 (throughput, optimization) → `index.html#cross-cutting`
 - D2 (throughput, batching) → `index.html#phase-b`
@@ -140,7 +237,22 @@ The nav uses `backdrop-filter: blur(12px)` which creates a stacking context. Do 
 - E1 (managed vs rental) → `index.html#phase-b`
 - E3 (data centers) → `index.html#cross-cutting`
 
-**Critical: Anchor ID mismatch risk.** index.html pipeline steps use `data-step` attributes, NOT `id` attributes. Cross-links must target phase/section IDs (`#phase-a`, `#phase-b`, `#cross-cutting`), not step-level IDs. Verify target anchors before creating any cross-page link.
+### Inference Economics → Training Economics (2 content links)
+- D1 (cost stack, networking) → `training-economics.html#hardware-costs`
+- F3 (stage by stage) → `training-economics.html#model-funding`
+
+### Training → Inference/Economics (3 content links)
+- G2 (tokenizer) → `index.html#phase-a`
+- H2 (distributed) → `index.html#cross-cutting`
+- H3 (monitoring) → `training-economics.html#failure-costs`
+
+### Training Economics → Other Pages (4 content links)
+- J1 (hardware) → `economics.html#cost-stack`
+- J3 (failures) → `training.html#monitoring`
+- K3 (cloud vs on-prem) → `economics.html#data-centers`
+- L1 (GPU financing) → `economics.html#equity-vs-debt`
+
+**Critical: Anchor ID mismatch risk.** index.html pipeline steps use `data-step` attributes, NOT `id` attributes. Cross-links must target phase/section IDs (`#phase-a`, `#phase-b`, `#cross-cutting`, `#inference-metrics`), not step-level IDs. Verify target anchors before creating any cross-page link.
 
 ## Design System
 
@@ -209,6 +321,36 @@ text-transform: uppercase;
 
 ### Responsive
 Single breakpoint at `max-width: 768px`. Changes: pipeline grid narrows, badges hidden, phase arrows go vertical, sub-topics stack single-column. Minimap hidden below `1440px`.
+
+## Interactive Visuals
+
+### economics.html (4 visuals)
+
+| Visual | Container ID | Init Function | Interaction |
+|--------|-------------|---------------|-------------|
+| Cost waterfall | `visual-cost-waterfall` | `initCostWaterfall()` | Hover segments for cost breakdown |
+| Deflation timeline | `visual-deflation-timeline` | `initDeflationTimeline()` | Scroll-triggered fill via IntersectionObserver |
+| Breakeven calculator | `visual-breakeven-calc` | `initBreakevenCalc()` | Two range sliders update 4 result values |
+| Capital structure bars | `visual-capital-bars` | `initCapitalBars()` | Click row to toggle detail panel |
+
+### training.html (3 visuals)
+
+| Visual | Container ID | Init Function | Interaction |
+|--------|-------------|---------------|-------------|
+| Data funnel | `visual-data-funnel` | `initDataFunnel()` | Animated pipeline showing data volume shrinking at each stage |
+| Optimizer comparison | `visual-optimizer-compare` | `initOptimizerCompare()` | Bar charts comparing convergence speed and memory usage |
+| Parallelism diagram | `visual-parallelism` | `initParallelism()` | 4x4 GPU grid with mode toggle buttons (DP/TP/PP/4D) |
+
+### training-economics.html (4 visuals)
+
+| Visual | Container ID | Init Function | Interaction |
+|--------|-------------|---------------|-------------|
+| Training cost waterfall | `visual-training-waterfall` | `initTrainingWaterfall()` | Stacked bar breakdown + model cost comparison |
+| Scaling curve | `visual-scaling-curve` | `initScalingCurve()` | Log-scale over-training comparison bars |
+| Cost calculator | `visual-cost-calc` | `initCostCalc()` | Two sliders (model size, tokens) update 4 cost results |
+| Spend timeline | `visual-spend-timeline` | `initSpendTimeline()` | Stacked bars showing training/inference spend shift 2023-2026 |
+
+**Critical**: The breakeven calculator (economics.html) creates `.term` elements via `innerHTML`. These miss the initial `querySelectorAll('.term')` event binding loop — manual event handlers are bound inside `initBreakevenCalc()`.
 
 ## HTML Templates
 
@@ -281,17 +423,6 @@ Two variables track tooltip state:
 
 Both must be cleared together. Without `activeTermEl`, clicking the same term creates a flash instead of toggling off.
 
-### Interactive Visuals (economics.html only)
-
-| Visual | Container ID | Init Function | Interaction |
-|--------|-------------|---------------|-------------|
-| Cost waterfall | `visual-cost-waterfall` | `initCostWaterfall()` | Hover segments for cost breakdown |
-| Deflation timeline | `visual-deflation-timeline` | `initDeflationTimeline()` | Scroll-triggered fill via IntersectionObserver |
-| Breakeven calculator | `visual-breakeven-calc` | `initBreakevenCalc()` | Two range sliders update 4 result values |
-| Capital structure bars | `visual-capital-bars` | `initCapitalBars()` | Click row to toggle detail panel |
-
-**Critical**: The breakeven calculator creates `.term` elements via `innerHTML`. These miss the initial `querySelectorAll('.term')` event binding loop — manual event handlers are bound inside `initBreakevenCalc()`.
-
 ### Scroll Reveal
 `IntersectionObserver` adds `.visible` to `.reveal` elements. One-way (no removal on scroll-out). Threshold 0.1 with -40px bottom margin.
 
@@ -319,26 +450,30 @@ Before creating any cross-page link:
 
 ## Testing Checklist
 
-When modifying interactions on either page:
-- [ ] Click each pipeline step / economics section 10+ times — verify toggle works consistently
+When modifying interactions on any page:
+- [ ] Click each pipeline step / section 10+ times — verify toggle works consistently
 - [ ] Click a term inside a sub-topic — verify only tooltip appears (no parent toggle)
 - [ ] Click the same term twice — verify it dismisses cleanly (no flash)
 - [ ] Click a term, then click elsewhere — verify tooltip closes
 - [ ] Click a term, then click a different term — verify first closes, second opens
 - [ ] Test at viewport < 768px — verify responsive layout
-- [ ] Verify no JS errors in console on either page
+- [ ] Verify no JS errors in console on all 4 pages
 
 ### Deployment Verification
-- [ ] All 11 technical steps + 9 economics sections expand/collapse
-- [ ] Nav bar links work bidirectionally (Technical Pipeline ↔ Economics)
-- [ ] Cross-links navigate to correct sections on the other page
-- [ ] Theme toggle works on both pages, persists across navigation
-- [ ] Interactive visuals: cost waterfall hover, breakeven sliders work, deflation timeline animates, capital bars expand
-- [ ] All ~58 term tooltips work (46 technical + 12 economics) — click show/dismiss
-- [ ] Responsive at 768px: nav adapts, minimap hides, content stacks
-- [ ] Light/dark theme: both pages adapt correctly
-- [ ] Minimap navigation: click EVERY minimap item on both pages and verify the correct section header is visible below the nav bar — especially sections near the bottom of the page (e.g., Data Centers, Contracted Revenue, Stage by Stage on economics; Sampling, Streaming on index). The minimap dot must highlight the clicked section, not a neighboring one.
-- [ ] No console errors on either page
+- [ ] All 4 pages load without console errors
+- [ ] All 11 inference steps + 10 training sections + 9 inference economics + 9 training economics sections expand/collapse
+- [ ] Nav shows 4 links + divider + theme toggle on all pages, `.active` class correct
+- [ ] Cross-links navigate to correct sections across all 4 pages
+- [ ] Theme toggle works on all 4 pages, persists across navigation
+- [ ] Interactive visuals on economics.html: cost waterfall hover, breakeven sliders, deflation timeline, capital bars
+- [ ] Interactive visuals on training.html: data funnel, optimizer comparison, parallelism diagram
+- [ ] Interactive visuals on training-economics.html: training waterfall, scaling curve, cost calculator, spend timeline
+- [ ] All ~90 term tooltips work (~46 inference + ~12 inference-econ + ~30 training + ~3 training-econ) — click show/dismiss
+- [ ] Responsive at 768px: nav adapts, minimap hides, content stacks on all pages
+- [ ] Light/dark theme: all 4 pages adapt correctly
+- [ ] Minimap navigation: click EVERY minimap item on all 4 pages and verify correct section
+- [ ] Training page uses amber accent (#E69F00), distinct from inference blue
+- [ ] No console errors on any page
 
 ## Common Pitfalls
 
@@ -348,18 +483,18 @@ When modifying interactions on either page:
 
 3. **HTML entity encoding**: Use `&amp;` for &, `&rarr;` for →, `&times;` for ×, `&mdash;` for —. Raw `<` and `>` in text content break HTML parsing.
 
-4. **Single-file editing**: With ~4,246 lines in index.html and ~1,694 in economics.html, always specify line ranges when making changes. Don't rewrite entire files for small edits.
+4. **Single-file editing**: With ~4,689 lines in index.html and ~2,084 in training.html, always specify line ranges when making changes. Don't rewrite entire files for small edits.
 
 5. **Font loading**: Google Fonts are loaded via `<link>` with `display=swap`. If adding new weights, update the Google Fonts URL.
 
 6. **Output token limits**: Never generate >500 lines in a single write. Plan large file creation as sequential appends.
 
-7. **Anchor ID mismatches**: index.html steps use `data-step` (no `id`). Cross-links from economics.html must target phase/section IDs, not step IDs.
+7. **Anchor ID mismatches**: index.html steps use `data-step` (no `id`). Cross-links from other pages must target phase/section IDs, not step IDs.
 
 8. **Dynamic DOM + event binding**: Elements created via `innerHTML` miss initial event listener setup. Bind handlers manually after insertion.
 
 9. **Minimap scroll and highlight**: Two issues: (1) `scrollIntoView` with `block: 'start'` or `block: 'center'` fails (behind nav, or can't center bottom sections). Use `window.scrollTo` with 64px offset. (2) The scroll-based minimap observer fires during smooth scroll, highlighting the wrong section (collapsed sections are short). Fix: immediately set clicked item as active + use a `scrollLock` timeout (800ms) to suppress the observer during animation.
 
-9. **Theme FOUC**: The theme init script must be in `<head>` (before body renders). If adding a new page, include the exact same init pattern.
+10. **Theme FOUC**: The theme init script must be in `<head>` (before body renders). If adding a new page, include the exact same init pattern.
 
-10. **No unnecessary abstractions**: The single-file approach is intentional. Don't add build steps, CSS preprocessors, JS frameworks, or separate files.
+11. **No unnecessary abstractions**: The single-file approach is intentional. Don't add build steps, CSS preprocessors, JS frameworks, or separate files.

@@ -1,4 +1,4 @@
-# LLM Inference Anatomy — Gemini Agent Instructions
+# LLM Anatomy — Gemini Agent Instructions
 
 ## Post-Change Workflow (MANDATORY)
 
@@ -13,11 +13,13 @@ Do not wait for the user to ask. Do not skip any step. This applies to every cha
 
 ## What This Project Is
 
-A two-page interactive educational site that explains every stage of LLM inference — from HTTP request to streamed token response (Technical Pipeline) — and the business economics behind it (Economics). Both pages use progressive disclosure: hero → phase overview → clickable sections → expandable sub-topics → clickable term definitions.
+A four-page interactive educational site covering LLM training and inference. Two pages explain the technical pipelines (training + inference), two cover business economics (training + inference). All pages use progressive disclosure: hero → phase overview → clickable sections → expandable sub-topics → clickable term definitions.
 
 **Key facts:**
-- `site/index.html` (~4,246 lines, inline HTML + CSS + JS) — Technical Pipeline
-- `site/economics.html` (~1,694 lines, inline HTML + CSS + JS) — Business Economics
+- `site/index.html` (~4,689 lines, inline HTML + CSS + JS) — Inference Technical Pipeline
+- `site/economics.html` (~1,752 lines, inline HTML + CSS + JS) — Inference Economics
+- `site/training.html` (~2,084 lines, inline HTML + CSS + JS) — Training Technical Pipeline
+- `site/training-economics.html` (~1,195 lines, inline HTML + CSS + JS) — Training Economics
 - No build step, no framework, no npm dependencies
 - Hosted on Cloudflare Pages as `llm-inference-anatomy`
 - Live at https://llm-inference-anatomy.pages.dev
@@ -25,24 +27,26 @@ A two-page interactive educational site that explains every stage of LLM inferen
 
 ### File Structure
 ```
-05-ai-infrastructure-inference/
+08-ai-infrastructure-inference/
 ├── AGENTS.md                        ← Codex agent instructions
 ├── ai-inference-knowledge-base.md   ← Source research document
 ├── CLAUDE.md                        ← Claude Code instructions
 ├── GEMINI.md                        ← Gemini agent instructions (this file)
 └── site/
-    ├── index.html                   ← Technical Pipeline (~4,246 lines)
-    └── economics.html               ← Business Economics (~1,694 lines)
+    ├── index.html                   ← Inference Technical Pipeline (~4,689 lines)
+    ├── economics.html               ← Inference Economics (~1,752 lines)
+    ├── training.html                ← Training Technical Pipeline (~2,084 lines)
+    └── training-economics.html      ← Training Economics (~1,195 lines)
 ```
 
 ## Content Architecture
 
-### index.html — Technical Pipeline (11 steps in 3 phases)
+### index.html — Inference Technical Pipeline (11 steps in 3 phases + Metrics)
 
 **Phase A — Request Preparation** (steps 01-04)
 | # | Step | Badge | data-step | What It Covers |
 |---|------|-------|-----------|----------------|
-| 01 | Request Routing | network | `routing` | KV-cache-aware routing, prefill/decode disaggregation, gateway frameworks |
+| 01 | Request Routing | network | `routing` | KV-cache-aware routing, prefill/decode disaggregation, geo-aware routing, gateway frameworks |
 | 02 | Preprocessing | logic | `preprocessing` | Prompt templates, RAG retrieval, rate limiting, input validation |
 | 03 | Tokenization | logic | `tokenization` | BPE, SentencePiece, vocabulary sizes, tiktoken, 2025 innovations |
 | 04 | Embedding & Position | memory | `embedding` | Token embeddings, RoPE, ALiBi, Per-Layer Embeddings |
@@ -63,13 +67,14 @@ A two-page interactive educational site that explains every stage of LLM inferen
 | 11 | Detokenization & Streaming | io | `streaming` | UTF-8 buffering, SSE protocol, postprocessing pipeline |
 
 **Separate sections (not pipeline steps):**
+- Inference Metrics (`id="inference-metrics"`): Latency (TTFT, TPOT, ITL), throughput, resource utilization, SLOs, cost metrics, observability
 - Cross-Cutting Optimizations (`id="cross-cutting"`): Quantization (FP8, AWQ, GPTQ, GGUF), Tensor/Pipeline/Expert Parallelism
 - Serving Frameworks (`id="frameworks"`): vLLM, SGLang, TensorRT-LLM, NVIDIA Dynamo
 - Journey Diagram (`id="journey"`): Interactive end-to-end summary with clickable phase labels
 
-**Important:** Pipeline steps use `data-step` attributes, NOT `id` attributes. Phase dividers and sections use `id` attributes: `phase-a`, `phase-b`, `phase-c`, `cross-cutting`, `frameworks`, `journey`.
+**Important:** Pipeline steps use `data-step` attributes, NOT `id` attributes. Phase dividers and sections use `id` attributes: `phase-a`, `phase-b`, `phase-c`, `inference-metrics`, `cross-cutting`, `frameworks`, `journey`.
 
-### economics.html — Business Economics (9 sections in 3 phases)
+### economics.html — Inference Economics (9 sections in 3 phases)
 
 **Phase D — Unit Economics** (`id="phase-d"`)
 | # | Section | ID | What It Covers |
@@ -92,6 +97,55 @@ A two-page interactive educational site that explains every stage of LLM inferen
 | F2 | Contracted Revenue | `contracted-revenue` | How pricing decisions unlock debt capacity; DSCR |
 | F3 | Stage-by-Stage | `stage-by-stage` | Series A → Public capital evolution; capital bars visual |
 
+### training.html — Training Technical Pipeline (10 sections in 3 phases)
+
+Color accent: `--accent: #E69F00` (Wong amber), distinct from inference blue (`#56B4E9`).
+
+**Phase G — Data & Architecture** (`id="phase-g"`)
+| # | Section | ID | What It Covers |
+|---|---------|-----|----------------|
+| G1 | Data Pipeline | `data-pipeline` | Collection, filtering, dedup, mixing; data funnel visual |
+| G2 | Tokenizer Training | `tokenizer` | BPE, SentencePiece, vocabulary sizes |
+| G3 | Model Architecture | `architecture` | Attention variants, SwiGLU, MoE, RoPE |
+
+**Phase H — Training Process** (`id="phase-h"`)
+| # | Section | ID | What It Covers |
+|---|---------|-----|----------------|
+| H1 | Optimization | `optimization` | AdamW, Muon, WSD, mixed precision; optimizer comparison visual |
+| H2 | Distributed Training | `distributed` | ZeRO, TP, PP, 4D parallelism; parallelism diagram visual |
+| H3 | Monitoring & Recovery | `monitoring` | Failure stats, checkpointing, MFU |
+
+**Phase I — Post-Training** (`id="phase-i"`)
+| # | Section | ID | What It Covers |
+|---|---------|-----|----------------|
+| I1 | Supervised Fine-Tuning | `sft` | LoRA, full fine-tuning, PEFT methods |
+| I2 | Alignment | `alignment` | RLHF, DPO, GRPO, Constitutional AI, KTO |
+| I3 | Reinforcement Fine-Tuning | `rft` | Expert-guided RFT, verifiable rewards, process vs outcome rewards, RFT as product |
+| I4 | Evaluation | `evaluation` | MMLU, benchmarks, contamination detection, dynamic evaluation |
+
+### training-economics.html — Training Economics (9 sections in 3 phases)
+
+**Phase J — Training Cost Stack** (`id="phase-j"`)
+| # | Section | ID | What It Covers |
+|---|---------|-----|----------------|
+| J1 | Hardware & Compute Costs | `hardware-costs` | GPU pricing, cloud rental decline, cost benchmarks; training cost waterfall visual |
+| J2 | Scaling Laws & Efficiency | `scaling-laws` | Chinchilla optimal, over-training, inference cost shift; scaling curve visual |
+| J3 | Failure & Wasted Compute | `failure-costs` | Llama 3 failures, OPT-175B waste, checkpoint overhead |
+
+**Phase K — Business Models** (`id="phase-k"`)
+| # | Section | ID | What It Covers |
+|---|---------|-----|----------------|
+| K1 | Build vs Fine-Tune vs API | `build-vs-buy` | Foundation model vs fine-tuning vs API; cost calculator visual |
+| K2 | Training Providers | `training-providers` | Foundation model companies, training-as-a-service |
+| K3 | Cloud vs On-Premise | `cloud-vs-onprem` | Cloud advantages, on-prem breakeven, hidden costs |
+
+**Phase L — Capital & Market** (`id="phase-l"`)
+| # | Section | ID | What It Covers |
+|---|---------|-----|----------------|
+| L1 | GPU Financing | `gpu-financing` | CoreWeave debt, Lambda sale-leaseback, GPU depreciation |
+| L2 | Foundation Model Funding | `model-funding` | Mega-rounds, Anthropic/OpenAI, Big Tech infrastructure spend |
+| L3 | Training vs Inference Spend | `training-vs-inference` | Spend ratio shift 2023-2026, revenue gap; spend timeline visual |
+
 ### Each Step/Section Contains
 1. **Summary** (always visible) — one-line description
 2. **Callout: Key Takeaway** — bold insight sentence (accent left border)
@@ -102,30 +156,40 @@ A two-page interactive educational site that explains every stage of LLM inferen
 
 ## Shared Navigation System
 
-Both pages have the same `<nav class="site-nav">`:
+All four pages have the same `<nav class="site-nav">`:
 ```html
 <nav class="site-nav">
-  <a href="index.html" class="nav-logo">LLM Inference Anatomy</a>
+  <a href="index.html" class="nav-logo">LLM Anatomy</a>
   <div class="nav-links">
-    <a href="index.html" class="nav-link active">Technical Pipeline</a>
-    <a href="economics.html" class="nav-link">Economics</a>
+    <a href="training.html" class="nav-link">Training</a>
+    <a href="training-economics.html" class="nav-link">Training Economics</a>
+    <span class="nav-divider"></span>
+    <a href="index.html" class="nav-link active">Inference</a>
+    <a href="economics.html" class="nav-link">Inference Economics</a>
     <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme"></button>
   </div>
 </nav>
 ```
 
-The `active` class moves to whichever page is current. The theme toggle is inside the nav (not floating).
+The `active` class moves to whichever page is current. The `nav-divider` is a 1px vertical line separating training from inference links. The theme toggle is inside the nav (not floating).
 
 ### Theme System
 - **Init script** runs in `<head>` before body renders (prevents FOUC)
 - Reads `localStorage.getItem('theme')`, falls back to `prefers-color-scheme`
 - Sets `data-theme` attribute on `<html>` element
-- Both pages share the same `localStorage` key `'theme'`
+- All four pages share the same `localStorage` key `'theme'`
 - Any new page must include the exact same init pattern
+
+### Minimap Behavior
+- Collapsed by default on all pages (labels hidden with `opacity: 0; width: 0`)
+- Expands on hover (`.minimap:hover .minimap-label { opacity: 1; width: auto; }`)
+- Hidden entirely below 1440px viewport width
+- Click handler uses `window.scrollTo` with 64px offset (to avoid nav overlap)
+- `scrollLock` timeout (800ms) suppresses IntersectionObserver during smooth scroll
 
 ## Cross-Link System
 
-### Technical → Economics (4 content links + nav)
+### Inference Technical → Inference Economics (4 content links + nav)
 | Source in index.html | Target in economics.html |
 |---------------------|------------------------|
 | Step 09 (decode) | `economics.html#throughput` |
@@ -133,7 +197,14 @@ The `active` class moves to whichever page is current. The theme toggle is insid
 | Cross-cutting (optimization) | `economics.html#throughput` |
 | Cross-cutting (networking) | `economics.html#cost-stack` |
 
-### Economics → Technical (6 content links + nav)
+### Inference Technical → Training (3 content links)
+| Source in index.html | Target in training.html |
+|---------------------|------------------------|
+| Step 03 (Tokenization) | `training.html#tokenizer` |
+| Step 04 (Embedding) | `training.html#architecture` |
+| Cross-cutting (Parallelism) | `training.html#distributed` |
+
+### Inference Economics → Inference Technical (6 content links + nav)
 | Source in economics.html | Target in index.html |
 |------------------------|---------------------|
 | D1: Cost Stack | `index.html#cross-cutting` |
@@ -143,10 +214,32 @@ The `active` class moves to whichever page is current. The theme toggle is insid
 | E1: Managed vs Rental | `index.html#phase-b` |
 | E3: Data Centers | `index.html#cross-cutting` |
 
+### Inference Economics → Training Economics (2 content links)
+| Source in economics.html | Target |
+|------------------------|--------|
+| D1: Cost Stack (networking) | `training-economics.html#hardware-costs` |
+| F3: Stage by Stage | `training-economics.html#model-funding` |
+
+### Training → Inference/Economics (3 content links)
+| Source in training.html | Target |
+|------------------------|--------|
+| G2: Tokenizer | `index.html#phase-a` |
+| H2: Distributed | `index.html#cross-cutting` |
+| H3: Monitoring | `training-economics.html#failure-costs` |
+
+### Training Economics → Other Pages (4 content links)
+| Source in training-economics.html | Target |
+|---------------------------------|--------|
+| J1: Hardware | `economics.html#cost-stack` |
+| J3: Failures | `training.html#monitoring` |
+| K3: Cloud vs On-Prem | `economics.html#data-centers` |
+| L1: GPU Financing | `economics.html#equity-vs-debt` |
+
 Cross-links use `.cross-link` class. **Critical:** index.html steps use `data-step` (no `id`). Cross-links must target phase/section IDs, not step IDs.
 
-## Interactive Visuals (economics.html)
+## Interactive Visuals
 
+### economics.html (4 visuals)
 | Visual | Container ID | Init Function | Interaction |
 |--------|-------------|---------------|-------------|
 | Cost waterfall chart | `visual-cost-waterfall` | `initCostWaterfall()` | Hover segments for Crusoe vs CoreWeave cost breakdown |
@@ -154,7 +247,22 @@ Cross-links use `.cross-link` class. **Critical:** index.html steps use `data-st
 | Breakeven calculator | `visual-breakeven-calc` | `initBreakevenCalc()` | Two range sliders (utilization %, WACC %) update 4 result values in real time |
 | Capital structure bars | `visual-capital-bars` | `initCapitalBars()` | Click funding stage row to toggle detail panel; 5 stages (Series A → Public) |
 
-**Note:** The breakeven calculator creates `.term` elements via `innerHTML` at runtime — these require manual event handler binding inside `initBreakevenCalc()` since they miss the initial `querySelectorAll('.term')` loop.
+### training.html (3 visuals)
+| Visual | Container ID | Init Function | Interaction |
+|--------|-------------|---------------|-------------|
+| Data funnel | `visual-data-funnel` | `initDataFunnel()` | Animated pipeline showing data volume shrinking at each stage |
+| Optimizer comparison | `visual-optimizer-compare` | `initOptimizerCompare()` | Bar charts comparing convergence speed and memory usage |
+| Parallelism diagram | `visual-parallelism` | `initParallelism()` | 4x4 GPU grid with mode toggle buttons (DP/TP/PP/4D) |
+
+### training-economics.html (4 visuals)
+| Visual | Container ID | Init Function | Interaction |
+|--------|-------------|---------------|-------------|
+| Training cost waterfall | `visual-training-waterfall` | `initTrainingWaterfall()` | Stacked bar breakdown + model cost comparison |
+| Scaling curve | `visual-scaling-curve` | `initScalingCurve()` | Log-scale over-training comparison bars |
+| Cost calculator | `visual-cost-calc` | `initCostCalc()` | Two sliders (model size, tokens) update 4 cost results |
+| Spend timeline | `visual-spend-timeline` | `initSpendTimeline()` | Stacked bars showing training/inference spend shift 2023-2026 |
+
+**Note:** The breakeven calculator (economics.html) creates `.term` elements via `innerHTML` at runtime — these require manual event handler binding inside `initBreakevenCalc()` since they miss the initial `querySelectorAll('.term')` loop.
 
 ## Design System Reference
 
@@ -188,7 +296,7 @@ Category badges (Wong colorblind-safe palette):
 
 ## How to Make Changes
 
-### Adding a New Pipeline Step / Economics Section
+### Adding a New Pipeline Step / Section
 
 Insert within the appropriate phase. Follow this template:
 
@@ -223,7 +331,7 @@ Insert within the appropriate phase. Follow this template:
 </div>
 ```
 
-Update the phase overview cards and (for index.html) journey diagram to reflect any new step.
+Update the phase overview cards and minimap to reflect any new section.
 
 ### Adding a Technical Term Definition
 
@@ -250,11 +358,17 @@ Always verify the target `id` exists in the target file before creating.
 
 ### Term Definitions Reference
 
-**index.html (46 terms):**
+**index.html (~46 terms):**
 `alibi`, `arithmetic-intensity`, `autoregressive`, `awq`, `bpe`, `chunked-prefill`, `cold-start`, `continuous-batching`, `decode`, `disaggregated-serving`, `eos`, `ep`, `flashattention`, `fp16`, `fp8`, `fsm-decoding`, `gguf`, `gptq`, `gqa`, `hbm`, `infiniband`, `int4`, `kv-cache`, `logits`, `lora`, `mha`, `min-p`, `mla`, `moe`, `mqa`, `nvlink`, `pagedattention`, `pp`, `prefill`, `prefix-caching`, `rdma`, `rope`, `softmax`, `speculative-decoding`, `sram`, `sse`, `top-k`, `top-p`, `tp`, `tpot`, `ttft`
 
-**economics.html (12 terms):**
+**economics.html (~12 terms):**
 `capex`, `dscr`, `fixed-rate-swap`, `gross-margin`, `opex`, `pue`, `residual-value`, `sofr`, `statistical-multiplexing`, `tco`, `utilization-breakeven`, `wacc`
+
+**training.html (~30 terms):**
+`bpe`, `sentencepiece`, `minhash`, `rmsnorm`, `swiglu`, `gqa`, `mla`, `rope`, `moe`, `adamw`, `muon`, `wsd`, `fsdp`, `zero`, `tp`, `pp`, `dpo`, `grpo`, `rlhf`, `constitutional-ai`, `kto`, `mmlu`, `mfu`, `rft`, `prm`, and more
+
+**training-economics.html (~3 terms):**
+`chinchilla`, `mfu`, `lora`
 
 ## JavaScript Interaction Model
 
@@ -335,7 +449,7 @@ This is intentionally simple. Don't add a build step, CSS preprocessor, JS frame
 AI tools have output limits (~32K tokens). A 1,700-line HTML file exceeds this in a single write. Never attempt to generate >500 lines in one tool call. Plan file creation as sequential appends from the start.
 
 ### 7. Anchor ID Mismatches Across Pages
-index.html pipeline steps use `data-step="routing"` (no `id`). Cross-links from economics.html that targeted `index.html#step-01` would break. Always verify target anchors exist. Link to phase/section IDs (`#phase-a`, `#phase-b`, `#cross-cutting`).
+index.html pipeline steps use `data-step="routing"` (no `id`). Cross-links from other pages that target `index.html#step-01` would break. Always verify target anchors exist. Link to phase/section IDs (`#phase-a`, `#phase-b`, `#cross-cutting`, `#inference-metrics`).
 
 ### 8. Background Agents for Creative Work
 Delegating large creative file generation to a background agent fails due to output limits. For files >500 lines, write sequentially yourself. Use agents only for research, not large-file generation.
@@ -347,23 +461,30 @@ Interactive visuals that create DOM elements via `innerHTML` (like the breakeven
 `.site-nav` uses `backdrop-filter: blur(12px)`, creating a new stacking context. `position: fixed` elements inside it behave differently. Tooltips and minimap are placed outside the nav.
 
 ### 11. Theme Sync Across Pages
-Both pages use the same `localStorage` key `'theme'` and the same init script in `<head>` (before body renders). Any new page must include this exact pattern to prevent FOUC and maintain theme continuity.
+All four pages use the same `localStorage` key `'theme'` and the same init script in `<head>` (before body renders). Any new page must include this exact pattern to prevent FOUC and maintain theme continuity.
 
 ### 12. Minimap Scroll and Highlight
 Two issues with minimap navigation: (1) `scrollIntoView` with `block: 'start'` scrolls behind the nav, and `block: 'center'` fails for bottom-of-page sections. Fix: `window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 64, behavior: 'smooth' })`. (2) The scroll-based minimap highlight observer fires during smooth scroll, detecting the wrong section as active (collapsed sections are short, so the next section's top crosses the threshold). Fix: immediately set the clicked item as active, and use a `scrollLock` timeout (800ms) to suppress the observer during the smooth scroll animation.
 
+### 13. Minimap Collapse by Default
+Minimap labels must be hidden at base CSS level (`opacity: 0; width: 0`), not inside a media query. Revealed via `.minimap:hover .minimap-label`. Previously, labels were inside `@media (max-width: 1440px)` which left them always visible on wider screens.
+
 ## Deployment Verification
 
 After deploying, verify:
-1. All 11 technical steps + 9 economics sections expand/collapse correctly
-2. Nav bar links work bidirectionally (Technical Pipeline ↔ Economics)
-3. Cross-links navigate to correct sections on the other page
-4. Theme toggle works on both pages, persists across navigation
-5. Interactive visuals: cost waterfall hover, breakeven sliders work, deflation timeline animates, capital bars expand
-6. All ~58 term tooltips work (46 technical + 12 economics) — click show/dismiss
-7. Sub-topics within steps toggle independently (no accordion — multiple can be open)
-8. Phase overview cards scroll to correct anchors on both pages
-9. Responsive at 768px: nav adapts, minimap hides, content stacks
-10. Light/dark theme: both pages render correctly in both modes
-11. Minimap navigation: click EVERY minimap item on both pages and verify the correct section header is visible below the nav bar — especially sections near the bottom of the page (e.g., Data Centers, Contracted Revenue, Stage by Stage on economics; Sampling, Streaming on index). The minimap dot must highlight the clicked section, not a neighboring one.
-12. No console errors on either page
+1. All 4 pages load without console errors
+2. All 11 inference steps + 10 training sections + 9 inference economics + 9 training economics sections expand/collapse
+3. Nav shows 4 links + divider + theme toggle on all pages, `.active` class correct
+4. Cross-links navigate to correct sections across all 4 pages
+5. Theme toggle works on all 4 pages, persists across navigation
+6. Interactive visuals on economics.html: cost waterfall hover, breakeven sliders work, deflation timeline animates, capital bars expand
+7. Interactive visuals on training.html: data funnel animates, optimizer bars render, parallelism grid toggles modes
+8. Interactive visuals on training-economics.html: training waterfall renders, scaling curve bars, cost calculator sliders, spend timeline bars
+9. All ~90 term tooltips work (~46 inference + ~12 inference-econ + ~30 training + ~3 training-econ) — click show/dismiss
+10. Sub-topics within sections toggle independently (no accordion — multiple can be open)
+11. Phase overview cards scroll to correct anchors on all pages
+12. Responsive at 768px: nav adapts, minimap hides, content stacks on all pages
+13. Light/dark theme: all 4 pages render correctly in both modes
+14. Minimap navigation: click EVERY minimap item on all 4 pages and verify correct section header visible below nav bar
+15. Training page uses amber accent (#E69F00), distinct from inference blue
+16. No console errors on any page
