@@ -1879,7 +1879,7 @@ body, .code-block, .journey-diagram, .callout-box, .metric, .journey-detail-pane
             </div>
             <div class="callout-box callout-analogy">
               <div class="callout-label">Think of it like...</div>
-              <p>A barber who starts the next haircut immediately when a chair opens, instead of waiting for an entire group appointment to finish.</p>
+              <p>A city bus where passengers board and exit at different stops &mdash; when someone gets off, that seat opens immediately for a new rider waiting at the next stop.</p>
             </div>
             <div class="detail-section">
               <div class="detail-label">Interactive Visual</div>
@@ -1902,7 +1902,22 @@ body, .code-block, .journey-diagram, .callout-box, .metric, .journey-detail-pane
                   </div>
                   <div class="sub-topic-preview">Fixed groups, wait for slowest request</div>
                   <div class="sub-topic-detail">
-                    <p>Requests are grouped into fixed-size batches. The entire batch waits until the <strong>slowest request finishes</strong>. If one request generates 10 tokens and another generates 500, the short request idles for the long one. GPU utilisation: <strong>30-60%</strong>.</p>
+                    <p>Requests are grouped into fixed-size batches. The entire batch waits until the <strong>slowest request finishes</strong>. If one request generates 10 tokens and another generates 500, the short request idles for the long one. Short sequences are padded to match the longest, wasting compute on empty tokens. GPU utilisation: <strong>30-60%</strong>.</p>
+                  </div>
+                </div>
+                <div class="sub-topic" onclick="toggleSubTopic(this)">
+                  <div class="sub-topic-header">
+                    <span class="sub-topic-name"><span class="term" data-term="dynamic-batching">Dynamic Batching</span></span>
+                    <span class="sub-topic-icon">+</span>
+                  </div>
+                  <div class="sub-topic-preview">Time or size trigger, still waits for slowest</div>
+                  <div class="sub-topic-detail">
+                    <p>A middle ground between static and continuous. A batch starts when either a <strong>max batch size</strong> is reached <em>or</em> a <strong>timeout expires</strong> &mdash; whichever comes first. This reduces queuing latency compared to static batching (no need to wait for a full batch), but the batch still runs as a unit: all requests finish together, so shorter sequences sit idle while the longest completes.</p>
+                    <div class="metrics-row">
+                      <div class="metric"><div class="metric-value">40-70%</div><div class="metric-label">GPU Utilisation</div></div>
+                      <div class="metric"><div class="metric-value">~1.5x</div><div class="metric-label">vs Static Throughput</div></div>
+                    </div>
+                    <p>Most appropriate for interactive workloads like image generation where requests arrive unevenly and latency matters more than maximum throughput.</p>
                   </div>
                 </div>
                 <div class="sub-topic" onclick="toggleSubTopic(this)">
@@ -2846,6 +2861,7 @@ const termDefs = {
   'autoregressive': { def: 'A generation method where each new token depends on all previously generated tokens. The model produces output one token at a time, sequentially.', src: 'https://en.wikipedia.org/wiki/Autoregressive_model' },
   'speculative-decoding': { def: 'A small draft model generates candidate tokens quickly, then the large model verifies them all in one parallel pass. Mathematically lossless, 2\u20133\u00d7 speedup.', src: 'https://arxiv.org/abs/2211.17192' },
   'continuous-batching': { def: 'Replacing finished sequences with new requests at every decode iteration, keeping GPU utilization at 80\u201395% vs 30\u201360% with static batching.', src: 'https://arxiv.org/abs/2309.06180' },
+  'dynamic-batching': { def: 'A batching strategy that triggers on either max batch size or a timeout \u2014 whichever comes first. Reduces queuing latency vs static batching, but all requests in the batch still finish together.', src: 'https://www.baseten.co/blog/continuous-batching-vs-dynamic-batching-for-llm-serving/' },
   'prefix-caching': { def: 'Reusing previously computed KV cache entries for matching prompt prefixes, skipping redundant prefill computation. Can reduce TTFT by 88%+.', src: 'https://arxiv.org/abs/2312.07104' },
   'awq': { def: 'Activation-aware Weight Quantization \u2014 identifies salient weights via activation magnitudes and preserves them during 4-bit quantization.', src: 'https://arxiv.org/abs/2306.00978' },
   'gptq': { def: 'Post-training quantization using approximate second-order information (Hessian) to minimize quantization error. Widely supported in inference frameworks.', src: 'https://arxiv.org/abs/2210.17323' },
@@ -2896,6 +2912,7 @@ const termStepMap = {
   'autoregressive': { step: 'decode', label: '09 Decode Loop' },
   'speculative-decoding': { step: 'decode', label: '09 Decode Loop' },
   'continuous-batching': { step: 'scheduling', label: '05 Scheduling' },
+  'dynamic-batching': { step: 'scheduling', label: '05 Scheduling' },
   'prefix-caching': { step: 'kvcache', label: '07 KV Cache' },
   'awq': { id: 'cross-cutting', label: 'Quantization' },
   'gptq': { id: 'cross-cutting', label: 'Quantization' },
@@ -3637,6 +3654,12 @@ document.addEventListener('click', function(e) {
       [1,1,1,0,0,0,0,0,0,0,0,0],
       [1,1,1,1,1,1,1,1,1,1,1,1]
     ];
+    var dynamicData = [
+      [1,1,1,1,1,0, 3,3,3,3,3,3],
+      [1,1,1,1,1,1, 3,3,3,3,0,0],
+      [1,1,0,0,0,0, 3,3,3,3,3,0],
+      [0,0,0,0,0,0, 3,3,3,3,3,3]
+    ];
     var contData = [
       [1,1,1,1,1,3,3,3,3,3,3,3],
       [1,1,1,1,1,1,1,1,1,3,3,3],
@@ -3701,9 +3724,11 @@ document.addEventListener('click', function(e) {
     legendDiv.style.cssText = 'display:none;justify-content:center;gap:0.75rem;margin-top:4px';
     gridArea.appendChild(legendDiv);
 
+    var titles = { static: 'STATIC BATCHING', dynamic: 'DYNAMIC BATCHING (TIMEOUT + SIZE TRIGGERS)', continuous: 'CONTINUOUS BATCHING' };
+
     function render() {
-      var data = mode === 'static' ? staticData : contData;
-      titleL.textContent = (mode === 'static' ? 'STATIC' : 'CONTINUOUS') + ' BATCHING';
+      var data = mode === 'static' ? staticData : mode === 'dynamic' ? dynamicData : contData;
+      titleL.textContent = titles[mode];
       stat.textContent = 'GPU Util: ' + calcUtil(data) + '%';
       gridDiv.innerHTML = '';
       data.forEach(function(row) {
@@ -3716,53 +3741,37 @@ document.addEventListener('click', function(e) {
         });
       });
 
-      // Legend: show for continuous mode (multiple request colors)
+      // Build legend
       legendDiv.innerHTML = '';
-      if (mode === 'continuous') {
-        legendDiv.style.display = 'flex';
+      legendDiv.style.display = 'flex';
+      if (mode === 'static') {
+        // Static: Active + Idle
+        addLegendItem(legendDiv, 'var(--accent)', '', 'Active');
+        addLegendItem(legendDiv, 'rgba(213,94,0,0.25)', 'rgba(213,94,0,0.4)', 'Idle (wasted)');
+      } else {
+        // Dynamic and Continuous: show used request colors + Idle
         var usedVals = {};
         data.forEach(function(r) { r.forEach(function(v) { if (v > 0) usedVals[v] = true; }); });
         Object.keys(usedVals).sort().forEach(function(v) {
           var cm = colorMap[parseInt(v)];
-          if (!cm) return;
-          var item = el('div', '');
-          item.style.cssText = 'display:flex;align-items:center;gap:4px;font-family:var(--font-mono);font-size:0.45rem;color:var(--text-muted)';
-          var swatch = el('div', '');
-          swatch.style.cssText = 'width:10px;height:10px;border-radius:2px;background:' + cm.bg;
-          item.appendChild(swatch);
-          item.appendChild(document.createTextNode(cm.label));
-          legendDiv.appendChild(item);
+          if (cm) addLegendItem(legendDiv, cm.bg, '', cm.label);
         });
-        // Add waste swatch
-        var wasteItem = el('div', '');
-        wasteItem.style.cssText = 'display:flex;align-items:center;gap:4px;font-family:var(--font-mono);font-size:0.45rem;color:var(--text-muted)';
-        var wasteSwatch = el('div', '');
-        wasteSwatch.style.cssText = 'width:10px;height:10px;border-radius:2px;background:rgba(213,94,0,0.25);border:1px solid rgba(213,94,0,0.4)';
-        wasteItem.appendChild(wasteSwatch);
-        wasteItem.appendChild(document.createTextNode('Idle'));
-        legendDiv.appendChild(wasteItem);
-      } else {
-        legendDiv.style.display = 'flex';
-        // Static mode: show 2-color legend
-        var activeItem = el('div', '');
-        activeItem.style.cssText = 'display:flex;align-items:center;gap:4px;font-family:var(--font-mono);font-size:0.45rem;color:var(--text-muted)';
-        var activeSwatch = el('div', '');
-        activeSwatch.style.cssText = 'width:10px;height:10px;border-radius:2px;background:var(--accent)';
-        activeItem.appendChild(activeSwatch);
-        activeItem.appendChild(document.createTextNode('Active'));
-        legendDiv.appendChild(activeItem);
-        var idleItem = el('div', '');
-        idleItem.style.cssText = 'display:flex;align-items:center;gap:4px;font-family:var(--font-mono);font-size:0.45rem;color:var(--text-muted)';
-        var idleSwatch = el('div', '');
-        idleSwatch.style.cssText = 'width:10px;height:10px;border-radius:2px;background:rgba(213,94,0,0.25);border:1px solid rgba(213,94,0,0.4)';
-        idleItem.appendChild(idleSwatch);
-        idleItem.appendChild(document.createTextNode('Idle (wasted)'));
-        legendDiv.appendChild(idleItem);
+        addLegendItem(legendDiv, 'rgba(213,94,0,0.25)', 'rgba(213,94,0,0.4)', 'Idle');
       }
     }
 
+    function addLegendItem(parent, bg, border, text) {
+      var item = el('div', '');
+      item.style.cssText = 'display:flex;align-items:center;gap:4px;font-family:var(--font-mono);font-size:0.45rem;color:var(--text-muted)';
+      var swatch = el('div', '');
+      swatch.style.cssText = 'width:10px;height:10px;border-radius:2px;background:' + bg + (border ? ';border:1px solid ' + border : '');
+      item.appendChild(swatch);
+      item.appendChild(document.createTextNode(text));
+      parent.appendChild(item);
+    }
+
     var ctrl = el('div', 'sv-controls');
-    ['Static', 'Continuous'].forEach(function(m) {
+    ['Static', 'Dynamic', 'Continuous'].forEach(function(m) {
       var btn = el('button', 'sv-btn' + (m.toLowerCase() === mode ? ' active' : ''), m);
       btn.addEventListener('click', function(e) {
         stopProp(e);
