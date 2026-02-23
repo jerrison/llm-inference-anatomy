@@ -1888,7 +1888,7 @@ body, .code-block, .journey-diagram, .callout-box, .metric, .journey-detail-pane
             <div class="detail-section">
               <div class="detail-label">Why batching is critical</div>
               <div class="detail-text">
-                Each decode step <strong>underutilises the GPU</strong> &mdash; the bottleneck is reading model weights from memory, not computation. Batching amortises this cost: reading weights once and applying them to many concurrent requests. At batch size 1, GPU compute utilisation is just <strong>2&ndash;5%</strong>. At batch size 32, it reaches <strong>60&ndash;80%</strong> &mdash; same weights, dramatically more work per byte loaded.
+                With no batching, each request processes alone &mdash; GPU compute utilisation sits at just <strong>2&ndash;5%</strong> because the GPU spends most time loading weights for a single sequence. Batching amortises this cost: reading weights once and applying them to many concurrent requests. At batch size 32, utilisation reaches <strong>60&ndash;80%</strong> &mdash; same weights, dramatically more work per byte loaded.
                 <br><a href="economics.html#throughput" style="color:var(--accent-dim);font-family:var(--font-mono);font-size:0.75rem;text-decoration:none;letter-spacing:0.05em">Utilization drives unit economics &rarr;</a>
               </div>
             </div>
