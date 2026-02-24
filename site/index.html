@@ -3613,7 +3613,7 @@ document.addEventListener('click', function(e) {
     c.appendChild(packet);
     // Legend
     var legend = el('div', '');
-    legend.style.cssText = 'position:absolute;left:8%;bottom:22%;display:flex;align-items:center;gap:10px;font-size:0.45rem;color:var(--text-muted)';
+    legend.style.cssText = 'position:absolute;left:8%;bottom:22%;display:flex;align-items:center;gap:10px;font-size:0.45rem;color:var(--text-muted);background:var(--bg-card);border:1px solid var(--border);border-radius:4px;padding:3px 8px';
     var kvSwatch = el('div', '');
     kvSwatch.style.cssText = 'width:24px;height:6px;background:var(--accent);border-radius:2px';
     legend.appendChild(kvSwatch);
@@ -4091,7 +4091,7 @@ document.addEventListener('click', function(e) {
 
     // Legend
     var legend = el('div', '');
-    legend.style.cssText = 'position:absolute;right:12%;top:6%;display:flex;align-items:center;gap:12px;font-size:0.45rem;color:var(--text-muted)';
+    legend.style.cssText = 'position:absolute;right:5%;top:5%;display:flex;align-items:center;gap:12px;font-size:0.45rem;color:var(--text-muted);background:var(--bg-card);border:1px solid var(--border);border-radius:4px;padding:3px 8px';
     var litSwatch = el('div', '');
     litSwatch.style.cssText = 'width:10px;height:10px;background:var(--accent);border:1px solid var(--accent-dim);border-radius:2px';
     legend.appendChild(litSwatch);
@@ -4271,7 +4271,7 @@ document.addEventListener('click', function(e) {
 
     // Legend
     var legend = el('div', '');
-    legend.style.cssText = 'position:absolute;left:8%;bottom:20%;display:flex;align-items:center;gap:12px;font-size:0.45rem;color:var(--text-muted)';
+    legend.style.cssText = 'position:absolute;left:8%;bottom:20%;display:flex;align-items:center;gap:12px;font-size:0.45rem;color:var(--text-muted);background:var(--bg-card);border:1px solid var(--border);border-radius:4px;padding:3px 8px';
     var logSw = el('div', '');
     logSw.style.cssText = 'width:10px;height:10px;border:1px solid var(--border-active);border-radius:3px';
     legend.appendChild(logSw);
@@ -4359,7 +4359,7 @@ document.addEventListener('click', function(e) {
 
     // Legend
     var legend = el('div', '');
-    legend.style.cssText = 'position:absolute;left:5%;bottom:18%;font-size:0.45rem;color:var(--text-muted)';
+    legend.style.cssText = 'position:absolute;left:5%;bottom:18%;font-size:0.45rem;color:var(--text-muted);background:var(--bg-card);border:1px solid var(--border);border-radius:4px;padding:3px 8px';
     legend.textContent = 'Matching colors = shared KV head group';
     c.appendChild(legend);
 
@@ -4415,13 +4415,13 @@ document.addEventListener('click', function(e) {
 
     // Weight loading dominance note
     var note = el('div', '');
-    note.style.cssText = 'position:absolute;left:50%;bottom:36%;transform:translateX(-50%);font-size:0.5rem;color:var(--text-muted);text-align:center;width:120px';
+    note.style.cssText = 'position:absolute;left:5%;top:5%;font-size:0.5rem;color:var(--text-muted);background:var(--bg-card);border:1px solid var(--border);border-radius:4px;padding:3px 8px';
     note.textContent = 'Weight loading dominates (~80% of time)';
     c.appendChild(note);
 
     // Legend
     var legend = el('div', '');
-    legend.style.cssText = 'position:absolute;left:5%;bottom:18%;display:flex;flex-wrap:wrap;gap:8px;font-size:0.45rem;color:var(--text-muted)';
+    legend.style.cssText = 'position:absolute;left:5%;bottom:18%;display:flex;flex-wrap:wrap;gap:8px;font-size:0.45rem;color:var(--text-muted);background:var(--bg-card);border:1px solid var(--border);border-radius:4px;padding:3px 8px';
     steps.forEach(function(s) {
       var item = el('span', '');
       item.style.cssText = 'display:inline-flex;align-items:center;gap:3px';
@@ -4525,7 +4525,7 @@ document.addEventListener('click', function(e) {
 
     // Legend
     var legend = el('div', '');
-    legend.style.cssText = 'position:absolute;right:5%;top:5%;display:flex;align-items:center;gap:10px;font-size:0.45rem;color:var(--text-muted)';
+    legend.style.cssText = 'position:absolute;right:5%;top:5%;display:flex;align-items:center;gap:10px;font-size:0.45rem;color:var(--text-muted);background:var(--bg-card);border:1px solid var(--border);border-radius:4px;padding:3px 8px';
     var actSw = el('div', '');
     actSw.style.cssText = 'width:16px;height:6px;background:var(--accent);border-radius:2px';
     legend.appendChild(actSw);
@@ -4662,7 +4662,7 @@ document.addEventListener('click', function(e) {
 
     // Legend
     var legend = el('div', '');
-    legend.style.cssText = 'position:absolute;left:50%;top:8%;transform:translateX(-50%);display:flex;align-items:center;gap:12px;font-size:0.45rem;color:var(--text-muted)';
+    legend.style.cssText = 'position:absolute;left:50%;top:5%;transform:translateX(-50%);display:flex;align-items:center;gap:12px;font-size:0.45rem;color:var(--text-muted);background:var(--bg-card);border:1px solid var(--border);border-radius:4px;padding:3px 8px';
     var srvSw = el('div', '');
     srvSw.style.cssText = 'width:10px;height:10px;border:1px solid var(--compute);border-radius:2px';
     legend.appendChild(srvSw);
