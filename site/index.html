@@ -4068,13 +4068,21 @@ document.addEventListener('click', function(e) {
     titleDiv.style.cssText = 'position:absolute;left:5%;top:6%';
     c.appendChild(titleDiv);
 
+    // Compute cell size to fit all n rows within the container
+    var ch = c.offsetHeight || 260;
+    var availH = ch - ch * 0.16 - 36 - 18; // top offset, controls, top labels
+    var cellSz = Math.floor((availH - (n - 1) * 2) / n); // subtract gaps
+    cellSz = Math.max(cellSz, 16);
+    var labelW = 40;
+
     var gridContainer = el('div', '');
-    gridContainer.style.cssText = 'position:absolute;left:12%;top:16%;right:12%';
+    var gridW = labelW + n * cellSz + (n - 1) * 2;
+    gridContainer.style.cssText = 'position:absolute;left:50%;top:16%;transform:translateX(-50%);width:' + gridW + 'px';
     c.appendChild(gridContainer);
 
     // Token labels (top)
     var topLabels = el('div', '');
-    topLabels.style.cssText = 'display:grid;gap:2px;margin-bottom:4px;grid-template-columns:40px repeat(' + n + ',1fr)';
+    topLabels.style.cssText = 'display:grid;gap:2px;margin-bottom:4px;grid-template-columns:' + labelW + 'px repeat(' + n + ',' + cellSz + 'px)';
     var corner = el('div', '');
     topLabels.appendChild(corner);
     tokens.forEach(function(t) {
@@ -4086,8 +4094,7 @@ document.addEventListener('click', function(e) {
     gridContainer.appendChild(topLabels);
 
     var grid = el('div', 'sv-grid');
-    grid.style.gridTemplateColumns = '40px repeat(' + n + ', 1fr)';
-    grid.style.width = '100%';
+    grid.style.gridTemplateColumns = labelW + 'px repeat(' + n + ', ' + cellSz + 'px)';
     var cells = [];
     for (var i = 0; i < n; i++) {
       var rowLabel = el('div', '');
@@ -4097,9 +4104,8 @@ document.addEventListener('click', function(e) {
       var row = [];
       for (var j = 0; j < n; j++) {
         var cell = el('div', 'sv-cell');
-        cell.style.width = '100%';
-        cell.style.paddingBottom = '100%';
-        cell.style.height = '0';
+        cell.style.width = cellSz + 'px';
+        cell.style.height = cellSz + 'px';
         grid.appendChild(cell);
         row.push(cell);
       }
