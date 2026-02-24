@@ -242,7 +242,7 @@ Cross-links use `.cross-link` class. **Critical:** index.html steps use `data-st
 ### economics.html (4 visuals)
 | Visual | Container ID | Init Function | Interaction |
 |--------|-------------|---------------|-------------|
-| Cost waterfall chart | `visual-cost-waterfall` | `initCostWaterfall()` | Hover segments for Crusoe vs CoreWeave cost breakdown |
+| Cost waterfall chart | `visual-cost-waterfall` | `initCostWaterfall()` | Stacked horizontal bars + vertical cost stack columns; hover tooltip (fixed-position, appended to body) shows category, value, % of total |
 | Deflation timeline | `visual-deflation-timeline` | `initDeflationTimeline()` | Scroll-triggered fill animation via IntersectionObserver |
 | Breakeven calculator | `visual-breakeven-calc` | `initBreakevenCalc()` | Two range sliders (utilization %, WACC %) update 4 result values in real time |
 | Capital structure bars | `visual-capital-bars` | `initCapitalBars()` | Click funding stage row to toggle detail panel; 5 stages (Series A → Public) |

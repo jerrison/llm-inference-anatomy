@@ -364,7 +364,7 @@ Track both `activeTooltip` (DOM element) and `activeTermEl` (which term is showi
 
 | Visual | Container ID | Init Function | Interaction |
 |--------|-------------|---------------|-------------|
-| Cost waterfall | `visual-cost-waterfall` | `initCostWaterfall()` | Hover segments for cost breakdown |
+| Cost waterfall | `visual-cost-waterfall` | `initCostWaterfall()` | Stacked horizontal bars + vertical cost stack columns; hover tooltip (fixed-position, appended to body) shows category, value, % of total |
 | Deflation timeline | `visual-deflation-timeline` | `initDeflationTimeline()` | Scroll-triggered fill via IntersectionObserver |
 | Breakeven calculator | `visual-breakeven-calc` | `initBreakevenCalc()` | Two range sliders (utilization, WACC) update 4 results |
 | Capital structure bars | `visual-capital-bars` | `initCapitalBars()` | Click row to toggle detail panel |
