@@ -407,6 +407,22 @@ body, .code-block, .callout-box, .metric, .site-nav, .minimap-phase { transition
     document.documentElement.setAttribute('data-theme', 'light');
   } else { document.documentElement.setAttribute('data-theme', 'dark'); }
 })();
+(function(){
+  if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+  var key = 'scrollY' + location.pathname;
+  window.addEventListener('beforeunload', function(){ sessionStorage.setItem(key, String(window.scrollY)); });
+  if (!window.location.hash) {
+    var saved = sessionStorage.getItem(key);
+    if (saved) {
+      var y = parseInt(saved, 10);
+      document.addEventListener('DOMContentLoaded', function(){
+        document.documentElement.style.scrollBehavior = 'auto';
+        window.scrollTo(0, y);
+        requestAnimationFrame(function(){ document.documentElement.style.scrollBehavior = ''; });
+      });
+    }
+  }
+})();
 </script>
 </head>
 <body>
