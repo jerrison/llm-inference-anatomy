@@ -446,6 +446,16 @@ body, .callout-box, .metric, .site-nav, .minimap-phase { transition: background-
               <div class="detail-label">Cloud Rental Decline</div>
               <div class="detail-text">
                 <p>H100 cloud pricing fell from <strong>$8/hr</strong> (early 2024) to <strong>~$1.50/hr</strong> (late 2025) &mdash; a <strong>60-70% drop</strong> driven by massive supply buildout and competition from CoreWeave, Lambda, and hyperscalers.</p>
+                <table class="data-table" style="margin-top:0.75rem">
+                  <thead><tr><th>GPU</th><th>Crusoe On-Demand</th><th>Crusoe Spot</th><th>Fireworks On-Demand</th></tr></thead>
+                  <tbody>
+                    <tr><td>A100 80 GB</td><td>$1.95/hr</td><td>$1.30/hr</td><td>$3.19/hr</td></tr>
+                    <tr><td>H100 SXM</td><td>$3.90/hr</td><td>$1.60/hr</td><td>$5.49/hr</td></tr>
+                    <tr><td>H200 SXM</td><td>$4.29/hr</td><td>&mdash;</td><td>&mdash;</td></tr>
+                    <tr><td>B200</td><td>Coming soon</td><td>&mdash;</td><td>&mdash;</td></tr>
+                  </tbody>
+                </table>
+                <p style="margin-top:0.5rem"><strong>Training cost example:</strong> An 8&times;H100 fine-tuning run on Crusoe spot at $1.60/hr &times; 8 GPUs &times; 24 hours = <strong>$307</strong> for a day-long training session. The same run on managed platforms costs 2&ndash;3&times; more but includes orchestration, checkpointing, and automatic failure recovery.</p>
               </div>
             </div>
 
@@ -636,6 +646,16 @@ body, .callout-box, .metric, .site-nav, .minimap-phase { transition: background-
                 <p>Modern managed stacks now cover the full post-training ladder: supervised text/chat/vision fine-tuning, DPO, and RFT. This collapses integration overhead compared with stitching multiple vendors.</p>
                 <p>Fireworks-specific levers that change unit economics: <strong>one-click LoRA deployment</strong>, support for up to <strong>100 LoRA adapters per base model</strong> on a single deployment, and secure enterprise modes for customer-controlled data boundaries.</p>
                 <p>Operationally, synthetic data generation plus built-in evaluation loops reduce labeling and experimentation costs, shifting budgets from infrastructure plumbing to model quality iteration.</p>
+                <table class="data-table" style="margin-top:0.75rem">
+                  <thead><tr><th>Model Size</th><th>SFT $/M tokens</th><th>DPO $/M tokens</th></tr></thead>
+                  <tbody>
+                    <tr><td>&le;16B</td><td>$0.50</td><td>$1.00</td></tr>
+                    <tr><td>16B &ndash; 80B</td><td>$2.00</td><td>$4.00</td></tr>
+                    <tr><td>80B &ndash; 300B</td><td>$5.00</td><td>$10.00</td></tr>
+                    <tr><td>300B+</td><td>$10.00</td><td>$20.00</td></tr>
+                  </tbody>
+                </table>
+                <p style="margin-top:0.5rem">DPO costs <strong>2&times; SFT</strong> because each training step processes a preference pair (chosen + rejected), doubling compute. Back-of-envelope: a LoRA fine-tune on a 7B model with 10K examples (~5M tokens) costs roughly <strong>$2.50&ndash;$25</strong> on managed platforms &mdash; orders of magnitude less than raw GPU rental for equivalent self-managed runs.</p>
               </div>
             </div>
 
@@ -711,6 +731,7 @@ body, .callout-box, .metric, .site-nav, .minimap-phase { transition: background-
               <div class="detail-label">Cloud Advantages</div>
               <div class="detail-text">
                 <p>No upfront CapEx. Access to latest hardware without procurement delays. Burst capacity for experiments. Scale down when not training. <strong>Option value</strong>: switch hardware as next-gen GPUs ship every 12-18 months.</p>
+                <p style="margin-top:0.5rem"><strong>The managed middle ground:</strong> Crusoe spot H100s at $1.60/hr combined with managed Slurm and AutoClusters offer a hybrid between cloud flexibility and on-prem economics. Teams get near-bare-metal rates (60% below on-demand) without managing their own cluster orchestration, checkpointing, or failure recovery. This collapses the build-vs-rent decision for training workloads that don&rsquo;t require 24/7 uptime.</p>
               </div>
             </div>
 
@@ -811,6 +832,7 @@ body, .callout-box, .metric, .site-nav, .minimap-phase { transition: background-
                     <tr><td>Anthropic</td><td>$30B</td><td>$380B (Feb 2026)</td></tr>
                     <tr><td>xAI</td><td>$6B</td><td>$50B</td></tr>
                     <tr><td>CoreWeave</td><td>$7.6B debt + IPO</td><td>$35B+ at peak</td></tr>
+                    <tr><td>Crusoe</td><td>$3.4B Series E + $9.6B infra debt</td><td>$10B+</td></tr>
                   </tbody>
                 </table>
               </div>

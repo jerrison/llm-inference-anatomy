@@ -1525,6 +1525,7 @@ body, .callout-box, .metric, .site-nav, .minimap-phase { transition: background-
                 <p><strong>Full fine-tuning</strong>: update all parameters. Best quality but expensive (~$50K per run for a 7B model on H100s).</p>
                 <p><strong>LoRA/QLoRA</strong>: freeze base weights, train small low-rank adapter matrices. <span class="term" data-term="lora">LoRA</span> adds &lt;1% parameters, achieves 90-95% of full fine-tuning quality at <strong>$300-$3,000 per run</strong>. QLoRA further quantizes the base model to 4-bit during training.</p>
                 <p>Fireworks defaults for LoRA SFT are deliberately conservative (rank 32, alpha 64, context 16K, ~3 epochs), then tuned from there. A major deployment advantage is multi-adapter serving: up to <strong>100 LoRA adapters</strong> can share one base model deployment, dramatically improving utilization for long-tail custom models.</p>
+                <p><strong>Managed fine-tuning pricing (Fireworks):</strong> $0.50/M tokens (&le;16B) &rarr; $2.00/M (16&ndash;80B) &rarr; $10.00/M (300B+). DPO runs at 2&times; SFT rate. A 10K-example LoRA on a 7B model (~5M tokens) costs roughly <strong>$2.50&ndash;$25</strong> &mdash; making rapid experimentation accessible without GPU procurement.</p>
               </div>
             </div>
           </div>
@@ -1584,6 +1585,7 @@ body, .callout-box, .metric, .site-nav, .minimap-phase { transition: background-
                   <div class="sub-topic-detail">
                     <p>Fireworks DPO expects explicit triplets: <span class="term" data-term="dpo-triplet">prompt</span>, preferred output, and non-preferred output. This makes preference data portable across experiments and easier to audit.</p>
                     <p>When workflows depend on function calling, datasets can include tool definitions and tool-call traces so preference optimization teaches both quality and tool-use behavior.</p>
+                    <p><strong>Cost implication:</strong> DPO runs at <strong>2&times; SFT pricing</strong> on managed platforms because each training step processes both the preferred and non-preferred response, effectively doubling the forward/backward pass compute per example. For a 7B model, expect $1.00/M tokens vs $0.50/M for standard SFT.</p>
                   </div>
                 </div>
                 <div class="sub-topic" onclick="toggleSubTopic(this)">

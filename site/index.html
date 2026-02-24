@@ -2739,6 +2739,7 @@ body, .code-block, .journey-diagram, .callout-box, .metric, .journey-detail-pane
         <p><strong>Token distributions</strong>: generated tokens per request and prompt tokens per request &mdash; essential for understanding workload mix and capacity planning.</p>
         <p><strong>Reasoning channel telemetry</strong>: count and rate of reasoning chunks (for APIs that stream <code>reasoning_content</code>), plus visible/reasoning token splits. Without this split, reasoning tiers look profitable until decode saturation appears.</p>
         <p style="margin-top:0.5rem"><strong>Alerting best practice</strong>: alert on <em>SLO burn rate</em> (error budget consumption speed) rather than raw thresholds. A brief latency spike that stays within your monthly error budget doesn&rsquo;t need to wake someone up at 3 AM.</p>
+        <p style="margin-top:0.5rem"><strong>Enterprise compliance:</strong> Production platforms like Fireworks AI maintain SOC2 Type II, HIPAA, and GDPR certifications. Their observable surface spans 100+ hosted models with structured outputs, function calling, vision, and audio &mdash; each generating distinct telemetry streams that must be captured, retained, and auditable under compliance frameworks.</p>
       </div>
     </div>
   </div>
@@ -2964,6 +2965,20 @@ body, .code-block, .journey-diagram, .callout-box, .metric, .journey-detail-pane
       <div class="sub-topic-preview">Next-gen distributed framework (GTC 2025).</div>
       <div class="sub-topic-detail">
         <p>Built-in prefill-decode disaggregation, dynamic GPU scheduling, LLM-aware request routing. Up to <strong>30x</strong> more requests (DeepSeek-R1 on Blackwell), <strong>2x+</strong> throughput (Llama 70B on Hopper). Dynamo Planner: SLO-driven automation solving the rate-matching challenge between prefill and decode tiers.</p>
+      </div>
+    </div>
+    <div class="sub-topic" onclick="toggleSubTopic(this)">
+      <div class="sub-topic-header">
+        <span class="sub-topic-name">Commercial Serving Platforms</span>
+        <span class="sub-topic-icon">+</span>
+      </div>
+      <div class="sub-topic-preview">Proprietary stacks built atop open-source frameworks.</div>
+      <div class="sub-topic-detail">
+        <p>Production inference providers build proprietary optimizations on top of open-source foundations:</p>
+        <p><strong>Fireworks &mdash; FireAttention:</strong> Custom CUDA kernels optimized for multi-tenant serving. Key innovation is <strong>LoRA multiplexing</strong> &mdash; serving up to 100 fine-tuned adapters from a single base model deployment with near-zero switching overhead. Combined with speculative decoding and prefix caching for sub-200ms TTFT on popular models. SOC2, HIPAA, and GDPR compliant with 100+ model catalog including function calling, structured outputs, vision, and audio.</p>
+        <p><strong>Crusoe &mdash; MemoryAlloy:</strong> Cluster-wide KV cache using <span class="term" data-term="rdma">RDMA</span> to pool GPU memory across nodes. Treats the entire cluster&rsquo;s HBM as shared storage, enabling <strong>9.9&times; TTFT improvement</strong> and <strong>81% cost reduction</strong> by eliminating redundant prefill. Built on their own data center infrastructure with stranded energy economics.</p>
+        <p><strong>Together AI:</strong> FlashAttention-3 integration, custom kernels for MoE routing, and aggressive quantization (FP8/INT4). Focuses on open-source model hosting with research-grade throughput.</p>
+        <a href="economics.html#managed-vs-rental" class="cross-link">&rarr; How managed platforms price the software premium</a>
       </div>
     </div>
   </div>

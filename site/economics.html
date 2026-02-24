@@ -556,6 +556,16 @@ body, .code-block, .callout-box, .metric, .site-nav, .minimap-phase { transition
                 <div class="sub-topic-detail">
                   <p>GPU purchase: H100 SXM ~$25-30K, B200 ~$30-40K. Purchased GPUs amortize over 3-5 years &mdash; cheaper per hour if utilization is high, but depreciation risk from technology obsolescence. Rented GPUs are <span class="term" data-term="opex">OpEx</span> at ~$2.00-3.00/hr mid-market (down from $7-8/hr peak).</p>
                   <p>GPU failure rate: ~2-5% annually, requiring spare buffer inventory. At 10,000 GPUs, expect 200-500 failures per year.</p>
+                  <table class="data-table" style="margin-top:0.75rem">
+                    <thead><tr><th>GPU</th><th>On-Demand</th><th>Spot</th><th>Provider</th></tr></thead>
+                    <tbody>
+                      <tr><td>H200 SXM</td><td>$4.29/hr</td><td>&mdash;</td><td>Crusoe</td></tr>
+                      <tr><td>H100 SXM</td><td>$3.90/hr</td><td>$1.60/hr</td><td>Crusoe</td></tr>
+                      <tr><td>A100 80 GB</td><td>$1.95/hr</td><td>$1.30/hr</td><td>Crusoe</td></tr>
+                      <tr><td>MI300X</td><td>$3.45/hr</td><td>$0.95/hr</td><td>Crusoe</td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin-top:0.5rem"><strong>Spot pricing</strong> fills idle capacity at 50-70% discounts. Workloads must tolerate preemption (checkpointing required), making spot ideal for batch inference and fault-tolerant training but unsuitable for latency-sensitive serving.</p>
                 </div>
               </div>
               <div class="sub-topic" onclick="toggleSubTopic(this)">
@@ -769,6 +779,16 @@ body, .code-block, .callout-box, .metric, .site-nav, .minimap-phase { transition
                 <div class="sub-topic-detail">
                   <p>Standard for API providers. Input/output split is critical: output tokens cost 2-4x more to serve because decode is sequential. Without the split, adverse selection occurs &mdash; output-heavy workloads subsidized by input-heavy ones.</p>
                   <p>Cached input pricing (~50% discount) incentivizes consistent prefixes, improving server-side prefix cache hit rates. This is pricing that shapes behavior to reduce costs.</p>
+                  <table class="data-table" style="margin-top:0.75rem">
+                    <thead><tr><th>Model Size Tier</th><th>Input $/M</th><th>Output $/M</th></tr></thead>
+                    <tbody>
+                      <tr><td>Under 4B</td><td>$0.10</td><td>$0.10</td></tr>
+                      <tr><td>4B &ndash; 16B</td><td>$0.20</td><td>$0.20</td></tr>
+                      <tr><td>16B &ndash; 80B</td><td>$0.90</td><td>$0.90</td></tr>
+                      <tr><td>MoE 56B &ndash; 176B</td><td>$0.50</td><td>$1.20</td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin-top:0.5rem">Fireworks serverless tiers (open-source models). Cached input at <strong>50% discount</strong>; batch mode adds another <strong>50% discount</strong> for non-real-time workloads. The MoE output premium reflects decode-bound compute despite efficient routing.</p>
                   <a href="index.html#phase-a" class="cross-link">&rarr; Rate limits as pricing levers</a>
                 </div>
               </div>
@@ -781,6 +801,16 @@ body, .code-block, .callout-box, .metric, .site-nav, .minimap-phase { transition
                 <div class="sub-topic-detail">
                   <p>For reasoning models, many teams now separate visible output from reasoning streams (for example <span class="term" data-term="reasoning-content">reasoning_content</span>) and apply policy caps with <span class="term" data-term="reasoning-effort">effort</span>, <span class="term" data-term="thinking-budget">budget</span>, and <span class="term" data-term="reasoning-history">history</span> controls.</p>
                   <p>Fine-tuned offerings add another pricing layer: base model usage + adapter premium. Fireworks-style LoRA deployment economics (including multi-adapter serving and one-click adapter deployment) allow providers to segment by workflow quality, not just raw token volume.</p>
+                  <table class="data-table" style="margin-top:0.75rem">
+                    <thead><tr><th>Model</th><th>Input $/M</th><th>Output $/M</th><th>Ratio</th></tr></thead>
+                    <tbody>
+                      <tr><td>DeepSeek V3 (671B MoE)</td><td>$0.56</td><td>$1.68</td><td>3.0&times;</td></tr>
+                      <tr><td>DeepSeek R1 (reasoning)</td><td>$3.00</td><td>$8.00</td><td>2.7&times;</td></tr>
+                      <tr><td>GLM-5-0520 (vision)</td><td>$1.50</td><td>$3.00</td><td>2.0&times;</td></tr>
+                      <tr><td>Kimi K2.5 (MoE)</td><td>$0.48</td><td>$1.44</td><td>3.0&times;</td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin-top:0.5rem">Output tokens cost <strong>2&ndash;5&times; input</strong> across all models &mdash; the ratio reflects decode&rsquo;s sequential nature. Reasoning models carry the highest absolute rates because extended chain-of-thought generates 5&ndash;20&times; more output tokens per query.</p>
                   <a href="training.html#sft" class="cross-link">&rarr; Fine-tuning methods and deployment implications</a>
                 </div>
               </div>
@@ -898,6 +928,14 @@ body, .code-block, .callout-box, .metric, .site-nav, .minimap-phase { transition
                   <p><strong>Input vs output split:</strong> Output tokens cost 2-4x more to serve. Without the split, adverse selection occurs &mdash; output-heavy workloads are subsidized.</p>
                   <p><strong>Cached input pricing:</strong> ~50% discount incentivizes consistent prefixes, improving prefix cache hit rates. Pricing that shapes behavior.</p>
                   <p><strong>Model-specific pricing:</strong> Based on cost to serve, competitive pricing, demand elasticity, and strategic value. Popular models subsidize long-tail catalog with sparse traffic.</p>
+                  <table class="data-table" style="margin-top:0.75rem">
+                    <thead><tr><th>GPU</th><th>Fireworks On-Demand</th><th>Crusoe On-Demand</th><th>Crusoe Spot</th></tr></thead>
+                    <tbody>
+                      <tr><td>H100 SXM</td><td>$5.49/hr</td><td>$3.90/hr</td><td>$1.60/hr</td></tr>
+                      <tr><td>A100 80 GB</td><td>$3.19/hr</td><td>$1.95/hr</td><td>$1.30/hr</td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin-top:0.5rem">The <strong>managed premium</strong>: Fireworks charges ~40% more than Crusoe on-demand for the same GPU because the rate bundles inference-optimized software (FireAttention, LoRA multiplexing, autoscaling). Crusoe spot at $1.60/hr represents raw infrastructure. The spread ($1.60 &rarr; $5.49) is where the entire inference software stack gets monetized.</p>
                 </div>
               </div>
               <div class="sub-topic" onclick="toggleSubTopic(this)">
@@ -921,7 +959,23 @@ body, .code-block, .callout-box, .metric, .site-nav, .minimap-phase { transition
                 <div class="sub-topic-preview">When managed inference undermines GPU rental</div>
                 <div class="sub-topic-detail">
                   <p>When Crusoe launches Managed Inference alongside GPU rental, they create internal tension. If MemoryAlloy delivers 9.9x better TTFT and 81% cost reduction, why would any inference customer rent raw GPUs?</p>
+                  <p><strong>How MemoryAlloy works:</strong> a cluster-wide KV cache that uses <span class="term" data-term="rdma">RDMA</span> to pool GPU memory across nodes. Instead of each GPU holding its own cache, MemoryAlloy treats the entire cluster&rsquo;s HBM as a shared resource. This enables instant context reuse across requests &mdash; the 9.9&times; TTFT improvement comes from eliminating redundant prefill when cached KV states exist elsewhere in the cluster. Supported models include Llama 3.1/3.3, DeepSeek R1/V3, and Qwen 2.5.</p>
                   <p>The resolution: GPU rental increasingly serves <strong>training</strong> customers and custom workloads. Managed inference captures inference demand at higher margin. Total revenue per GPU potentially goes up &mdash; but the PM must model the revenue migration carefully.</p>
+                </div>
+              </div>
+              <div class="sub-topic" onclick="toggleSubTopic(this)">
+                <div class="sub-topic-header">
+                  <span class="sub-topic-name">Infrastructure Platform Features</span>
+                  <span class="sub-topic-icon">+</span>
+                </div>
+                <div class="sub-topic-preview">VPC, InfiniBand, managed orchestration, and SLA guarantees</div>
+                <div class="sub-topic-detail">
+                  <p>GPU cloud providers differentiate on platform features beyond raw compute. Crusoe&rsquo;s stack illustrates what enterprise buyers expect:</p>
+                  <p><strong>Networking:</strong> InfiniBand for GPU-to-GPU, NVLink within nodes, RDMA for cluster-wide memory access. These determine whether multi-node inference and distributed training are viable.</p>
+                  <p><strong>Orchestration:</strong> Managed Kubernetes (K8s) and Slurm for job scheduling. AutoClusters provision multi-node GPU environments in minutes rather than days of manual configuration.</p>
+                  <p><strong>Isolation:</strong> VPC (Virtual Private Cloud) for network isolation, per-minute billing granularity, and enterprise security boundaries.</p>
+                  <p><strong>SLAs:</strong> 99.98% uptime guarantee, &lt;6 minute support response time. These commitments unlock enterprise procurement cycles that require contractual guarantees.</p>
+                  <p><strong>Hardware roadmap:</strong> GB200, B200, and MI355X availability signals to customers that the provider won&rsquo;t strand them on last-gen hardware &mdash; critical for multi-year capacity planning.</p>
                 </div>
               </div>
             </div>
@@ -1073,6 +1127,23 @@ body, .code-block, .callout-box, .metric, .site-nav, .minimap-phase { transition
                   <div class="metric"><div class="metric-value">$60M</div><div class="metric-label">Annual Savings (100MW)</div></div>
                 </div>
                 <p>Traditional operator at $0.10/kWh: 1 kW continuous for a month = $72 just in electricity. Out of $150/kW/month price, nearly half is power. Crusoe at $0.03/kWh: same 1 kW = $22/month.</p>
+              </div>
+            </div>
+
+            <div class="detail-section">
+              <div class="detail-label">Crusoe Facility Portfolio</div>
+              <div class="detail-text">
+                <table class="data-table">
+                  <thead><tr><th>Location</th><th>Capacity</th><th>Energy Source</th></tr></thead>
+                  <tbody>
+                    <tr><td>Abilene, TX</td><td>1.2 GW</td><td>Grid + renewables</td></tr>
+                    <tr><td>Iceland</td><td>Expanding</td><td>Geothermal (near-zero carbon)</td></tr>
+                    <tr><td>Wyoming</td><td>Operating</td><td>Stranded natural gas</td></tr>
+                    <tr><td>Norway</td><td>Planned</td><td>Hydroelectric</td></tr>
+                    <tr><td>Argentina</td><td>Planned</td><td>Stranded gas (Vaca Muerta)</td></tr>
+                  </tbody>
+                </table>
+                <p style="margin-top:0.5rem">Crusoe&rsquo;s Abilene campus alone at <strong>1.2 GW</strong> would rank among the largest single-site data center deployments globally. The geographic diversification across clean/stranded energy sources hedges against regional power regulation and positions the company for enterprise customers with carbon-reduction mandates. A nuclear energy partnership with Blue Owl Capital adds baseload diversification beyond renewables.</p>
               </div>
             </div>
 
@@ -1413,7 +1484,8 @@ body, .code-block, .callout-box, .metric, .site-nav, .minimap-phase { transition
     'reasoning-content': 'A separate reasoning stream returned by some APIs, distinct from user-visible output tokens.',
     'reasoning-effort': 'API control for how much internal reasoning to use before/during answer generation.',
     'reasoning-history': 'Policy control for prior reasoning carry-forward across turns (for example preserved/compact/clear/none behaviors).',
-    'thinking-budget': 'A token budget cap for reasoning streams to bound latency and cost.'
+    'thinking-budget': 'A token budget cap for reasoning streams to bound latency and cost.',
+    'rdma': 'Remote Direct Memory Access — lets GPUs read/write each other\'s memory directly, bypassing the CPU. Used for cluster-wide KV cache sharing in systems like MemoryAlloy.'
   };
 
   /* ─── TERM-TO-SECTION NAVIGATION MAP ─── */
@@ -1435,7 +1507,8 @@ body, .code-block, .callout-box, .metric, .site-nav, .minimap-phase { transition
     'reasoning-content': { id: 'pricing', label: 'D3 Pricing' },
     'reasoning-effort': { id: 'pricing', label: 'D3 Pricing' },
     'reasoning-history': { id: 'pricing', label: 'D3 Pricing' },
-    'thinking-budget': { id: 'pricing', label: 'D3 Pricing' }
+    'thinking-budget': { id: 'pricing', label: 'D3 Pricing' },
+    'rdma': { id: 'managed-vs-rental', label: 'E1 Managed vs Rental' }
   };
 
   /* ─── THEME TOGGLE ─── */
@@ -1657,7 +1730,7 @@ body, .code-block, .callout-box, .metric, .site-nav, .minimap-phase { transition
 
     // Margin comparison
     html += '<div style="display:flex;gap:1.5rem;margin-top:1rem">';
-    html += '<div style="font-size:0.7rem;color:var(--text-dim)">Crusoe margin: <strong style="color:var(--economics)">~40%</strong> at $2.20/hr</div>';
+    html += '<div style="font-size:0.7rem;color:var(--text-dim)">Crusoe margin: <strong style="color:var(--economics)">~40%</strong> at $2.20/hr (current on-demand: $3.90/hr H100, $4.29/hr H200)</div>';
     html += '<div style="font-size:0.7rem;color:var(--text-dim)">CoreWeave margin: <strong style="color:var(--accent)">~34%</strong> at $2.20/hr</div>';
     html += '</div>';
 
