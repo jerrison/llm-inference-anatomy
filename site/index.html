@@ -2332,7 +2332,9 @@ body, .code-block, .journey-diagram, .callout-box, .metric, .journey-detail-pane
             <div class="detail-section">
               <div class="detail-label">The autoregressive loop</div>
               <div class="detail-text">
-                For each new token: the single embedding is fed through all layers. Only the <strong>Query for the new token</strong> is computed fresh. The Key and Value are computed and <strong>appended to the KV cache</strong>. Attention is computed between the new Q and all cached K/V pairs. Output <span class="term" data-term="logits">logits</span> represent probability over the vocabulary.
+                <p>The input to each decode step is the token sampled in the <em>previous</em> step. For each layer: <strong>(1)</strong> Q, K, and V vectors are computed by multiplying against that layer's weight matrices &mdash; this weight loading from HBM dominates each layer's time. <strong>(2)</strong> K and V are immediately appended to that layer's KV cache. <strong>(3)</strong> Q attends against all K's in the cache (including the K just added), producing a weighted sum of all V's. <strong>(4)</strong> The result passes through the feedforward network. Repeat for every subsequent layer.</p>
+                <p>After the <strong>final layer</strong>, the model outputs <span class="term" data-term="logits">logits</span> &mdash; a probability score for every token in the vocabulary (e.g., 128K scores for Llama 3). Sampling selects one token, which is streamed to the user and becomes the input for the next decode step.</p>
+                <p style="color:var(--text-dim);font-size:0.85rem"><strong>Key subtlety</strong>: there is always a one-step offset &mdash; a token's KV vectors are computed and cached during the <em>next</em> decode step's forward pass, not during the step that produced it.</p>
               </div>
             </div>
             <div class="detail-section">
@@ -4423,46 +4425,48 @@ document.addEventListener('click', function(e) {
 
   // ═══ 09 DECODE ═══
   visualInits.decode = function(c) {
+    // Correct per-token cycle: forward pass (QKV→Cache→Attend→FFN per layer) → Logits → Sample
     var steps = [
-      { label: 'Load Weights', angle: 0, color: 'var(--compute)', thick: true },
-      { label: 'Compute', angle: 90, color: 'var(--accent)', thick: false },
-      { label: 'Sample', angle: 180, color: 'var(--logic)', thick: false },
-      { label: 'Append KV', angle: 270, color: 'var(--memory)', thick: false }
+      { label: 'Compute QKV', angle: 0, color: 'var(--compute)', thick: true, desc: 'Load layer weights, compute Q/K/V' },
+      { label: 'Cache + Attend', angle: 90, color: 'var(--memory)', thick: false, desc: 'Append K/V to cache, attend all K/V' },
+      { label: 'FFN → Logits', angle: 180, color: 'var(--accent)', thick: false, desc: 'Feedforward, then logits after final layer' },
+      { label: 'Sample', angle: 270, color: 'var(--logic)', thick: false, desc: 'Select token, stream to user' }
     ];
     var currentStep = 0;
     var tokenCount = 0;
     var playing = false;
     var timer = null;
     var padTop = 44;
+    var nodeW = 100;
     var cx = c.offsetWidth / 2, cy = (c.offsetHeight + padTop) / 2;
-    var r = Math.min(cx, cy - padTop) * 0.48;
+    var r = Math.min(cx - nodeW / 2 - 10, cy - padTop - 10) * 0.52;
 
     // Draw step nodes
     steps.forEach(function(s, i) {
       var rad = (s.angle - 90) * Math.PI / 180;
       var x = cx + r * Math.cos(rad);
       var y = cy + r * Math.sin(rad);
-      // Clamp to stay inside container
-      x = Math.max(44, Math.min(c.offsetWidth - 44, x));
+      x = Math.max(nodeW / 2 + 4, Math.min(c.offsetWidth - nodeW / 2 - 4, x));
       y = Math.max(34, Math.min(c.offsetHeight - 34, y));
       var node = el('div', 'sv-node');
       node.textContent = s.label;
-      node.style.left = (x - 40) + 'px';
+      node.style.left = (x - nodeW / 2) + 'px';
       node.style.top = (y - 12) + 'px';
-      node.style.width = '80px';
+      node.style.width = nodeW + 'px';
       node.style.textAlign = 'center';
       if (s.thick) {
         node.style.borderWidth = '2px';
         node.style.borderColor = s.color;
       }
       s.el = node;
+      s.cx = x; s.cy = y;
       c.appendChild(node);
     });
 
-    // Weight loading dominance note
+    // Note
     var note = el('div', '');
     note.style.cssText = 'position:absolute;left:5%;top:5%;font-size:0.5rem;color:var(--text-muted);background:var(--bg-card);border:1px solid var(--border);border-radius:4px;padding:3px 8px';
-    note.textContent = 'Weight loading dominates (~80% of time)';
+    note.textContent = 'Steps 1-3 repeat per layer; weight loading ~80% of time';
     c.appendChild(note);
 
     // Legend
@@ -4487,12 +4491,9 @@ document.addEventListener('click', function(e) {
     c.appendChild(stat);
 
     function positionPacket(i) {
-      var rad = (steps[i].angle - 90) * Math.PI / 180;
-      var x = cx + r * Math.cos(rad);
-      var y = cy + r * Math.sin(rad);
       packet.style.transition = 'left 0.3s ease, top 0.3s ease';
-      packet.style.left = (x - 4) + 'px';
-      packet.style.top = (y - 4) + 'px';
+      packet.style.left = (steps[i].cx - 4) + 'px';
+      packet.style.top = (steps[i].cy - 4) + 'px';
     }
 
     function highlightStep(i) {
