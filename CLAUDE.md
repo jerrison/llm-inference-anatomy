@@ -351,7 +351,7 @@ Always verify the target `id` exists in the target file before creating the link
 
 ### Three interaction layers (nested, with event isolation)
 1. **Pipeline step toggle** — clicking `.step-card` toggles `.active` on `.pipeline-step` (multiple sections can be open simultaneously — no accordion)
-2. **Sub-topic toggle** — clicking `.sub-topic` toggles `.expanded` (multiple sub-topics can be open simultaneously — no accordion)
+2. **Sub-topic toggle** — clicking `.sub-topic-header` toggles `.expanded` on parent `.sub-topic` (via `el.closest('.sub-topic')`). Only the header is clickable, not the card body. Multiple sub-topics can be open simultaneously — no accordion.
 3. **Term tooltip** — clicking `.term` shows a definition tooltip
 
 ### Critical: Event Propagation

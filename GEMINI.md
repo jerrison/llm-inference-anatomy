@@ -377,7 +377,7 @@ The site has three levels of clickable elements, nested inside each other:
 
 ```
 .pipeline-step  →  click .step-card to toggle .active (multiple can be open, no accordion)
-  └─ .sub-topic  →  onclick="toggleSubTopic(this)" (multiple can be open, no accordion)
+  └─ .sub-topic-header  →  onclick="toggleSubTopic(this)" toggles parent .sub-topic (multiple can be open, no accordion)
        └─ .term  →  direct addEventListener with stopPropagation (tooltip)
 ```
 
