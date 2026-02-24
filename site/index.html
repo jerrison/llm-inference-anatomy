@@ -1485,7 +1485,7 @@ body, .code-block, .journey-diagram, .callout-box, .metric, .journey-detail-pane
   </div>
 </nav>
 
-<nav class="minimap" id="minimap" aria-label="Pipeline navigation">
+<nav class="minimap visible" id="minimap" aria-label="Pipeline navigation">
   <div class="minimap-phase">
     <div class="minimap-phase-label">Request Prep</div>
     <a class="minimap-item" href="#" data-target="routing"><span class="minimap-dot"></span><span class="minimap-label">Routing</span></a>
@@ -1509,6 +1509,12 @@ body, .code-block, .journey-diagram, .callout-box, .metric, .journey-detail-pane
   <div class="minimap-phase">
     <div class="minimap-phase-label">Observability</div>
     <a class="minimap-item" href="#" data-target="inference-metrics"><span class="minimap-dot"></span><span class="minimap-label">Metrics</span></a>
+  </div>
+  <div class="minimap-phase">
+    <div class="minimap-phase-label">Deep Dives</div>
+    <a class="minimap-item" href="#" data-target="cross-cutting"><span class="minimap-dot"></span><span class="minimap-label">Optimizations</span></a>
+    <a class="minimap-item" href="#" data-target="frameworks"><span class="minimap-dot"></span><span class="minimap-label">Frameworks</span></a>
+    <a class="minimap-item" href="#" data-target="journey"><span class="minimap-dot"></span><span class="minimap-label">Journey</span></a>
   </div>
 </nav>
 
@@ -3428,25 +3434,21 @@ document.addEventListener('click', function(e) {
     itemMap[item.getAttribute('data-target')] = item;
   });
 
-  // 1. Section observer — show/hide minimap (visible from hero through content)
-  var visibleSections = new Set();
-  var sectionObs = new IntersectionObserver(function(entries) {
-    entries.forEach(function(entry) {
-      if (entry.isIntersecting) visibleSections.add(entry.target);
-      else visibleSections.delete(entry.target);
-    });
-    minimap.classList.toggle('visible', visibleSections.size > 0);
-  }, { threshold: 0 });
-  var hero = document.querySelector('.hero');
-  if (hero) sectionObs.observe(hero);
-  sectionObs.observe(pipeline);
-
-  // 2. Step observer — highlight current step
+  // Step observer — highlight current step/section in minimap
   var activeSteps = new Set();
   var scrollLock = null; // suppress observer during click-scroll
+
+  // Collect all observable targets: pipeline steps + named sections
+  var sectionIds = ['inference-metrics', 'cross-cutting', 'frameworks', 'journey'];
+  var sectionEls = {};
+  sectionIds.forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) sectionEls[id] = el;
+  });
+
   var stepObs = new IntersectionObserver(function(entries) {
     entries.forEach(function(entry) {
-      var id = entry.target.getAttribute('data-step');
+      var id = entry.target.getAttribute('data-step') || entry.target.id;
       if (entry.isIntersecting) {
         activeSteps.add(id);
       } else {
@@ -3454,11 +3456,12 @@ document.addEventListener('click', function(e) {
       }
     });
     if (scrollLock) return; // click-scroll in progress, don't override
-    // Highlight the step closest to viewport center
+    // Highlight the item closest to viewport center
     items.forEach(function(item) { item.classList.remove('active'); });
     var vpCenter = window.innerHeight / 2;
     var bestId = null;
     var bestDist = Infinity;
+    // Check pipeline steps
     steps.forEach(function(step) {
       var id = step.getAttribute('data-step');
       if (!activeSteps.has(id)) return;
@@ -3467,12 +3470,21 @@ document.addEventListener('click', function(e) {
       var dist = Math.abs(stepCenter - vpCenter);
       if (dist < bestDist) { bestDist = dist; bestId = id; }
     });
+    // Check named sections
+    sectionIds.forEach(function(id) {
+      if (!activeSteps.has(id) || !sectionEls[id]) return;
+      var rect = sectionEls[id].getBoundingClientRect();
+      var center = rect.top + rect.height / 2;
+      var dist = Math.abs(center - vpCenter);
+      if (dist < bestDist) { bestDist = dist; bestId = id; }
+    });
     if (bestId && itemMap[bestId]) {
       itemMap[bestId].classList.add('active');
     }
   }, { rootMargin: '-30% 0px -30% 0px', threshold: 0 });
 
   steps.forEach(function(step) { stepObs.observe(step); });
+  sectionIds.forEach(function(id) { if (sectionEls[id]) stepObs.observe(sectionEls[id]); });
 
   // 3. Click handler — smooth scroll + toggle expand/collapse + immediate highlight
   items.forEach(function(item) {
