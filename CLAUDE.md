@@ -485,6 +485,9 @@ The prefill visual's stat label ("Memory-bound · Sequential") overlapped the le
 ### Radial Layout Overflow — Account for Node Size and Container Padding
 The decode loop visual positions 4 nodes in a circle using trigonometry. The original code shifted the center upward (`cy = height/2 - 10`), pushing the top node ("Load Weights") into the container border. Fix: add a `padTop` buffer, compute `cy = (height + padTop) / 2`, reduce radius with `(cy - padTop) * 0.52`, and clamp all node positions to stay >=20px from container edges. When placing elements radially, always account for node dimensions (width/height) plus any border/padding when computing the radius — the node center is not its visual edge.
 
+### Hero and Minimap Visibility
+Hero uses `min-height: 50vh` (not 100vh) so content is reachable faster. Minimap is visible from page load — training.html and training-economics.html add `.visible` immediately, index.html observes both hero and pipeline, economics.html always adds `.visible` in the scroll handler. Minimap phase labels use descriptive names ("Request Prep", "GPU Compute", etc.) not letter codes (A, B, C).
+
 ### External Data Sources Integrated
 The site now includes concrete pricing and infrastructure data from Fireworks AI and Crusoe Cloud public docs. When updating this data:
 - **Fireworks**: Serverless tiers by model size, model-specific pricing (DeepSeek V3/R1, GLM-5, Kimi K2.5), on-demand GPU rates ($5.49/hr H100, $3.19/hr A100), fine-tuning pricing ($0.50-$10/M tokens), DPO at 2× SFT, SOC2/HIPAA/GDPR compliance, FireAttention/LoRA multiplexing

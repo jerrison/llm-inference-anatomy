@@ -517,4 +517,6 @@ When modifying interactions on any page:
 
 17. **Radial layout overflow**: The decode loop visual positions nodes in a circle using trigonometry. Always account for node dimensions (width/height) plus border/padding when computing the radius — the node center is not its visual edge. Add a top padding buffer, shift the circle center down, and clamp node positions to stay >=20px from container edges.
 
+18. **Hero and minimap visibility**: Hero uses `min-height: 50vh` (not 100vh) so content is reachable faster. Minimap is visible from page load — not hidden until scroll past hero. Minimap phase labels use descriptive section names ("Request Prep", "GPU Compute", "Unit Economics", etc.) not letter codes (A, B, C).
+
 18. **External data sources**: The site includes concrete pricing and infrastructure data from Fireworks AI and Crusoe Cloud public docs. Key data points: Fireworks serverless tiers by model size, model-specific pricing (DeepSeek V3/R1, GLM-5, Kimi K2.5), on-demand GPU rates, fine-tuning pricing ($0.50-$10/M tokens), SOC2/HIPAA/GDPR compliance, FireAttention/LoRA multiplexing. Crusoe: on-demand/spot GPU rates, MemoryAlloy (cluster KV cache via RDMA), facility portfolio (Abilene TX 1.2GW, Iceland, Wyoming, Norway, Argentina), $3.4B Series E + $9.6B infra debt. The `rdma` term is defined in both index.html and economics.html termDefs.
