@@ -445,14 +445,13 @@ body {
   border: 1px solid var(--border);
   border-radius: 8px;
   padding: 1rem;
-  cursor: pointer;
   transition: border-color 0.18s ease, background-color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
 }
 
 .sub-topic:hover { border-color: var(--border-active); background: rgba(255,255,255,0.04); }
 .sub-topic.expanded { grid-column: 1 / -1; border-color: var(--accent-dim); }
 
-.sub-topic-header { display: flex; align-items: center; justify-content: space-between; }
+.sub-topic-header { display: flex; align-items: center; justify-content: space-between; cursor: pointer; }
 .sub-topic-name { font-family: var(--font-display); font-size: 1.1rem; }
 .sub-topic-icon { color: var(--text-muted); font-family: var(--font-mono); font-size: 0.9rem; transition: transform 0.3s ease; }
 .sub-topic.expanded .sub-topic-icon { transform: rotate(45deg); color: var(--accent); }
@@ -1163,8 +1162,8 @@ body, .callout-box, .metric, .site-nav, .minimap-phase { transition: background-
             <div class="detail-section">
               <div class="detail-label">Attention Variants</div>
               <div class="sub-topics">
-                <div class="sub-topic" onclick="toggleSubTopic(this)">
-                  <div class="sub-topic-header">
+                <div class="sub-topic">
+                  <div class="sub-topic-header" onclick="toggleSubTopic(this)">
                     <span class="sub-topic-name">MHA &rarr; MQA &rarr; GQA</span>
                     <span class="sub-topic-icon">+</span>
                   </div>
@@ -1175,8 +1174,8 @@ body, .callout-box, .metric, .site-nav, .minimap-phase { transition: background-
                     <p><strong><span class="term" data-term="gqa">Grouped-Query Attention (GQA)</span></strong>: compromise &mdash; heads are grouped, each group shares K/V. Llama 3 uses 8 KV heads for 64 query heads (8:1 ratio). Near-MHA quality with near-MQA efficiency.</p>
                   </div>
                 </div>
-                <div class="sub-topic" onclick="toggleSubTopic(this)">
-                  <div class="sub-topic-header">
+                <div class="sub-topic">
+                  <div class="sub-topic-header" onclick="toggleSubTopic(this)">
                     <span class="sub-topic-name">Multi-head Latent Attention</span>
                     <span class="sub-topic-icon">+</span>
                   </div>
@@ -1322,8 +1321,8 @@ body, .callout-box, .metric, .site-nav, .minimap-phase { transition: background-
             <div class="detail-section">
               <div class="detail-label">Parallelism Strategies</div>
               <div class="sub-topics">
-                <div class="sub-topic" onclick="toggleSubTopic(this)">
-                  <div class="sub-topic-header">
+                <div class="sub-topic">
+                  <div class="sub-topic-header" onclick="toggleSubTopic(this)">
                     <span class="sub-topic-name">Data Parallelism &amp; ZeRO</span>
                     <span class="sub-topic-icon">+</span>
                   </div>
@@ -1334,8 +1333,8 @@ body, .callout-box, .metric, .site-nav, .minimap-phase { transition: background-
                     <p><span class="term" data-term="fsdp">FSDP2</span> (Fully Sharded Data Parallelism): PyTorch-native ZeRO Stage 3. The default for most training runs that don&rsquo;t need tensor parallelism.</p>
                   </div>
                 </div>
-                <div class="sub-topic" onclick="toggleSubTopic(this)">
-                  <div class="sub-topic-header">
+                <div class="sub-topic">
+                  <div class="sub-topic-header" onclick="toggleSubTopic(this)">
                     <span class="sub-topic-name">Tensor Parallelism</span>
                     <span class="sub-topic-icon">+</span>
                   </div>
@@ -1345,8 +1344,8 @@ body, .callout-box, .metric, .site-nav, .minimap-phase { transition: background-
                     <p>Communication cost is proportional to hidden dimension and number of layers. Only practical within a node &mdash; inter-node bandwidth (InfiniBand at 400 Gb/s) is too slow for per-layer synchronization.</p>
                   </div>
                 </div>
-                <div class="sub-topic" onclick="toggleSubTopic(this)">
-                  <div class="sub-topic-header">
+                <div class="sub-topic">
+                  <div class="sub-topic-header" onclick="toggleSubTopic(this)">
                     <span class="sub-topic-name">Pipeline Parallelism</span>
                     <span class="sub-topic-icon">+</span>
                   </div>
@@ -1356,8 +1355,8 @@ body, .callout-box, .metric, .site-nav, .minimap-phase { transition: background-
                     <p>Llama 3 used PP=16, meaning 16 pipeline stages across 16 nodes. Each stage holds ~5 layers of the 126-layer model.</p>
                   </div>
                 </div>
-                <div class="sub-topic" onclick="toggleSubTopic(this)">
-                  <div class="sub-topic-header">
+                <div class="sub-topic">
+                  <div class="sub-topic-header" onclick="toggleSubTopic(this)">
                     <span class="sub-topic-name">4D Parallelism</span>
                     <span class="sub-topic-icon">+</span>
                   </div>
@@ -1554,8 +1553,8 @@ body, .callout-box, .metric, .site-nav, .minimap-phase { transition: background-
             <div class="detail-section">
               <div class="detail-label">Alignment Methods</div>
               <div class="sub-topics">
-                <div class="sub-topic" onclick="toggleSubTopic(this)">
-                  <div class="sub-topic-header">
+                <div class="sub-topic">
+                  <div class="sub-topic-header" onclick="toggleSubTopic(this)">
                     <span class="sub-topic-name">RLHF Pipeline</span>
                     <span class="sub-topic-icon">+</span>
                   </div>
@@ -1565,8 +1564,8 @@ body, .callout-box, .metric, .site-nav, .minimap-phase { transition: background-
                     <p>Requires <strong>4 models in memory simultaneously</strong> (policy, reference, reward, value). Complex, expensive, and sensitive to hyperparameters. Still used by OpenAI and Anthropic but increasingly supplemented by simpler methods.</p>
                   </div>
                 </div>
-                <div class="sub-topic" onclick="toggleSubTopic(this)">
-                  <div class="sub-topic-header">
+                <div class="sub-topic">
+                  <div class="sub-topic-header" onclick="toggleSubTopic(this)">
                     <span class="sub-topic-name">DPO</span>
                     <span class="sub-topic-icon">+</span>
                   </div>
@@ -1576,8 +1575,8 @@ body, .callout-box, .metric, .site-nav, .minimap-phase { transition: background-
                     <p>Limitation: still requires pairwise comparisons (chosen/rejected responses), which are expensive to collect.</p>
                   </div>
                 </div>
-                <div class="sub-topic" onclick="toggleSubTopic(this)">
-                  <div class="sub-topic-header">
+                <div class="sub-topic">
+                  <div class="sub-topic-header" onclick="toggleSubTopic(this)">
                     <span class="sub-topic-name">DPO Data Contracts (Fireworks)</span>
                     <span class="sub-topic-icon">+</span>
                   </div>
@@ -1588,8 +1587,8 @@ body, .callout-box, .metric, .site-nav, .minimap-phase { transition: background-
                     <p><strong>Cost implication:</strong> DPO runs at <strong>2&times; SFT pricing</strong> on managed platforms because each training step processes both the preferred and non-preferred response, effectively doubling the forward/backward pass compute per example. For a 7B model, expect $1.00/M tokens vs $0.50/M for standard SFT.</p>
                   </div>
                 </div>
-                <div class="sub-topic" onclick="toggleSubTopic(this)">
-                  <div class="sub-topic-header">
+                <div class="sub-topic">
+                  <div class="sub-topic-header" onclick="toggleSubTopic(this)">
                     <span class="sub-topic-name">GRPO</span>
                     <span class="sub-topic-icon">+</span>
                   </div>
@@ -1599,8 +1598,8 @@ body, .callout-box, .metric, .site-nav, .minimap-phase { transition: background-
                     <p>Result on AIME 2024: <strong>15.6% &rarr; 71.0%</strong>. Dramatically simpler and more scalable than RLHF for domains with verifiable outcomes.</p>
                   </div>
                 </div>
-                <div class="sub-topic" onclick="toggleSubTopic(this)">
-                  <div class="sub-topic-header">
+                <div class="sub-topic">
+                  <div class="sub-topic-header" onclick="toggleSubTopic(this)">
                     <span class="sub-topic-name">Constitutional AI &amp; KTO</span>
                     <span class="sub-topic-icon">+</span>
                   </div>
@@ -1658,8 +1657,8 @@ body, .callout-box, .metric, .site-nav, .minimap-phase { transition: background-
             <div class="detail-section">
               <div class="detail-label">RFT Methods</div>
               <div class="sub-topics">
-                <div class="sub-topic" onclick="toggleSubTopic(this)">
-                  <div class="sub-topic-header">
+                <div class="sub-topic">
+                  <div class="sub-topic-header" onclick="toggleSubTopic(this)">
                     <span class="sub-topic-name">Expert-Guided RFT</span>
                     <span class="sub-topic-icon">+</span>
                   </div>
@@ -1669,8 +1668,8 @@ body, .callout-box, .metric, .site-nav, .minimap-phase { transition: background-
                     <p>OpenAI&rsquo;s RFT product uses this approach: customers provide 50-500 expert-graded examples with multi-dimensional scoring criteria. The model trains on thousands of self-generated attempts, evaluated against the rubric.</p>
                   </div>
                 </div>
-                <div class="sub-topic" onclick="toggleSubTopic(this)">
-                  <div class="sub-topic-header">
+                <div class="sub-topic">
+                  <div class="sub-topic-header" onclick="toggleSubTopic(this)">
                     <span class="sub-topic-name">Verifiable Reward RFT</span>
                     <span class="sub-topic-icon">+</span>
                   </div>
@@ -1680,8 +1679,8 @@ body, .callout-box, .metric, .site-nav, .minimap-phase { transition: background-
                     <p>Scales massively because no human annotation is needed. The model can train on millions of self-generated attempts. This is how OpenAI o1/o3 and DeepSeek R1 achieved breakthroughs on math and coding benchmarks.</p>
                   </div>
                 </div>
-                <div class="sub-topic" onclick="toggleSubTopic(this)">
-                  <div class="sub-topic-header">
+                <div class="sub-topic">
+                  <div class="sub-topic-header" onclick="toggleSubTopic(this)">
                     <span class="sub-topic-name">Outcome vs Process Reward</span>
                     <span class="sub-topic-icon">+</span>
                   </div>
@@ -1692,8 +1691,8 @@ body, .callout-box, .metric, .site-nav, .minimap-phase { transition: background-
                     <p>The tradeoff: PRMs require step-level annotations, which are much more expensive to collect than outcome labels.</p>
                   </div>
                 </div>
-                <div class="sub-topic" onclick="toggleSubTopic(this)">
-                  <div class="sub-topic-header">
+                <div class="sub-topic">
+                  <div class="sub-topic-header" onclick="toggleSubTopic(this)">
                     <span class="sub-topic-name">RFT as a Product</span>
                     <span class="sub-topic-icon">+</span>
                   </div>
@@ -1747,8 +1746,8 @@ body, .callout-box, .metric, .site-nav, .minimap-phase { transition: background-
             <div class="detail-section">
               <div class="detail-label">Benchmark Suites</div>
               <div class="sub-topics">
-                <div class="sub-topic" onclick="toggleSubTopic(this)">
-                  <div class="sub-topic-header">
+                <div class="sub-topic">
+                  <div class="sub-topic-header" onclick="toggleSubTopic(this)">
                     <span class="sub-topic-name">Knowledge &amp; Reasoning</span>
                     <span class="sub-topic-icon">+</span>
                   </div>
@@ -1757,8 +1756,8 @@ body, .callout-box, .metric, .site-nav, .minimap-phase { transition: background-
                     <p><span class="term" data-term="mmlu">MMLU</span> (57 subjects, multiple choice): essentially saturated at &gt;90% for frontier models. <strong>MMLU-Pro</strong>: 10-option multiple choice with harder questions, 16-33% more difficult. <strong>HellaSwag</strong>: commonsense reasoning about physical situations.</p>
                   </div>
                 </div>
-                <div class="sub-topic" onclick="toggleSubTopic(this)">
-                  <div class="sub-topic-header">
+                <div class="sub-topic">
+                  <div class="sub-topic-header" onclick="toggleSubTopic(this)">
                     <span class="sub-topic-name">Code &amp; Math</span>
                     <span class="sub-topic-icon">+</span>
                   </div>
@@ -1840,7 +1839,7 @@ document.querySelectorAll('.pipeline-step').forEach(function(step) {
 
 /* ─── SUB-TOPIC TOGGLE ─── */
 window.toggleSubTopic = function(el) {
-  el.classList.toggle('expanded');
+  el.closest('.sub-topic').classList.toggle('expanded');
 };
 
 /* ─── TERM TOOLTIPS ─── */

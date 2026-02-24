@@ -117,10 +117,10 @@ body { background: var(--bg); color: var(--text); font-family: var(--font-body);
 
 /* ─── SUB-TOPICS ─── */
 .sub-topics { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 0.75rem; margin-top: 0.75rem; }
-.sub-topic { background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 8px; padding: 1rem; cursor: pointer; transition: border-color 0.18s ease, background-color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease; }
+.sub-topic { background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 8px; padding: 1rem; transition: border-color 0.18s ease, background-color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease; }
 .sub-topic:hover { border-color: var(--border-active); background: rgba(255,255,255,0.04); }
 .sub-topic.expanded { grid-column: 1 / -1; border-color: var(--accent-dim); }
-.sub-topic-header { display: flex; align-items: center; justify-content: space-between; }
+.sub-topic-header { display: flex; align-items: center; justify-content: space-between; cursor: pointer; }
 .sub-topic-name { font-family: var(--font-display); font-size: 1.1rem; }
 .sub-topic-icon { color: var(--text-muted); font-family: var(--font-mono); font-size: 0.9rem; transition: transform 0.3s ease; }
 .sub-topic.expanded .sub-topic-icon { transform: rotate(45deg); color: var(--accent); }
@@ -956,7 +956,7 @@ document.querySelectorAll('.pipeline-step').forEach(function(step) {
 
 /* ─── SUB-TOPIC TOGGLE ─── */
 window.toggleSubTopic = function(el) {
-  el.classList.toggle('expanded');
+  el.closest('.sub-topic').classList.toggle('expanded');
 };
 
 /* ─── TERM TOOLTIPS ─── */

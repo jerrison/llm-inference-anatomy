@@ -186,10 +186,10 @@ body {
 
 /* ─── SUB-TOPICS ─── */
 .sub-topics { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 0.75rem; margin-top: 0.75rem; }
-.sub-topic { background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 8px; padding: 1rem; cursor: pointer; transition: border-color 0.18s ease, background-color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease; }
+.sub-topic { background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 8px; padding: 1rem; transition: border-color 0.18s ease, background-color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease; }
 .sub-topic:hover { border-color: var(--border-active); background: rgba(255,255,255,0.04); }
 .sub-topic.expanded { grid-column: 1 / -1; border-color: var(--accent-dim); }
-.sub-topic-header { display: flex; align-items: center; justify-content: space-between; }
+.sub-topic-header { display: flex; align-items: center; justify-content: space-between; cursor: pointer; }
 .sub-topic-name { font-family: var(--font-display); font-size: 1.1rem; }
 .sub-topic-icon { color: var(--text-muted); font-family: var(--font-mono); font-size: 0.9rem; transition: transform 0.3s ease; }
 .sub-topic.expanded .sub-topic-icon { transform: rotate(45deg); color: var(--accent); }
@@ -561,8 +561,8 @@ body, .code-block, .callout-box, .metric, .site-nav, .minimap-phase { transition
             </div>
 
             <div class="sub-topics">
-              <div class="sub-topic" onclick="toggleSubTopic(this)">
-                <div class="sub-topic-header">
+              <div class="sub-topic">
+                <div class="sub-topic-header" onclick="toggleSubTopic(this)">
                   <span class="sub-topic-name">Hardware / Compute</span>
                   <span class="sub-topic-icon">+</span>
                 </div>
@@ -582,8 +582,8 @@ body, .code-block, .callout-box, .metric, .site-nav, .minimap-phase { transition
                   <p style="margin-top:0.5rem"><strong>Spot pricing</strong> fills idle capacity at 50-70% discounts. Workloads must tolerate preemption (checkpointing required), making spot ideal for batch inference and fault-tolerant training but unsuitable for latency-sensitive serving.</p>
                 </div>
               </div>
-              <div class="sub-topic" onclick="toggleSubTopic(this)">
-                <div class="sub-topic-header">
+              <div class="sub-topic">
+                <div class="sub-topic-header" onclick="toggleSubTopic(this)">
                   <span class="sub-topic-name">Power &amp; Cooling</span>
                   <span class="sub-topic-icon">+</span>
                 </div>
@@ -593,8 +593,8 @@ body, .code-block, .callout-box, .metric, .site-nav, .minimap-phase { transition
                   <p><span class="term" data-term="pue">PUE</span> (Power Usage Effectiveness): 1.1 means 10% cooling overhead; 1.4 means 40%. Liquid cooling pushes closer to 1.1, air cooling sits at 1.3-1.5. Every 0.1 improvement in PUE across a 100MW facility saves ~$600K/year.</p>
                 </div>
               </div>
-              <div class="sub-topic" onclick="toggleSubTopic(this)">
-                <div class="sub-topic-header">
+              <div class="sub-topic">
+                <div class="sub-topic-header" onclick="toggleSubTopic(this)">
                   <span class="sub-topic-name">Networking &amp; Storage</span>
                   <span class="sub-topic-icon">+</span>
                 </div>
@@ -606,8 +606,8 @@ body, .code-block, .callout-box, .metric, .site-nav, .minimap-phase { transition
                   <a href="training-economics.html#hardware-costs" class="cross-link">&rarr; Training hardware costs comparison</a>
                 </div>
               </div>
-              <div class="sub-topic" onclick="toggleSubTopic(this)">
-                <div class="sub-topic-header">
+              <div class="sub-topic">
+                <div class="sub-topic-header" onclick="toggleSubTopic(this)">
                   <span class="sub-topic-name">Operations</span>
                   <span class="sub-topic-icon">+</span>
                 </div>
@@ -666,8 +666,8 @@ body, .code-block, .callout-box, .metric, .site-nav, .minimap-phase { transition
             </div>
 
             <div class="sub-topics">
-              <div class="sub-topic" onclick="toggleSubTopic(this)">
-                <div class="sub-topic-header">
+              <div class="sub-topic">
+                <div class="sub-topic-header" onclick="toggleSubTopic(this)">
                   <span class="sub-topic-name">Model Size</span>
                   <span class="sub-topic-icon">+</span>
                 </div>
@@ -686,8 +686,8 @@ body, .code-block, .callout-box, .metric, .site-nav, .minimap-phase { transition
                   </table>
                 </div>
               </div>
-              <div class="sub-topic" onclick="toggleSubTopic(this)">
-                <div class="sub-topic-header">
+              <div class="sub-topic">
+                <div class="sub-topic-header" onclick="toggleSubTopic(this)">
                   <span class="sub-topic-name">Optimization Level</span>
                   <span class="sub-topic-icon">+</span>
                 </div>
@@ -698,8 +698,8 @@ body, .code-block, .callout-box, .metric, .site-nav, .minimap-phase { transition
                   <a href="index.html#cross-cutting" class="cross-link">&rarr; Performance Optimization Stack details</a>
                 </div>
               </div>
-              <div class="sub-topic" onclick="toggleSubTopic(this)">
-                <div class="sub-topic-header">
+              <div class="sub-topic">
+                <div class="sub-topic-header" onclick="toggleSubTopic(this)">
                   <span class="sub-topic-name">Batching &amp; Utilization</span>
                   <span class="sub-topic-icon">+</span>
                 </div>
@@ -710,8 +710,8 @@ body, .code-block, .callout-box, .metric, .site-nav, .minimap-phase { transition
                   <a href="index.html#phase-b" class="cross-link">&rarr; How continuous batching works</a>
                 </div>
               </div>
-              <div class="sub-topic" onclick="toggleSubTopic(this)">
-                <div class="sub-topic-header">
+              <div class="sub-topic">
+                <div class="sub-topic-header" onclick="toggleSubTopic(this)">
                   <span class="sub-topic-name">Reasoning-Mode Throughput</span>
                   <span class="sub-topic-icon">+</span>
                 </div>
@@ -722,8 +722,8 @@ body, .code-block, .callout-box, .metric, .site-nav, .minimap-phase { transition
                   <a href="index.html#step-decode" class="cross-link">&rarr; Decode behavior for reasoning models</a>
                 </div>
               </div>
-              <div class="sub-topic" onclick="toggleSubTopic(this)">
-                <div class="sub-topic-header">
+              <div class="sub-topic">
+                <div class="sub-topic-header" onclick="toggleSubTopic(this)">
                   <span class="sub-topic-name">Hardware Generation</span>
                   <span class="sub-topic-icon">+</span>
                 </div>
@@ -784,8 +784,8 @@ body, .code-block, .callout-box, .metric, .site-nav, .minimap-phase { transition
             </div>
 
             <div class="sub-topics">
-              <div class="sub-topic" onclick="toggleSubTopic(this)">
-                <div class="sub-topic-header">
+              <div class="sub-topic">
+                <div class="sub-topic-header" onclick="toggleSubTopic(this)">
                   <span class="sub-topic-name">Per-Token (Serverless)</span>
                   <span class="sub-topic-icon">+</span>
                 </div>
@@ -806,8 +806,8 @@ body, .code-block, .callout-box, .metric, .site-nav, .minimap-phase { transition
                   <a href="index.html#phase-a" class="cross-link">&rarr; Rate limits as pricing levers</a>
                 </div>
               </div>
-              <div class="sub-topic" onclick="toggleSubTopic(this)">
-                <div class="sub-topic-header">
+              <div class="sub-topic">
+                <div class="sub-topic-header" onclick="toggleSubTopic(this)">
                   <span class="sub-topic-name">Reasoning &amp; Fine-Tune Tiers</span>
                   <span class="sub-topic-icon">+</span>
                 </div>
@@ -828,8 +828,8 @@ body, .code-block, .callout-box, .metric, .site-nav, .minimap-phase { transition
                   <a href="training.html#sft" class="cross-link">&rarr; Fine-tuning methods and deployment implications</a>
                 </div>
               </div>
-              <div class="sub-topic" onclick="toggleSubTopic(this)">
-                <div class="sub-topic-header">
+              <div class="sub-topic">
+                <div class="sub-topic-header" onclick="toggleSubTopic(this)">
                   <span class="sub-topic-name">Reserved &amp; Committed</span>
                   <span class="sub-topic-icon">+</span>
                 </div>
@@ -839,8 +839,8 @@ body, .code-block, .callout-box, .metric, .site-nav, .minimap-phase { transition
                   <p>The real risk isn&rsquo;t the contract price &mdash; it&rsquo;s what the contract signals about capacity planning. Contracted capacity is hedged; uncontracted capacity is an outright bet on future pricing.</p>
                 </div>
               </div>
-              <div class="sub-topic" onclick="toggleSubTopic(this)">
-                <div class="sub-topic-header">
+              <div class="sub-topic">
+                <div class="sub-topic-header" onclick="toggleSubTopic(this)">
                   <span class="sub-topic-name">Batch Pricing</span>
                   <span class="sub-topic-icon">+</span>
                 </div>
@@ -850,8 +850,8 @@ body, .code-block, .callout-box, .metric, .site-nav, .minimap-phase { transition
                   <p>Batch workloads smooth demand curves: if real-time peaks at 2pm, batch jobs absorb 2am-6am idle capacity. This improves overall fleet utilization from 40-50% to 80-90%.</p>
                 </div>
               </div>
-              <div class="sub-topic" onclick="toggleSubTopic(this)">
-                <div class="sub-topic-header">
+              <div class="sub-topic">
+                <div class="sub-topic-header" onclick="toggleSubTopic(this)">
                   <span class="sub-topic-name">Strategic Pricing</span>
                   <span class="sub-topic-icon">+</span>
                 </div>
@@ -920,8 +920,8 @@ body, .code-block, .callout-box, .metric, .site-nav, .minimap-phase { transition
             </div>
 
             <div class="sub-topics">
-              <div class="sub-topic" onclick="toggleSubTopic(this)">
-                <div class="sub-topic-header">
+              <div class="sub-topic">
+                <div class="sub-topic-header" onclick="toggleSubTopic(this)">
                   <span class="sub-topic-name">Statistical Multiplexing</span>
                   <span class="sub-topic-icon">+</span>
                 </div>
@@ -932,8 +932,8 @@ body, .code-block, .callout-box, .metric, .site-nav, .minimap-phase { transition
                   <a href="index.html#phase-b" class="cross-link">&rarr; How continuous batching enables this</a>
                 </div>
               </div>
-              <div class="sub-topic" onclick="toggleSubTopic(this)">
-                <div class="sub-topic-header">
+              <div class="sub-topic">
+                <div class="sub-topic-header" onclick="toggleSubTopic(this)">
                   <span class="sub-topic-name">Pricing Design Decisions</span>
                   <span class="sub-topic-icon">+</span>
                 </div>
@@ -952,8 +952,8 @@ body, .code-block, .callout-box, .metric, .site-nav, .minimap-phase { transition
                   <p style="margin-top:0.5rem">The <strong>managed premium</strong>: Fireworks charges ~40% more than Crusoe on-demand for the same GPU because the rate bundles inference-optimized software (FireAttention, LoRA multiplexing, autoscaling). Crusoe spot at $1.60/hr represents raw infrastructure. The spread ($1.60 &rarr; $5.49) is where the entire inference software stack gets monetized.</p>
                 </div>
               </div>
-              <div class="sub-topic" onclick="toggleSubTopic(this)">
-                <div class="sub-topic-header">
+              <div class="sub-topic">
+                <div class="sub-topic-header" onclick="toggleSubTopic(this)">
                   <span class="sub-topic-name">PM Decisions</span>
                   <span class="sub-topic-icon">+</span>
                 </div>
@@ -965,8 +965,8 @@ body, .code-block, .callout-box, .metric, .site-nav, .minimap-phase { transition
                   <p><strong>4. Optimization pass-through:</strong> When your team ships a 2x throughput improvement, do you pass savings to customers (growth) or keep as margin (profitability)?</p>
                 </div>
               </div>
-              <div class="sub-topic" onclick="toggleSubTopic(this)">
-                <div class="sub-topic-header">
+              <div class="sub-topic">
+                <div class="sub-topic-header" onclick="toggleSubTopic(this)">
                   <span class="sub-topic-name">Cannibalization Tension</span>
                   <span class="sub-topic-icon">+</span>
                 </div>
@@ -977,8 +977,8 @@ body, .code-block, .callout-box, .metric, .site-nav, .minimap-phase { transition
                   <p>The resolution: GPU rental increasingly serves <strong>training</strong> customers and custom workloads. Managed inference captures inference demand at higher margin. Total revenue per GPU potentially goes up &mdash; but the PM must model the revenue migration carefully.</p>
                 </div>
               </div>
-              <div class="sub-topic" onclick="toggleSubTopic(this)">
-                <div class="sub-topic-header">
+              <div class="sub-topic">
+                <div class="sub-topic-header" onclick="toggleSubTopic(this)">
                   <span class="sub-topic-name">Infrastructure Platform Features</span>
                   <span class="sub-topic-icon">+</span>
                 </div>
@@ -1041,8 +1041,8 @@ body, .code-block, .callout-box, .metric, .site-nav, .minimap-phase { transition
             </div>
 
             <div class="sub-topics">
-              <div class="sub-topic" onclick="toggleSubTopic(this)">
-                <div class="sub-topic-header">
+              <div class="sub-topic">
+                <div class="sub-topic-header" onclick="toggleSubTopic(this)">
                   <span class="sub-topic-name">TCO Breakdown</span>
                   <span class="sub-topic-icon">+</span>
                 </div>
@@ -1053,8 +1053,8 @@ body, .code-block, .callout-box, .metric, .site-nav, .minimap-phase { transition
                   <p><strong>Rent side:</strong> ~$2.00-3.00/hr for H100. No upfront <span class="term" data-term="capex">CapEx</span>. Flexibility to scale. Obsolescence risk sits with the lessor &mdash; but you&rsquo;re paying their margin.</p>
                 </div>
               </div>
-              <div class="sub-topic" onclick="toggleSubTopic(this)">
-                <div class="sub-topic-header">
+              <div class="sub-topic">
+                <div class="sub-topic-header" onclick="toggleSubTopic(this)">
                   <span class="sub-topic-name">Cost of Capital Changes Everything</span>
                   <span class="sub-topic-icon">+</span>
                 </div>
@@ -1064,8 +1064,8 @@ body, .code-block, .callout-box, .metric, .site-nav, .minimap-phase { transition
                   <p>Breakeven utilization moves from 44% to ~59%. If funded with pure equity at 25%, breakeven jumps to ~76%. Interest rate environment matters: 300-400 bps difference on $1B GPU purchase = $30-40M/year in additional interest expense.</p>
                 </div>
               </div>
-              <div class="sub-topic" onclick="toggleSubTopic(this)">
-                <div class="sub-topic-header">
+              <div class="sub-topic">
+                <div class="sub-topic-header" onclick="toggleSubTopic(this)">
                   <span class="sub-topic-name">Technology Obsolescence</span>
                   <span class="sub-topic-icon">+</span>
                 </div>
@@ -1076,8 +1076,8 @@ body, .code-block, .callout-box, .metric, .site-nav, .minimap-phase { transition
                   <a href="index.html#cross-cutting" class="cross-link">&rarr; GPU Memory Hierarchy details</a>
                 </div>
               </div>
-              <div class="sub-topic" onclick="toggleSubTopic(this)">
-                <div class="sub-topic-header">
+              <div class="sub-topic">
+                <div class="sub-topic-header" onclick="toggleSubTopic(this)">
                   <span class="sub-topic-name">The Barbell Strategy</span>
                   <span class="sub-topic-icon">+</span>
                 </div>
@@ -1162,8 +1162,8 @@ body, .code-block, .callout-box, .metric, .site-nav, .minimap-phase { transition
             </div>
 
             <div class="sub-topics">
-              <div class="sub-topic" onclick="toggleSubTopic(this)">
-                <div class="sub-topic-header">
+              <div class="sub-topic">
+                <div class="sub-topic-header" onclick="toggleSubTopic(this)">
                   <span class="sub-topic-name">Power as Binding Constraint</span>
                   <span class="sub-topic-icon">+</span>
                 </div>
@@ -1173,8 +1173,8 @@ body, .code-block, .callout-box, .metric, .site-nav, .minimap-phase { transition
                   <p>Power delivery infrastructure alone costs millions: transformers ($1-5M each), switchgear, UPS, backup generators, distribution. Redundancy requirements (N+1 or 2N) mean 100 kW provisioned &rarr; 200 kW built.</p>
                 </div>
               </div>
-              <div class="sub-topic" onclick="toggleSubTopic(this)">
-                <div class="sub-topic-header">
+              <div class="sub-topic">
+                <div class="sub-topic-header" onclick="toggleSubTopic(this)">
                   <span class="sub-topic-name">Cooling at Scale</span>
                   <span class="sub-topic-icon">+</span>
                 </div>
@@ -1184,8 +1184,8 @@ body, .code-block, .callout-box, .metric, .site-nav, .minimap-phase { transition
                   <p><span class="term" data-term="pue">PUE</span> captures this overhead. PUE of 1.1 (liquid) means 10% cooling overhead. PUE of 1.4 (air) means 40%. The difference at 100MW: an extra 30MW consumed just for cooling, or ~$15M/year at grid rates.</p>
                 </div>
               </div>
-              <div class="sub-topic" onclick="toggleSubTopic(this)">
-                <div class="sub-topic-header">
+              <div class="sub-topic">
+                <div class="sub-topic-header" onclick="toggleSubTopic(this)">
                   <span class="sub-topic-name">What $/kW/month Bundles</span>
                   <span class="sub-topic-icon">+</span>
                 </div>
@@ -1252,8 +1252,8 @@ body, .code-block, .callout-box, .metric, .site-nav, .minimap-phase { transition
             </div>
 
             <div class="sub-topics">
-              <div class="sub-topic" onclick="toggleSubTopic(this)">
-                <div class="sub-topic-header">
+              <div class="sub-topic">
+                <div class="sub-topic-header" onclick="toggleSubTopic(this)">
                   <span class="sub-topic-name">Tax Shield</span>
                   <span class="sub-topic-icon">+</span>
                 </div>
@@ -1263,8 +1263,8 @@ body, .code-block, .callout-box, .metric, .site-nav, .minimap-phase { transition
                   <p>On $5B of debt at 8%, the tax shield is worth <strong>$84M/year</strong> &mdash; pure value creation from choosing debt over equity for the same investment.</p>
                 </div>
               </div>
-              <div class="sub-topic" onclick="toggleSubTopic(this)">
-                <div class="sub-topic-header">
+              <div class="sub-topic">
+                <div class="sub-topic-header" onclick="toggleSubTopic(this)">
                   <span class="sub-topic-name">Contractual vs Residual Claims</span>
                   <span class="sub-topic-icon">+</span>
                 </div>
@@ -1274,8 +1274,8 @@ body, .code-block, .callout-box, .metric, .site-nav, .minimap-phase { transition
                   <p>Information asymmetry compounds this: debt holders protect themselves with covenants, while equity holders have board seats but can&rsquo;t contractually force profitability. More trust required = riskier = more expensive.</p>
                 </div>
               </div>
-              <div class="sub-topic" onclick="toggleSubTopic(this)">
-                <div class="sub-topic-header">
+              <div class="sub-topic">
+                <div class="sub-topic-header" onclick="toggleSubTopic(this)">
                   <span class="sub-topic-name">Why Not All Debt?</span>
                   <span class="sub-topic-icon">+</span>
                 </div>
@@ -1329,8 +1329,8 @@ body, .code-block, .callout-box, .metric, .site-nav, .minimap-phase { transition
             </div>
 
             <div class="sub-topics">
-              <div class="sub-topic" onclick="toggleSubTopic(this)">
-                <div class="sub-topic-header">
+              <div class="sub-topic">
+                <div class="sub-topic-header" onclick="toggleSubTopic(this)">
                   <span class="sub-topic-name">Higher Debt Capacity</span>
                   <span class="sub-topic-icon">+</span>
                 </div>
@@ -1341,8 +1341,8 @@ body, .code-block, .callout-box, .metric, .site-nav, .minimap-phase { transition
                   <p><strong>With 15-year Oracle contract at $600M/year:</strong> Lender underwrites to $600M &rarr; $400M FCF &rarr; supports ~$267M/year debt service &rarr; ~$3-4B total debt capacity. Same facility, dramatically different borrowing.</p>
                 </div>
               </div>
-              <div class="sub-topic" onclick="toggleSubTopic(this)">
-                <div class="sub-topic-header">
+              <div class="sub-topic">
+                <div class="sub-topic-header" onclick="toggleSubTopic(this)">
                   <span class="sub-topic-name">Lower Interest &amp; Looser Covenants</span>
                   <span class="sub-topic-icon">+</span>
                 </div>
@@ -1352,8 +1352,8 @@ body, .code-block, .callout-box, .metric, .site-nav, .minimap-phase { transition
                   <p>Looser covenants: fewer restrictions on additional borrowing, less stringent maintenance ratios, more operational flexibility. Longer tenor: 15-year contracted revenue supports 10-12 year debt vs 3-5 years for uncontracted.</p>
                 </div>
               </div>
-              <div class="sub-topic" onclick="toggleSubTopic(this)">
-                <div class="sub-topic-header">
+              <div class="sub-topic">
+                <div class="sub-topic-header" onclick="toggleSubTopic(this)">
                   <span class="sub-topic-name">Assignment of Contracts</span>
                   <span class="sub-topic-icon">+</span>
                 </div>
@@ -1363,8 +1363,8 @@ body, .code-block, .callout-box, .metric, .site-nav, .minimap-phase { transition
                   <p>Like mortgage-backed securities &mdash; the payment streams themselves are the security. Not the physical assets, but the right to receive contracted cash flows.</p>
                 </div>
               </div>
-              <div class="sub-topic" onclick="toggleSubTopic(this)">
-                <div class="sub-topic-header">
+              <div class="sub-topic">
+                <div class="sub-topic-header" onclick="toggleSubTopic(this)">
                   <span class="sub-topic-name">The Virtuous Cycle</span>
                   <span class="sub-topic-icon">+</span>
                 </div>
@@ -1409,8 +1409,8 @@ body, .code-block, .callout-box, .metric, .site-nav, .minimap-phase { transition
             </div>
 
             <div class="sub-topics">
-              <div class="sub-topic" onclick="toggleSubTopic(this)">
-                <div class="sub-topic-header">
+              <div class="sub-topic">
+                <div class="sub-topic-header" onclick="toggleSubTopic(this)">
                   <span class="sub-topic-name">Series A &rarr; Series B</span>
                   <span class="sub-topic-icon">+</span>
                 </div>
@@ -1420,8 +1420,8 @@ body, .code-block, .callout-box, .metric, .site-nav, .minimap-phase { transition
                   <p><strong>Series B:</strong> $5-20M ARR, real product, paying customers. Cost of equity: 30-50%. Cost of debt: 12-15% (venture debt with warrants). Mix: 80-90% equity. Equipment financing becomes possible (80% LTV on GPU purchases).</p>
                 </div>
               </div>
-              <div class="sub-topic" onclick="toggleSubTopic(this)">
-                <div class="sub-topic-header">
+              <div class="sub-topic">
+                <div class="sub-topic-header" onclick="toggleSubTopic(this)">
                   <span class="sub-topic-name">Series C/D &rarr; Pre-IPO</span>
                   <span class="sub-topic-icon">+</span>
                 </div>
@@ -1431,8 +1431,8 @@ body, .code-block, .callout-box, .metric, .site-nav, .minimap-phase { transition
                   <p><strong>Pre-IPO:</strong> $200M-1B+ revenue, clear profitability path. Cost of equity: 12-20%. Cost of debt: 6-9%. Mix: 40-60% equity. Convertible notes popular: lower interest (2-5%) with embedded call option. Crusoe is here now (Series E, $10B+).</p>
                 </div>
               </div>
-              <div class="sub-topic" onclick="toggleSubTopic(this)">
-                <div class="sub-topic-header">
+              <div class="sub-topic">
+                <div class="sub-topic-header" onclick="toggleSubTopic(this)">
                   <span class="sub-topic-name">Public Company</span>
                   <span class="sub-topic-icon">+</span>
                 </div>
@@ -1442,8 +1442,8 @@ body, .code-block, .callout-box, .metric, .site-nav, .minimap-phase { transition
                   <p>Active capital management: share buybacks, debt-funded buybacks, dividend policy, credit rating management. The CFO becomes a portfolio manager optimizing the capital structure continuously.</p>
                 </div>
               </div>
-              <div class="sub-topic" onclick="toggleSubTopic(this)">
-                <div class="sub-topic-header">
+              <div class="sub-topic">
+                <div class="sub-topic-header" onclick="toggleSubTopic(this)">
                   <span class="sub-topic-name">Crusoe&rsquo;s Dual Structure</span>
                   <span class="sub-topic-icon">+</span>
                 </div>
@@ -1546,7 +1546,7 @@ body, .code-block, .callout-box, .metric, .site-nav, .minimap-phase { transition
 
   /* ─── SUB-TOPIC TOGGLE ─── */
   window.toggleSubTopic = function(el) {
-    el.classList.toggle('expanded');
+    el.closest('.sub-topic').classList.toggle('expanded');
   };
 
   /* ─── TERM TOOLTIPS ─── */
