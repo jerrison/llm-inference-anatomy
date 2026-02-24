@@ -1995,8 +1995,19 @@ minimapItems.forEach(function(item) {
   });
 });
 
-/* Show minimap from hero through all content */
-minimap.classList.add('visible');
+/* Show minimap from hero through all content, hide in footer */
+var visibleSections = new Set();
+var minimapShowObserver = new IntersectionObserver(function(entries) {
+  entries.forEach(function(entry) {
+    if (entry.isIntersecting) visibleSections.add(entry.target);
+    else visibleSections.delete(entry.target);
+  });
+  minimap.classList.toggle('visible', visibleSections.size > 0);
+}, { threshold: 0 });
+var heroSection = document.querySelector('.hero');
+var pipelineSection = document.getElementById('pipeline');
+if (heroSection) minimapShowObserver.observe(heroSection);
+if (pipelineSection) minimapShowObserver.observe(pipelineSection);
 
 /* ─── INTERACTIVE VISUALS ─── */
 

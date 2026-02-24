@@ -1652,8 +1652,11 @@ body, .code-block, .callout-box, .metric, .site-nav, .minimap-phase { transition
     var scrollY = window.scrollY;
     var vh = window.innerHeight;
 
-    // Show minimap from page load (always visible on desktop)
-    minimap.classList.add('visible');
+    // Show minimap from page load, hide in footer
+    var footer = document.querySelector('.footer');
+    var footerTop = footer ? footer.getBoundingClientRect().top + scrollY : Infinity;
+    if (scrollY + vh < footerTop + 100) { minimap.classList.add('visible'); }
+    else { minimap.classList.remove('visible'); }
 
     // Skip highlight update during click-initiated scroll
     if (scrollLock) return;
