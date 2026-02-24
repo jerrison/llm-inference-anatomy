@@ -284,6 +284,7 @@ body {
   transition: border-color 0.18s ease, background-color 0.18s ease;
   position: relative;
   overflow: hidden;
+  cursor: pointer;
 }
 
 .step-card::before {
@@ -356,6 +357,7 @@ body {
   transition: max-height 0.18s ease-out;
   position: relative;
   z-index: 1;
+  cursor: default;
 }
 
 .pipeline-step.active .step-detail { max-height: 8000px; }
@@ -1828,8 +1830,8 @@ document.querySelectorAll('.reveal').forEach(function(el) {
 
 /* ─── PIPELINE STEP TOGGLE ─── */
 document.querySelectorAll('.pipeline-step').forEach(function(step) {
-  step.querySelector('.step-header').addEventListener('click', function(e) {
-    if (e.target.closest('.term')) return;
+  step.querySelector('.step-card').addEventListener('click', function(e) {
+    if (e.target.closest('.term, a, button, .step-detail, .sub-topic')) return;
     step.classList.toggle('active');
   });
 });

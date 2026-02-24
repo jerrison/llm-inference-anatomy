@@ -335,6 +335,7 @@ body {
   transition: border-color 0.18s ease, background-color 0.18s ease;
   position: relative;
   overflow: hidden;
+  cursor: pointer;
 }
 
 .step-card::before {
@@ -429,6 +430,7 @@ body {
   transition: max-height 0.18s ease-out;
   position: relative;
   z-index: 1;
+  cursor: default;
 }
 
 .pipeline-step.active .step-detail {
@@ -3047,10 +3049,10 @@ body, .code-block, .journey-diagram, .callout-box, .metric, .journey-detail-pane
 </footer>
 
 <script>
-// ─── Pipeline step toggle (header only) ───
+// ─── Pipeline step toggle ───
 document.querySelectorAll('.pipeline-step').forEach(step => {
-  step.querySelector('.step-header').addEventListener('click', (e) => {
-    if (e.target.closest('.term')) return;
+  step.querySelector('.step-card').addEventListener('click', (e) => {
+    if (e.target.closest('.term, a, button, .step-detail, .sub-topic, .visual-toggle')) return;
     step.classList.toggle('active');
   });
 });
