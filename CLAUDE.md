@@ -475,3 +475,9 @@ Search should not be limited to section headers. Index section body content (`te
 
 ### Knowledge Markdown Export Freshness
 The knowledge download should be generated at click time from live page HTML, not from a static repository file. Fetch all four same-origin pages, parse their visible instructional sections, and export a single markdown blob so the downloaded file always tracks the latest deployed website state.
+
+### External Data Sources Integrated
+The site now includes concrete pricing and infrastructure data from Fireworks AI and Crusoe Cloud public docs. When updating this data:
+- **Fireworks**: Serverless tiers by model size, model-specific pricing (DeepSeek V3/R1, GLM-5, Kimi K2.5), on-demand GPU rates ($5.49/hr H100, $3.19/hr A100), fine-tuning pricing ($0.50-$10/M tokens), DPO at 2× SFT, SOC2/HIPAA/GDPR compliance, FireAttention/LoRA multiplexing
+- **Crusoe**: On-demand rates (H200 $4.29, H100 $3.90, A100 $1.95, MI300X $3.45), spot rates (H100 $1.60, A100 $1.30, MI300X $0.95), MemoryAlloy (cluster KV cache via RDMA), facility portfolio (Abilene TX 1.2GW, Iceland, Wyoming, Norway, Argentina), $3.4B Series E + $9.6B infra debt, VPC/InfiniBand/managed K8s/Slurm/AutoClusters, 99.98% uptime SLA
+- **Term definitions**: `rdma` added to economics.html termDefs and termStepMap
