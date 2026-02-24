@@ -4416,14 +4416,18 @@ document.addEventListener('click', function(e) {
     var tokenCount = 0;
     var playing = false;
     var timer = null;
-    var cx = c.offsetWidth / 2, cy = c.offsetHeight / 2 - 10;
-    var r = Math.min(cx, cy) * 0.55;
+    var padTop = 30;
+    var cx = c.offsetWidth / 2, cy = (c.offsetHeight + padTop) / 2;
+    var r = Math.min(cx, cy - padTop) * 0.52;
 
     // Draw step nodes
     steps.forEach(function(s, i) {
       var rad = (s.angle - 90) * Math.PI / 180;
       var x = cx + r * Math.cos(rad);
       var y = cy + r * Math.sin(rad);
+      // Clamp to stay inside container
+      x = Math.max(44, Math.min(c.offsetWidth - 44, x));
+      y = Math.max(20, Math.min(c.offsetHeight - 20, y));
       var node = el('div', 'sv-node');
       node.textContent = s.label;
       node.style.left = (x - 40) + 'px';
