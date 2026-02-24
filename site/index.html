@@ -49,13 +49,13 @@ body {
 
 /* ─── HERO ─── */
 .hero {
-  min-height: 100vh;
+  min-height: 50vh;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   text-align: center;
-  padding: 2rem;
+  padding: 1.5rem 2rem;
   position: relative;
   overflow: hidden;
 }
@@ -77,7 +77,7 @@ body {
   letter-spacing: 0.3em;
   text-transform: uppercase;
   color: var(--accent);
-  margin-bottom: 2rem;
+  margin-bottom: 1rem;
   opacity: 0;
   animation: fadeUp 0.8s ease forwards 0.2s;
 }
@@ -102,13 +102,13 @@ body {
   font-size: clamp(1rem, 2vw, 1.2rem);
   color: var(--text-dim);
   max-width: 600px;
-  margin-top: 1.5rem;
+  margin-top: 1rem;
   opacity: 0;
   animation: fadeUp 0.8s ease forwards 0.6s;
 }
 
 .hero-cta {
-  margin-top: 3rem;
+  margin-top: 1.5rem;
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -3428,12 +3428,14 @@ document.addEventListener('click', function(e) {
     itemMap[item.getAttribute('data-target')] = item;
   });
 
-  // 1. Section observer — show/hide minimap
+  // 1. Section observer — show/hide minimap (visible from hero through content)
   var sectionObs = new IntersectionObserver(function(entries) {
     entries.forEach(function(entry) {
-      minimap.classList.toggle('visible', entry.isIntersecting);
+      if (entry.isIntersecting) minimap.classList.add('visible');
     });
   }, { threshold: 0 });
+  var hero = document.querySelector('.hero');
+  if (hero) sectionObs.observe(hero);
   sectionObs.observe(pipeline);
 
   // 2. Step observer — highlight current step
