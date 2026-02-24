@@ -1487,14 +1487,14 @@ body, .code-block, .journey-diagram, .callout-box, .metric, .journey-detail-pane
 
 <nav class="minimap" id="minimap" aria-label="Pipeline navigation">
   <div class="minimap-phase">
-    <div class="minimap-phase-label">A</div>
+    <div class="minimap-phase-label">Request Prep</div>
     <a class="minimap-item" href="#" data-target="routing"><span class="minimap-dot"></span><span class="minimap-label">Routing</span></a>
     <a class="minimap-item" href="#" data-target="preprocessing"><span class="minimap-dot"></span><span class="minimap-label">Preprocessing</span></a>
     <a class="minimap-item" href="#" data-target="tokenization"><span class="minimap-dot"></span><span class="minimap-label">Tokenization</span></a>
     <a class="minimap-item" href="#" data-target="embedding"><span class="minimap-dot"></span><span class="minimap-label">Embedding</span></a>
   </div>
   <div class="minimap-phase">
-    <div class="minimap-phase-label">B</div>
+    <div class="minimap-phase-label">GPU Compute</div>
     <a class="minimap-item" href="#" data-target="scheduling"><span class="minimap-dot"></span><span class="minimap-label">Scheduling</span></a>
     <a class="minimap-item" href="#" data-target="prefill"><span class="minimap-dot"></span><span class="minimap-label">Prefill</span></a>
     <a class="minimap-item" href="#" data-target="kvcache"><span class="minimap-dot"></span><span class="minimap-label">KV Cache</span></a>
@@ -1502,12 +1502,12 @@ body, .code-block, .journey-diagram, .callout-box, .metric, .journey-detail-pane
     <a class="minimap-item" href="#" data-target="decode"><span class="minimap-dot"></span><span class="minimap-label">Decode</span></a>
   </div>
   <div class="minimap-phase">
-    <div class="minimap-phase-label">C</div>
+    <div class="minimap-phase-label">Output</div>
     <a class="minimap-item" href="#" data-target="sampling"><span class="minimap-dot"></span><span class="minimap-label">Sampling</span></a>
     <a class="minimap-item" href="#" data-target="streaming"><span class="minimap-dot"></span><span class="minimap-label">Streaming</span></a>
   </div>
   <div class="minimap-phase">
-    <div class="minimap-phase-label">&bull;</div>
+    <div class="minimap-phase-label">Observability</div>
     <a class="minimap-item" href="#" data-target="inference-metrics"><span class="minimap-dot"></span><span class="minimap-label">Metrics</span></a>
   </div>
 </nav>
