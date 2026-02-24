@@ -236,9 +236,8 @@ body {
 .waterfall-row { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem; }
 .waterfall-label { min-width: 100px; font-size: 0.65rem; color: var(--text-dim); text-align: right; }
 .waterfall-bar-wrap { flex: 1; height: 24px; background: rgba(255,255,255,0.03); border-radius: 4px; overflow: hidden; position: relative; }
-.waterfall-segment { height: 100%; float: left; transition: width 0.6s ease; position: relative; }
+.waterfall-segment { height: 100%; float: left; transition: width 0.6s ease; position: relative; cursor: default; }
 .waterfall-segment:hover { filter: brightness(1.25); }
-.waterfall-segment { cursor: default; }
 .waterfall-val { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); font-size: 0.55rem; color: rgba(255,255,255,0.9); white-space: nowrap; }
 .waterfall-total { font-size: 0.65rem; color: var(--text); min-width: 60px; }
 .wf-tooltip { position: fixed; padding: 8px 12px; background: var(--bg-card); border: 1px solid var(--border-active); border-radius: 6px; font-size: 0.65rem; color: var(--text); pointer-events: none; z-index: 1000; white-space: nowrap; box-shadow: 0 4px 16px rgba(0,0,0,0.4); opacity: 0; transition: opacity 0.15s; line-height: 1.5; }
@@ -1758,7 +1757,6 @@ body, .code-block, .callout-box, .metric, .site-nav, .minimap-phase { transition
       data.forEach(function(d, i) {
         var val = provider === 'crusoe' ? d.crusoe : d.coreweave;
         var h = Math.max(val * scale, minH);
-        var pctOfTotal = ((val / totalVal) * 100).toFixed(0);
         col += '<div class="cost-stack-block" data-idx="' + i + '" data-provider="' + provider + '" style="height:' + h.toFixed(0) + 'px;background:' + d.color + '">';
         if (h >= 36) {
           col += '<span class="cs-cat">' + d.short + '</span><span class="cs-val">$' + val.toFixed(2) + '</span>';
