@@ -1390,6 +1390,10 @@ body, .code-block, .journey-diagram, .callout-box, .metric, .journey-detail-pane
   font-size: 0.55rem;
   color: var(--accent);
   z-index: 3;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 2px 6px;
 }
 
 .sv-token {
@@ -4559,63 +4563,111 @@ document.addEventListener('click', function(e) {
   visualInits.sampling = function(c) {
     var rawProbs = [0.32, 0.18, 0.12, 0.08, 0.06, 0.05, 0.04, 0.03, 0.025, 0.02, 0.015, 0.01, 0.008, 0.006, 0.004];
     var labels = ['the', 'a', 'one', 'my', 'his', 'her', 'its', 'an', 'our', 'this', 'that', 'some', 'your', 'each', 'no'];
-    var stage = 0; // 0=raw, 1=temperature, 2=filtered
-    var stageNames = ['Raw Logits', 'After Temperature (T=0.7)', 'After Top-K (K=5)'];
+    var mode = 'raw'; // raw, temp, topk, topp, minp
+    var temp = 0.7;
+    var topK = 5, topP = 0.9, minP = 0.1;
 
     var barContainer = el('div', '');
-    barContainer.style.cssText = 'position:absolute;left:5%;right:5%;top:12%;bottom:18%';
+    barContainer.style.cssText = 'position:absolute;left:5%;right:5%;top:14%;bottom:18%';
     c.appendChild(barContainer);
 
     var titleDiv = el('div', 'sv-label');
-    titleDiv.style.cssText = 'position:absolute;left:5%;top:5%';
+    titleDiv.style.cssText = 'position:absolute;left:5%;top:3%';
     c.appendChild(titleDiv);
+
+    // Temperature slider row
+    var sliderRow = el('div', '');
+    sliderRow.style.cssText = 'position:absolute;right:5%;top:3%;display:flex;align-items:center;gap:6px;font-size:0.5rem;color:var(--text-dim)';
+    var tempLabel = el('span', '', 'T=' + temp.toFixed(1));
+    var slider = document.createElement('input');
+    slider.type = 'range'; slider.min = '0.1'; slider.max = '2.0'; slider.step = '0.1'; slider.value = String(temp);
+    slider.style.cssText = 'width:80px;height:4px;accent-color:var(--accent);cursor:pointer';
+    slider.addEventListener('input', function(e) {
+      stopProp(e);
+      temp = parseFloat(slider.value);
+      tempLabel.textContent = 'T=' + temp.toFixed(1);
+      if (mode === 'raw') mode = 'temp';
+      render();
+      updateBtnActive();
+    });
+    slider.addEventListener('click', function(e) { stopProp(e); });
+    sliderRow.appendChild(el('span', '', 'Temperature'));
+    sliderRow.appendChild(slider);
+    sliderRow.appendChild(tempLabel);
+    c.appendChild(sliderRow);
 
     // Legend
     var legend = el('div', '');
-    legend.style.cssText = 'position:absolute;right:5%;top:5%;display:flex;align-items:center;gap:10px;font-size:0.45rem;color:var(--text-muted);background:var(--bg-card);border:1px solid var(--border);border-radius:4px;padding:3px 8px';
+    legend.style.cssText = 'position:absolute;right:5%;top:10%;display:flex;align-items:center;gap:8px;font-size:0.42rem;color:var(--text-muted);background:var(--bg-card);border:1px solid var(--border);border-radius:4px;padding:2px 6px';
     var actSw = el('div', '');
-    actSw.style.cssText = 'width:16px;height:6px;background:var(--accent);border-radius:2px';
+    actSw.style.cssText = 'width:12px;height:5px;background:var(--accent);border-radius:2px';
     legend.appendChild(actSw);
-    legend.appendChild(el('span', '', 'Candidate'));
+    legend.appendChild(el('span', '', 'Kept'));
     var filtSw = el('div', '');
-    filtSw.style.cssText = 'width:16px;height:6px;background:var(--border);opacity:0.5;border-radius:2px';
+    filtSw.style.cssText = 'width:12px;height:5px;background:var(--border);opacity:0.5;border-radius:2px';
     legend.appendChild(filtSw);
-    legend.appendChild(el('span', '', 'Filtered out'));
+    legend.appendChild(el('span', '', 'Filtered'));
     c.appendChild(legend);
 
     var stat = el('div', 'sv-stat');
+    stat.style.top = '10%';
     c.appendChild(stat);
 
-    function sharpen(probs, temp) {
-      var logs = probs.map(function(p) { return Math.log(p) / temp; });
+    function sharpen(probs, t) {
+      var logs = probs.map(function(p) { return Math.log(p) / t; });
       var maxLog = Math.max.apply(null, logs);
       var exps = logs.map(function(l) { return Math.exp(l - maxLog); });
       var sum = exps.reduce(function(a, b) { return a + b; }, 0);
       return exps.map(function(e) { return e / sum; });
     }
 
-    function render() {
-      titleDiv.textContent = stageNames[stage];
-      barContainer.innerHTML = '';
-      var probs;
-      if (stage === 0) probs = rawProbs.slice();
-      else if (stage === 1) probs = sharpen(rawProbs, 0.7);
-      else {
-        probs = sharpen(rawProbs, 0.7);
-        // Top-5: zero out rest, renormalize
-        var sorted = probs.map(function(p, i) { return { p: p, i: i }; }).sort(function(a, b) { return b.p - a.p; });
-        var kept = {};
-        for (var k = 0; k < 5; k++) kept[sorted[k].i] = true;
-        var sum = 0;
-        probs = probs.map(function(p, i) {
-          if (kept[i]) { sum += p; return p; }
-          return 0;
-        });
-        probs = probs.map(function(p) { return p / sum; });
+    function applyTruncation(probs, m) {
+      if (m === 'raw' || m === 'temp') return { probs: probs, kept: probs.map(function() { return true; }), info: '' };
+      var sorted = probs.map(function(p, i) { return { p: p, i: i }; }).sort(function(a, b) { return b.p - a.p; });
+      var kept = {};
+      if (m === 'topk') {
+        for (var k = 0; k < topK && k < sorted.length; k++) kept[sorted[k].i] = true;
+        var info = 'Top-K (K=' + topK + ')';
+      } else if (m === 'topp') {
+        var cum = 0;
+        for (var k = 0; k < sorted.length; k++) {
+          kept[sorted[k].i] = true;
+          cum += sorted[k].p;
+          if (cum >= topP) break;
+        }
+        var info = 'Top-P (P=' + topP + ')';
+      } else if (m === 'minp') {
+        var maxProb = sorted[0].p;
+        var threshold = maxProb * minP;
+        for (var k = 0; k < sorted.length; k++) {
+          if (sorted[k].p >= threshold) kept[sorted[k].i] = true;
+        }
+        var info = 'Min-P (P=' + minP + ', threshold=' + (threshold * 100).toFixed(1) + '%)';
       }
+      var sum = 0;
+      var out = probs.map(function(p, i) { if (kept[i]) { sum += p; return p; } return 0; });
+      out = out.map(function(p) { return sum > 0 ? p / sum : 0; });
+      var keptArr = probs.map(function(p, i) { return !!kept[i]; });
+      var nKept = Object.keys(kept).length;
+      return { probs: out, kept: keptArr, info: nKept + ' tokens kept — ' + info };
+    }
 
-      var maxP = Math.max.apply(null, probs);
-      probs.forEach(function(p, i) {
+    function render() {
+      barContainer.innerHTML = '';
+      var baseProbs = mode === 'raw' ? rawProbs.slice() : sharpen(rawProbs, temp);
+      var result = applyTruncation(baseProbs, mode);
+      var displayProbs = result.probs;
+      var keptFlags = result.kept;
+
+      var stageLabel = mode === 'raw' ? 'Raw Logits' :
+        mode === 'temp' ? 'After Temperature (T=' + temp.toFixed(1) + ')' :
+        mode === 'topk' ? 'After Top-K (K=' + topK + ', T=' + temp.toFixed(1) + ')' :
+        mode === 'topp' ? 'After Top-P (P=' + topP + ', T=' + temp.toFixed(1) + ')' :
+        'After Min-P (P=' + minP + ', T=' + temp.toFixed(1) + ')';
+      titleDiv.textContent = stageLabel;
+
+      var maxP = Math.max.apply(null, displayProbs.concat(baseProbs));
+      displayProbs.forEach(function(p, i) {
         var row = el('div', '');
         row.style.cssText = 'display:flex;align-items:center;gap:6px;margin-bottom:2px';
         var lbl = el('span', '');
@@ -4626,29 +4678,45 @@ document.addEventListener('click', function(e) {
         bar.style.flex = '1';
         bar.style.height = '11px';
         var fill = el('div', 'sv-bar-fill');
-        fill.style.background = p === 0 ? 'var(--border)' : 'var(--accent)';
-        fill.style.width = (p / maxP * 100) + '%';
-        fill.style.opacity = p === 0 ? '0.3' : '1';
+        fill.style.background = keptFlags[i] ? 'var(--accent)' : 'var(--border)';
+        fill.style.width = ((keptFlags[i] ? p : baseProbs[i]) / maxP * 100) + '%';
+        fill.style.opacity = keptFlags[i] ? '1' : '0.3';
         bar.appendChild(fill);
         row.appendChild(bar);
         var pct = el('span', '');
-        pct.style.cssText = 'width:35px;font-size:0.5rem;color:' + (p === 0 ? 'var(--text-muted)' : 'var(--accent)');
-        pct.textContent = p === 0 ? '-' : (p * 100).toFixed(1) + '%';
+        pct.style.cssText = 'width:38px;font-size:0.5rem;color:' + (keptFlags[i] ? 'var(--accent)' : 'var(--text-muted)');
+        pct.textContent = keptFlags[i] ? (p * 100).toFixed(1) + '%' : '-';
         row.appendChild(pct);
         barContainer.appendChild(row);
       });
-      stat.textContent = stage === 2 ? '5 tokens kept, renormalized' : probs.filter(function(p) { return p > 0; }).length + ' candidate tokens';
+
+      if (result.info) {
+        stat.textContent = result.info;
+      } else {
+        var n = displayProbs.filter(function(p) { return p > 0; }).length;
+        stat.textContent = n + ' candidate tokens';
+      }
+    }
+
+    function updateBtnActive() {
+      ctrl.querySelectorAll('.sv-btn').forEach(function(b) { b.classList.toggle('active', b.getAttribute('data-mode') === mode); });
     }
 
     var ctrl = el('div', 'sv-controls');
-    stageNames.forEach(function(name, i) {
-      var short = ['Raw', 'Temp', 'Top-K'][i];
-      var btn = el('button', 'sv-btn' + (i === stage ? ' active' : ''), short);
+    var modes = [
+      { key: 'raw', label: 'Raw' },
+      { key: 'temp', label: 'Temp' },
+      { key: 'topk', label: 'Top-K' },
+      { key: 'topp', label: 'Top-P' },
+      { key: 'minp', label: 'Min-P' }
+    ];
+    modes.forEach(function(m) {
+      var btn = el('button', 'sv-btn' + (m.key === mode ? ' active' : ''), m.label);
+      btn.setAttribute('data-mode', m.key);
       btn.addEventListener('click', function(e) {
         stopProp(e);
-        stage = i;
-        ctrl.querySelectorAll('.sv-btn').forEach(function(b) { b.classList.remove('active'); });
-        btn.classList.add('active');
+        mode = m.key;
+        updateBtnActive();
         render();
       });
       ctrl.appendChild(btn);
@@ -4657,19 +4725,13 @@ document.addEventListener('click', function(e) {
     var sampleBtn = el('button', 'sv-btn', 'Sample');
     sampleBtn.addEventListener('click', function(e) {
       stopProp(e);
-      stage = 2;
-      ctrl.querySelectorAll('.sv-btn').forEach(function(b) { b.classList.remove('active'); });
-      ctrl.children[2].classList.add('active');
-      render();
-      // Pick random from top 5
-      var probs2 = sharpen(rawProbs, 0.7);
-      var sorted = probs2.map(function(p, i) { return { p: p, i: i }; }).sort(function(a, b) { return b.p - a.p; });
-      var sum = 0;
-      for (var k = 0; k < 5; k++) sum += sorted[k].p;
-      var r = Math.random() * sum, acc = 0, picked = 0;
-      for (var k = 0; k < 5; k++) { acc += sorted[k].p; if (r <= acc) { picked = sorted[k].i; break; } }
-      stat.textContent = 'Sampled: "' + labels[picked] + '" (' + (probs2[picked] / sum * 100).toFixed(1) + '%)';
-      // Highlight picked bar
+      // Sample from current truncation
+      var baseProbs = sharpen(rawProbs, temp);
+      var result = applyTruncation(baseProbs, mode === 'raw' || mode === 'temp' ? 'temp' : mode);
+      var probs2 = result.probs;
+      var r = Math.random(), acc = 0, picked = 0;
+      for (var k = 0; k < probs2.length; k++) { acc += probs2[k]; if (r <= acc) { picked = k; break; } }
+      stat.textContent = 'Sampled: "' + labels[picked] + '" (' + (probs2[picked] * 100).toFixed(1) + '%)';
       var rows = barContainer.children;
       if (rows[picked]) rows[picked].style.background = 'var(--accent-glow)';
     });
