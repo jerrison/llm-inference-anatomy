@@ -478,6 +478,9 @@ Search must support fuzzy matching and body-content discovery, not just titles/d
 ### 16. Knowledge Markdown Export Freshness
 Do not rely on a static markdown snapshot for site knowledge. Generate markdown dynamically from the live HTML of all four pages at download time so exported knowledge stays aligned with the latest deployed content.
 
+### 17. External Data Sources Integrated
+The site includes concrete pricing and infrastructure data from Fireworks AI and Crusoe Cloud public docs. Key data: Fireworks serverless tiers, model-specific pricing (DeepSeek V3/R1, GLM-5, Kimi K2.5), on-demand GPU rates, fine-tuning pricing ($0.50-$10/M tokens), SOC2/HIPAA/GDPR compliance, FireAttention/LoRA multiplexing. Crusoe: on-demand/spot GPU rates, MemoryAlloy (cluster KV cache via RDMA), facility portfolio (Abilene TX 1.2GW, Iceland, Wyoming, Norway, Argentina), $3.4B Series E + $9.6B infra debt. The `rdma` term is defined in both index.html and economics.html termDefs.
+
 ## Deployment Verification
 
 After deploying, verify:
