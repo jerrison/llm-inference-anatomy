@@ -159,7 +159,7 @@ body { background: var(--bg); color: var(--text); font-family: var(--font-body);
 .minimap-phase + .minimap-phase { border-top: 1px solid var(--border); margin-top: 0.15rem; padding-top: 0.55rem; }
 .minimap-phase-label { font-family: var(--font-mono); font-size: 0.5rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent-dim); margin-bottom: 0.35rem; padding-left: 2px; }
 .minimap-item { display: flex; align-items: center; gap: 0.5rem; padding: 0.2rem 0; text-decoration: none; cursor: pointer; outline: none; }
-.minimap-dot { width: 8px; height: 8px; border-radius: 50%; border: 1.5px solid var(--border); background: var(--bg); flex-shrink: 0; transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease; }
+.minimap-dot { width: 8px; height: 8px; border-radius: 50%; border: 1.5px solid var(--border-active); background: var(--bg); flex-shrink: 0; box-shadow: 0 0 0 3px var(--bg); transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease; }
 .minimap-label { font-family: var(--font-mono); font-size: 0.55rem; letter-spacing: 0.06em; color: var(--text-muted); white-space: nowrap; transition: color 0.2s ease; }
 .minimap-item:hover .minimap-dot { border-color: var(--border-active); }
 .minimap-item:hover .minimap-label { color: var(--text-dim); }
