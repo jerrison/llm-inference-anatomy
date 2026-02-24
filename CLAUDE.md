@@ -476,6 +476,12 @@ Search should not be limited to section headers. Index section body content (`te
 ### Knowledge Markdown Export Freshness
 The knowledge download should be generated at click time from live page HTML, not from a static repository file. Fetch all four same-origin pages, parse their visible instructional sections, and export a single markdown blob so the downloaded file always tracks the latest deployed website state.
 
+### Interactive Visual Sizing — Avoid Percentage-Based Cell Heights
+The prefill attention matrix used `paddingBottom: 100%` to create square grid cells, but with `1fr` columns on wide viewports each cell grew to ~100px tall, overflowing the 260px `.step-visual` container. Fix: compute cell pixel size from available container height (`(availH - gaps) / rows`), then use fixed `width`/`height` in pixels. Always test visuals at multiple viewport widths. Only the prefill visual had this issue — all other visuals use absolute positioning or fixed heights.
+
+### Visual Element Overlap — Check All Positioned Children
+The prefill visual's stat label ("Memory-bound · Sequential") overlapped the legend box because both were absolutely positioned in the top-right. When fixing a UI element, audit the same pattern across all pages. For overlapping positioned elements, move one to a different quadrant (e.g., stat below the title on the left, legend stays top-right).
+
 ### External Data Sources Integrated
 The site now includes concrete pricing and infrastructure data from Fireworks AI and Crusoe Cloud public docs. When updating this data:
 - **Fireworks**: Serverless tiers by model size, model-specific pricing (DeepSeek V3/R1, GLM-5, Kimi K2.5), on-demand GPU rates ($5.49/hr H100, $3.19/hr A100), fine-tuning pricing ($0.50-$10/M tokens), DPO at 2× SFT, SOC2/HIPAA/GDPR compliance, FireAttention/LoRA multiplexing
