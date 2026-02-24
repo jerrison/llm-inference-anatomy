@@ -237,9 +237,22 @@ body {
 .waterfall-label { min-width: 100px; font-size: 0.65rem; color: var(--text-dim); text-align: right; }
 .waterfall-bar-wrap { flex: 1; height: 24px; background: rgba(255,255,255,0.03); border-radius: 4px; overflow: hidden; position: relative; }
 .waterfall-segment { height: 100%; float: left; transition: width 0.6s ease; position: relative; }
-.waterfall-segment:hover { opacity: 0.85; }
-.waterfall-val { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); font-size: 0.55rem; color: rgba(255,255,255,0.9); }
+.waterfall-segment:hover { filter: brightness(1.25); }
+.waterfall-segment { cursor: default; }
+.waterfall-val { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); font-size: 0.55rem; color: rgba(255,255,255,0.9); white-space: nowrap; }
 .waterfall-total { font-size: 0.65rem; color: var(--text); min-width: 60px; }
+.wf-tooltip { position: fixed; padding: 8px 12px; background: var(--bg-card); border: 1px solid var(--border-active); border-radius: 6px; font-size: 0.65rem; color: var(--text); pointer-events: none; z-index: 1000; white-space: nowrap; box-shadow: 0 4px 16px rgba(0,0,0,0.4); opacity: 0; transition: opacity 0.15s; line-height: 1.5; }
+.wf-tooltip.visible { opacity: 1; }
+.wf-tooltip strong { display: block; margin-bottom: 2px; }
+.cost-stack-wrap { display: flex; gap: 2.5rem; justify-content: center; align-items: flex-end; margin: 1.25rem 0 0; }
+.cost-stack-col-wrap { display: flex; flex-direction: column; align-items: center; }
+.cost-stack-col { display: flex; flex-direction: column-reverse; border-radius: 6px; overflow: hidden; }
+.cost-stack-block { width: 130px; display: flex; align-items: center; justify-content: space-between; padding: 0 8px; font-size: 0.5rem; color: rgba(255,255,255,0.9); cursor: default; transition: filter 0.15s; box-sizing: border-box; }
+.cost-stack-block:hover { filter: brightness(1.25); }
+.cost-stack-block .cs-cat { opacity: 0.75; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-right: 4px; }
+.cost-stack-block .cs-val { font-weight: 600; white-space: nowrap; }
+.cost-stack-total { font-size: 0.7rem; color: var(--text); margin-top: 0.4rem; font-weight: 600; }
+.cost-stack-provider { font-size: 0.55rem; color: var(--text-dim); letter-spacing: 0.12em; text-transform: uppercase; margin-top: 0.15rem; }
 .timeline-track { position: relative; height: 4px; background: var(--border); border-radius: 2px; margin: 2rem 0 1rem; }
 .timeline-fill { position: absolute; left: 0; top: 0; height: 100%; background: var(--accent); border-radius: 2px; transition: width 1.5s ease; }
 .timeline-point { position: absolute; top: -8px; width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--accent); background: var(--bg-card); transform: translateX(-50%); z-index: 2; }
@@ -342,6 +355,8 @@ body {
 [data-theme="light"] .term { text-decoration-color: rgba(26,122,181,0.4); }
 [data-theme="light"] ::selection { background: var(--accent); color: #ffffff; }
 [data-theme="light"] .step-visual { background: rgba(0,0,0,0.02); }
+[data-theme="light"] .cost-stack-block { color: rgba(0,0,0,0.8); }
+[data-theme="light"] .wf-tooltip { box-shadow: 0 4px 16px rgba(0,0,0,0.12); }
 [data-theme="light"] .minimap-dot { background: var(--bg-card); }
 [data-theme="light"] .minimap-item.active .minimap-dot { box-shadow: 0 0 8px rgba(26,122,181,0.2); }
 
@@ -1689,39 +1704,40 @@ body, .code-block, .callout-box, .metric, .site-nav, .minimap-phase { transition
     if (!el) return;
 
     var data = [
-      { label: 'GPU CapEx (3yr)', crusoe: 0.95, coreweave: 1.10, color: 'var(--compute)' },
-      { label: 'Power', crusoe: 0.03, coreweave: 0.07, color: 'var(--io)' },
-      { label: 'Data center', crusoe: 0.15, coreweave: 0.25, color: 'var(--memory)' },
-      { label: 'Networking', crusoe: 0.10, coreweave: 0.10, color: 'var(--network)' },
-      { label: 'Operations', crusoe: 0.10, coreweave: 0.12, color: 'var(--logic)' }
+      { label: 'GPU CapEx (3yr)', short: 'GPU CapEx', crusoe: 0.95, coreweave: 1.10, color: 'var(--compute)' },
+      { label: 'Power', short: 'Power', crusoe: 0.03, coreweave: 0.07, color: 'var(--io)' },
+      { label: 'Data center', short: 'Data ctr', crusoe: 0.15, coreweave: 0.25, color: 'var(--memory)' },
+      { label: 'Networking', short: 'Network', crusoe: 0.10, coreweave: 0.10, color: 'var(--network)' },
+      { label: 'Operations', short: 'Ops', crusoe: 0.10, coreweave: 0.12, color: 'var(--logic)' }
     ];
 
-    var maxVal = 1.64;
+    var crusoeTotal = 0, cwTotal = 0;
+    data.forEach(function(d) { crusoeTotal += d.crusoe; cwTotal += d.coreweave; });
+    var maxVal = Math.max(crusoeTotal, cwTotal);
+
+    // Tooltip element (appended to body so not clipped)
+    var tooltip = document.createElement('div');
+    tooltip.className = 'wf-tooltip';
+    document.body.appendChild(tooltip);
+
     var html = '<div style="font-size:0.6rem;color:var(--text-muted);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:1rem">Cost per H100-Hour Comparison</div>';
 
-    // Crusoe stacked bar
-    html += '<div class="waterfall-row"><div class="waterfall-label">Crusoe</div><div class="waterfall-bar-wrap">';
-    var crusoeTotal = 0;
-    data.forEach(function(d) {
-      var pct = (d.crusoe / maxVal * 100).toFixed(1);
-      crusoeTotal += d.crusoe;
-      html += '<div class="waterfall-segment" style="width:' + pct + '%;background:' + d.color + '" title="' + d.label + ': $' + d.crusoe.toFixed(2) + '/hr">';
-      if (d.crusoe / maxVal > 0.08) html += '<span class="waterfall-val">$' + d.crusoe.toFixed(2) + '</span>';
-      html += '</div>';
-    });
-    html += '</div><div class="waterfall-total">$' + crusoeTotal.toFixed(2) + '/hr</div></div>';
+    // Helper: build a stacked bar row
+    function buildBar(provider, totalVal) {
+      var row = '<div class="waterfall-row"><div class="waterfall-label">' + provider.charAt(0).toUpperCase() + provider.slice(1) + '</div><div class="waterfall-bar-wrap">';
+      data.forEach(function(d, i) {
+        var val = provider === 'crusoe' ? d.crusoe : d.coreweave;
+        var pct = (val / maxVal * 100).toFixed(1);
+        row += '<div class="waterfall-segment" data-idx="' + i + '" data-provider="' + provider + '" style="width:' + pct + '%;background:' + d.color + '">';
+        if (val / maxVal > 0.08) row += '<span class="waterfall-val">$' + val.toFixed(2) + '</span>';
+        row += '</div>';
+      });
+      row += '</div><div class="waterfall-total">$' + totalVal.toFixed(2) + '/hr</div></div>';
+      return row;
+    }
 
-    // CoreWeave stacked bar
-    html += '<div class="waterfall-row"><div class="waterfall-label">CoreWeave</div><div class="waterfall-bar-wrap">';
-    var cwTotal = 0;
-    data.forEach(function(d) {
-      var pct = (d.coreweave / maxVal * 100).toFixed(1);
-      cwTotal += d.coreweave;
-      html += '<div class="waterfall-segment" style="width:' + pct + '%;background:' + d.color + '" title="' + d.label + ': $' + d.coreweave.toFixed(2) + '/hr">';
-      if (d.coreweave / maxVal > 0.08) html += '<span class="waterfall-val">$' + d.coreweave.toFixed(2) + '</span>';
-      html += '</div>';
-    });
-    html += '</div><div class="waterfall-total">$' + cwTotal.toFixed(2) + '/hr</div></div>';
+    html += buildBar('crusoe', crusoeTotal);
+    html += buildBar('coreweave', cwTotal);
 
     // Legend
     html += '<div style="display:flex;flex-wrap:wrap;gap:0.75rem;margin-top:0.75rem">';
@@ -1730,13 +1746,73 @@ body, .code-block, .callout-box, .metric, .site-nav, .minimap-phase { transition
     });
     html += '</div>';
 
+    // Vertical cost stack
+    html += '<div style="font-size:0.6rem;color:var(--text-muted);letter-spacing:0.15em;text-transform:uppercase;margin:1.5rem 0 0.75rem">Cost Stack Breakdown</div>';
+
+    var stackH = 210;
+    var scale = stackH / maxVal;
+    var minH = 22;
+
+    function buildStack(provider, totalVal) {
+      var col = '<div class="cost-stack-col-wrap"><div class="cost-stack-col">';
+      data.forEach(function(d, i) {
+        var val = provider === 'crusoe' ? d.crusoe : d.coreweave;
+        var h = Math.max(val * scale, minH);
+        var pctOfTotal = ((val / totalVal) * 100).toFixed(0);
+        col += '<div class="cost-stack-block" data-idx="' + i + '" data-provider="' + provider + '" style="height:' + h.toFixed(0) + 'px;background:' + d.color + '">';
+        if (h >= 36) {
+          col += '<span class="cs-cat">' + d.short + '</span><span class="cs-val">$' + val.toFixed(2) + '</span>';
+        } else {
+          col += '<span class="cs-val" style="margin:0 auto">$' + val.toFixed(2) + '</span>';
+        }
+        col += '</div>';
+      });
+      col += '</div>';
+      col += '<div class="cost-stack-total">$' + totalVal.toFixed(2) + '/hr</div>';
+      col += '<div class="cost-stack-provider">' + provider.charAt(0).toUpperCase() + provider.slice(1) + '</div>';
+      col += '</div>';
+      return col;
+    }
+
+    html += '<div class="cost-stack-wrap">';
+    html += buildStack('crusoe', crusoeTotal);
+    html += buildStack('coreweave', cwTotal);
+    html += '</div>';
+
     // Margin comparison
-    html += '<div style="display:flex;gap:1.5rem;margin-top:1rem">';
+    html += '<div style="display:flex;flex-wrap:wrap;gap:1.5rem;margin-top:1.25rem">';
     html += '<div style="font-size:0.7rem;color:var(--text-dim)">Crusoe margin: <strong style="color:var(--economics)">~40%</strong> at $2.20/hr (current on-demand: $3.90/hr H100, $4.29/hr H200)</div>';
     html += '<div style="font-size:0.7rem;color:var(--text-dim)">CoreWeave margin: <strong style="color:var(--accent)">~34%</strong> at $2.20/hr</div>';
     html += '</div>';
 
     el.innerHTML = html;
+
+    // Bind hover tooltip on all interactive segments
+    var allSegs = el.querySelectorAll('.waterfall-segment, .cost-stack-block');
+    allSegs.forEach(function(seg) {
+      seg.addEventListener('mouseenter', function(e) {
+        var idx = parseInt(seg.getAttribute('data-idx'));
+        var prov = seg.getAttribute('data-provider');
+        var d = data[idx];
+        var val = prov === 'crusoe' ? d.crusoe : d.coreweave;
+        var total = prov === 'crusoe' ? crusoeTotal : cwTotal;
+        var pctOfTotal = ((val / total) * 100).toFixed(1);
+        tooltip.innerHTML = '<strong>' + d.label + '</strong>' + prov.charAt(0).toUpperCase() + prov.slice(1) + ': $' + val.toFixed(2) + '/hr &middot; ' + pctOfTotal + '% of total';
+        tooltip.classList.add('visible');
+        var r = seg.getBoundingClientRect();
+        tooltip.style.left = (r.left + r.width / 2) + 'px';
+        tooltip.style.top = (r.top - 8) + 'px';
+        tooltip.style.transform = 'translate(-50%, -100%)';
+      });
+      seg.addEventListener('mousemove', function(e) {
+        tooltip.style.left = (e.clientX + 14) + 'px';
+        tooltip.style.top = (e.clientY - 14) + 'px';
+        tooltip.style.transform = 'translate(0, -100%)';
+      });
+      seg.addEventListener('mouseleave', function() {
+        tooltip.classList.remove('visible');
+      });
+    });
   }
 
   // D3: Deflation Timeline
