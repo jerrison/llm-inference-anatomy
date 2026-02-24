@@ -484,7 +484,10 @@ The prefill attention matrix used `paddingBottom: 100%` for square cells, but `1
 ### 18. Visual Element Overlap — Check All Positioned Children
 The prefill stat label overlapped the legend because both were positioned top-right. When fixing a UI element, audit the same pattern across all pages. For overlapping positioned elements, move one to a different quadrant.
 
-### 19. External Data Sources Integrated
+### 19. Radial Layout Overflow — Account for Node Dimensions
+The decode loop visual positions nodes in a circle using trigonometry. The original center was shifted upward, pushing the top node into the container border. Always account for node width/height plus border/padding when computing the radius — the node center is not its visual edge. Add a top padding buffer, shift the circle center down, and clamp node positions to stay >=20px from container edges.
+
+### 20. External Data Sources Integrated
 The site includes concrete pricing and infrastructure data from Fireworks AI and Crusoe Cloud public docs. Key data: Fireworks serverless tiers, model-specific pricing (DeepSeek V3/R1, GLM-5, Kimi K2.5), on-demand GPU rates, fine-tuning pricing ($0.50-$10/M tokens), SOC2/HIPAA/GDPR compliance, FireAttention/LoRA multiplexing. Crusoe: on-demand/spot GPU rates, MemoryAlloy (cluster KV cache via RDMA), facility portfolio (Abilene TX 1.2GW, Iceland, Wyoming, Norway, Argentina), $3.4B Series E + $9.6B infra debt. The `rdma` term is defined in both index.html and economics.html termDefs.
 
 ## Deployment Verification

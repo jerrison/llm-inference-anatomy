@@ -482,6 +482,9 @@ The prefill attention matrix used `paddingBottom: 100%` to create square grid ce
 ### Visual Element Overlap — Check All Positioned Children
 The prefill visual's stat label ("Memory-bound · Sequential") overlapped the legend box because both were absolutely positioned in the top-right. When fixing a UI element, audit the same pattern across all pages. For overlapping positioned elements, move one to a different quadrant (e.g., stat below the title on the left, legend stays top-right).
 
+### Radial Layout Overflow — Account for Node Size and Container Padding
+The decode loop visual positions 4 nodes in a circle using trigonometry. The original code shifted the center upward (`cy = height/2 - 10`), pushing the top node ("Load Weights") into the container border. Fix: add a `padTop` buffer, compute `cy = (height + padTop) / 2`, reduce radius with `(cy - padTop) * 0.52`, and clamp all node positions to stay >=20px from container edges. When placing elements radially, always account for node dimensions (width/height) plus any border/padding when computing the radius — the node center is not its visual edge.
+
 ### External Data Sources Integrated
 The site now includes concrete pricing and infrastructure data from Fireworks AI and Crusoe Cloud public docs. When updating this data:
 - **Fireworks**: Serverless tiers by model size, model-specific pricing (DeepSeek V3/R1, GLM-5, Kimi K2.5), on-demand GPU rates ($5.49/hr H100, $3.19/hr A100), fine-tuning pricing ($0.50-$10/M tokens), DPO at 2× SFT, SOC2/HIPAA/GDPR compliance, FireAttention/LoRA multiplexing
