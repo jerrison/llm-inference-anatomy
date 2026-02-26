@@ -361,8 +361,8 @@ Always verify the target `id` exists in the target file before creating.
 **index.html (~46 terms):**
 `alibi`, `arithmetic-intensity`, `autoregressive`, `awq`, `bpe`, `chunked-prefill`, `cold-start`, `continuous-batching`, `decode`, `disaggregated-serving`, `eos`, `ep`, `flashattention`, `fp16`, `fp8`, `fsm-decoding`, `gguf`, `gptq`, `gqa`, `hbm`, `infiniband`, `int4`, `kv-cache`, `logits`, `lora`, `mha`, `min-p`, `mla`, `moe`, `mqa`, `nvlink`, `pagedattention`, `pp`, `prefill`, `prefix-caching`, `rdma`, `rope`, `softmax`, `speculative-decoding`, `sram`, `sse`, `top-k`, `top-p`, `tp`, `tpot`, `ttft`
 
-**economics.html (~14 terms):**
-`barbell-strategy`, `capex`, `dscr`, `fixed-rate-swap`, `gross-margin`, `opex`, `pue`, `rdma`, `residual-value`, `revenue-per-watt`, `sofr`, `statistical-multiplexing`, `tco`, `utilization-breakeven`, `wacc`
+**economics.html (~21 terms):**
+`barbell-strategy`, `capex`, `dscr`, `fixed-rate-swap`, `gross-margin`, `interleaved-thinking`, `opex`, `preserved-thinking`, `pue`, `rdma`, `reasoning-content`, `reasoning-effort`, `reasoning-history`, `residual-value`, `revenue-per-watt`, `sofr`, `statistical-multiplexing`, `tco`, `thinking-budget`, `utilization-breakeven`, `wacc`
 
 **training.html (~30 terms):**
 `bpe`, `sentencepiece`, `minhash`, `rmsnorm`, `swiglu`, `gqa`, `mla`, `rope`, `moe`, `adamw`, `muon`, `wsd`, `fsdp`, `zero`, `tp`, `pp`, `dpo`, `grpo`, `rlhf`, `constitutional-ai`, `kto`, `mmlu`, `mfu`, `rft`, `prm`, and more
@@ -504,7 +504,7 @@ After deploying, verify:
 6. Interactive visuals on economics.html: cost waterfall hover, breakeven sliders work, deflation timeline animates, capital bars expand
 7. Interactive visuals on training.html: data funnel animates, optimizer bars render, parallelism grid toggles modes
 8. Interactive visuals on training-economics.html: training waterfall renders, scaling curve bars, cost calculator sliders, spend timeline bars
-9. All ~93 term tooltips work (~46 inference + ~14 inference-econ + ~30 training + ~3 training-econ) — click show/dismiss
+9. All ~100 term tooltips work (~46 inference + ~21 inference-econ + ~30 training + ~3 training-econ) — click show/dismiss
 10. Sub-topics within sections toggle independently (no accordion — multiple can be open)
 11. Phase overview cards scroll to correct anchors on all pages
 12. Responsive at 768px: nav adapts, minimap hides, content stacks on all pages

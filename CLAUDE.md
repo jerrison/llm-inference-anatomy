@@ -414,7 +414,7 @@ No build step needed. The `site/` directory is deployed directly.
 - [ ] Cross-links navigate to correct sections across all 4 pages
 - [ ] Theme toggle works on all 4 pages, persists across navigation
 - [ ] Interactive visuals on economics.html: cost waterfall, breakeven sliders, deflation timeline, capital bars
-- [ ] All ~95 term tooltips work (~46 inference + ~14 inference-econ + ~30 training + ~3 training-econ) — click show/dismiss
+- [ ] All ~100 term tooltips work (~46 inference + ~21 inference-econ + ~30 training + ~3 training-econ) — click show/dismiss
 - [ ] Responsive at 768px: nav adapts, minimap hides, content stacks on all pages
 - [ ] Light/dark theme: all 4 pages adapt correctly
 - [ ] Minimap navigation: click EVERY minimap item on all 4 pages and verify correct section
