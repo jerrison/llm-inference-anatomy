@@ -15,7 +15,7 @@ Do not wait for the user to ask. Do not skip any step. This applies to every cha
 
 A four-page interactive reference site covering LLM training and inference. Two pages cover the technical pipeline (training + inference), two cover business economics (training + inference). Dark/light theme, editorial design, progressive disclosure. No framework, no build step — four self-contained HTML files with inline CSS and JS.
 
-- **Files**: `site/index.html` (~4,689 lines), `site/economics.html` (~1,752 lines), `site/training.html` (~2,084 lines), `site/training-economics.html` (~1,195 lines)
+- **Files**: `site/index.html` (~4,689 lines), `site/economics.html` (~3,189 lines), `site/training.html` (~2,084 lines), `site/training-economics.html` (~1,195 lines)
 - **Hosting**: Cloudflare Pages (`llm-inference-anatomy`)
 - **Deploy**: `npx wrangler pages deploy ./site --project-name=llm-inference-anatomy`
 - **Live**: https://llm-inference-anatomy.pages.dev
@@ -42,7 +42,7 @@ npx wrangler pages deploy ./site --project-name=llm-inference-anatomy
 ├── GEMINI.md                        ← Gemini instructions
 └── site/
     ├── index.html                   ← Inference Technical Pipeline (~4,689 lines)
-    ├── economics.html               ← Inference Economics (~1,752 lines)
+    ├── economics.html               ← Inference Economics (~3,189 lines)
     ├── training.html                ← Training Technical Pipeline (~2,084 lines)
     └── training-economics.html      ← Training Economics (~1,195 lines)
 ```
@@ -473,7 +473,7 @@ When modifying interactions on any page:
 - [ ] Interactive visuals on economics.html: cost waterfall hover, breakeven sliders, deflation timeline, capital bars
 - [ ] Interactive visuals on training.html: data funnel, optimizer comparison, parallelism diagram
 - [ ] Interactive visuals on training-economics.html: training waterfall, scaling curve, cost calculator, spend timeline
-- [ ] All ~90 term tooltips work (~46 inference + ~12 inference-econ + ~30 training + ~3 training-econ) — click show/dismiss
+- [ ] All ~93 term tooltips work (~46 inference + ~14 inference-econ + ~30 training + ~3 training-econ) — click show/dismiss
 - [ ] Responsive at 768px: nav adapts, minimap hides, content stacks on all pages
 - [ ] Light/dark theme: all 4 pages adapt correctly
 - [ ] Minimap navigation: click EVERY minimap item on all 4 pages and verify correct section

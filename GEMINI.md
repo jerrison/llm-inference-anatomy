@@ -17,7 +17,7 @@ A four-page interactive educational site covering LLM training and inference. Tw
 
 **Key facts:**
 - `site/index.html` (~4,689 lines, inline HTML + CSS + JS) — Inference Technical Pipeline
-- `site/economics.html` (~1,752 lines, inline HTML + CSS + JS) — Inference Economics
+- `site/economics.html` (~3,189 lines, inline HTML + CSS + JS) — Inference Economics
 - `site/training.html` (~2,084 lines, inline HTML + CSS + JS) — Training Technical Pipeline
 - `site/training-economics.html` (~1,195 lines, inline HTML + CSS + JS) — Training Economics
 - No build step, no framework, no npm dependencies
@@ -34,7 +34,7 @@ A four-page interactive educational site covering LLM training and inference. Tw
 ├── GEMINI.md                        ← Gemini agent instructions (this file)
 └── site/
     ├── index.html                   ← Inference Technical Pipeline (~4,689 lines)
-    ├── economics.html               ← Inference Economics (~1,752 lines)
+    ├── economics.html               ← Inference Economics (~3,189 lines)
     ├── training.html                ← Training Technical Pipeline (~2,084 lines)
     └── training-economics.html      ← Training Economics (~1,195 lines)
 ```
@@ -361,8 +361,8 @@ Always verify the target `id` exists in the target file before creating.
 **index.html (~46 terms):**
 `alibi`, `arithmetic-intensity`, `autoregressive`, `awq`, `bpe`, `chunked-prefill`, `cold-start`, `continuous-batching`, `decode`, `disaggregated-serving`, `eos`, `ep`, `flashattention`, `fp16`, `fp8`, `fsm-decoding`, `gguf`, `gptq`, `gqa`, `hbm`, `infiniband`, `int4`, `kv-cache`, `logits`, `lora`, `mha`, `min-p`, `mla`, `moe`, `mqa`, `nvlink`, `pagedattention`, `pp`, `prefill`, `prefix-caching`, `rdma`, `rope`, `softmax`, `speculative-decoding`, `sram`, `sse`, `top-k`, `top-p`, `tp`, `tpot`, `ttft`
 
-**economics.html (~12 terms):**
-`capex`, `dscr`, `fixed-rate-swap`, `gross-margin`, `opex`, `pue`, `residual-value`, `sofr`, `statistical-multiplexing`, `tco`, `utilization-breakeven`, `wacc`
+**economics.html (~14 terms):**
+`barbell-strategy`, `capex`, `dscr`, `fixed-rate-swap`, `gross-margin`, `opex`, `pue`, `rdma`, `residual-value`, `revenue-per-watt`, `sofr`, `statistical-multiplexing`, `tco`, `utilization-breakeven`, `wacc`
 
 **training.html (~30 terms):**
 `bpe`, `sentencepiece`, `minhash`, `rmsnorm`, `swiglu`, `gqa`, `mla`, `rope`, `moe`, `adamw`, `muon`, `wsd`, `fsdp`, `zero`, `tp`, `pp`, `dpo`, `grpo`, `rlhf`, `constitutional-ai`, `kto`, `mmlu`, `mfu`, `rft`, `prm`, and more
@@ -504,7 +504,7 @@ After deploying, verify:
 6. Interactive visuals on economics.html: cost waterfall hover, breakeven sliders work, deflation timeline animates, capital bars expand
 7. Interactive visuals on training.html: data funnel animates, optimizer bars render, parallelism grid toggles modes
 8. Interactive visuals on training-economics.html: training waterfall renders, scaling curve bars, cost calculator sliders, spend timeline bars
-9. All ~90 term tooltips work (~46 inference + ~12 inference-econ + ~30 training + ~3 training-econ) — click show/dismiss
+9. All ~93 term tooltips work (~46 inference + ~14 inference-econ + ~30 training + ~3 training-econ) — click show/dismiss
 10. Sub-topics within sections toggle independently (no accordion — multiple can be open)
 11. Phase overview cards scroll to correct anchors on all pages
 12. Responsive at 768px: nav adapts, minimap hides, content stacks on all pages
