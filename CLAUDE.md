@@ -28,7 +28,7 @@ A four-page interactive reference site covering LLM training and inference. Two 
 ├── GEMINI.md                        ← Gemini agent instructions
 └── site/
     ├── index.html                   ← Inference Technical Pipeline (~4,689 lines)
-    ├── economics.html               ← Inference Economics (~1,752 lines)
+    ├── economics.html               ← Inference Economics (~3,189 lines)
     ├── training.html                ← Training Technical Pipeline (~2,084 lines)
     └── training-economics.html      ← Training Economics (~1,195 lines)
 ```
@@ -82,17 +82,17 @@ Page structure (top to bottom):
 
 Three Phases:
 - **Phase D — Unit Economics** (`id="phase-d"`)
-  - D1: The Cost Stack (`id="cost-stack"`) — GPU CapEx, power, data center, networking, operations
-  - D2: Throughput as Margin (`id="throughput"`) — optimization creates 3-5× throughput variance
-  - D3: Pricing Structures (`id="pricing"`) — per-token, per-GPU-hour, reserved, batch, value-based
+  - D1: The Cost Stack (`id="cost-stack"`) — GPU CapEx, power, data center, networking, operations, GPU power draw & facility cost tables, 3 ownership scenarios (grid competitor, Crusoe-owned, Crusoe-renting), complete cost bridge ($/kWh → $/kW/month → $/GPU-hour)
+  - D2: Throughput as Margin (`id="throughput"`) — optimization creates 3-5× (15-17×) throughput variance, cumulative optimization stack (300→5,000 tok/s), revenue per GPU-hour formulas, revenue per MW & facility economics, target margins by business model
+  - D3: Pricing Structures (`id="pricing"`) — per-token, per-GPU-hour, reserved, batch, value-based, reserved contracts as fixed-rate swaps, deflation dynamic
 - **Phase E — Business Models** (`id="phase-e"`)
-  - E1: Managed vs GPU Rental (`id="managed-vs-rental"`) — statistical multiplexing, outcomes vs infra
-  - E2: Buy vs Rent GPUs (`id="buy-vs-rent"`) — breakeven calculator, ownership cost model
-  - E3: Data Centers (`id="data-centers"`) — power costs, PUE, facility economics
+  - E1: Managed vs GPU Rental (`id="managed-vs-rental"`) — statistical multiplexing, outcomes vs infra, revenue multiplier comparison (rental vs managed by model size), IPO valuation lens (infrastructure vs software multiples), cannibalization tension
+  - E2: Buy vs Rent GPUs (`id="buy-vs-rent"`) — breakeven calculator, ownership cost model, option value lens, barbell strategy
+  - E3: Data Centers (`id="data-centers"`) — power costs, PUE, facility economics, CapEx breakdown by component per MW, OpEx breakdown with Crusoe advantage analysis, colocation lease rate benchmarks (9 markets), 100 MW reference facility model
 - **Phase F — Capital Structure** (`id="phase-f"`)
   - F1: Equity vs Debt (`id="equity-vs-debt"`) — risk, information asymmetry, tax shields
-  - F2: Contracted Revenue (`id="contracted-revenue"`) — pricing decisions unlock debt capacity
-  - F3: Stage-by-Stage (`id="stage-by-stage"`) — Series A → Public capital evolution
+  - F2: Contracted Revenue (`id="contracted-revenue"`) — pricing decisions unlock debt capacity, 4 mechanisms, tenor economics ($127M/yr freed on 12yr vs 5yr), reserved pricing NPV analysis, virtuous cycle
+  - F3: Stage-by-Stage (`id="stage-by-stage"`) — Series A → Public capital evolution, dual capital structure, CapEx in supply-constrained markets (sequential bottleneck cascade), barbell approach (6-domain resource allocation framework)
 
 Uses the same component patterns as index.html: step-card, sub-topic, callout-box, data-table, metrics-row.
 
@@ -414,7 +414,7 @@ No build step needed. The `site/` directory is deployed directly.
 - [ ] Cross-links navigate to correct sections across all 4 pages
 - [ ] Theme toggle works on all 4 pages, persists across navigation
 - [ ] Interactive visuals on economics.html: cost waterfall, breakeven sliders, deflation timeline, capital bars
-- [ ] All ~90 term tooltips work (~46 inference + ~12 inference-econ + ~30 training + ~3 training-econ) — click show/dismiss
+- [ ] All ~95 term tooltips work (~46 inference + ~14 inference-econ + ~30 training + ~3 training-econ) — click show/dismiss
 - [ ] Responsive at 768px: nav adapts, minimap hides, content stacks on all pages
 - [ ] Light/dark theme: all 4 pages adapt correctly
 - [ ] Minimap navigation: click EVERY minimap item on all 4 pages and verify correct section
