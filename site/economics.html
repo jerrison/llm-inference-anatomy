@@ -633,6 +633,78 @@ body, .code-block, .callout-box, .metric, .site-nav, .minimap-phase { transition
                   <p>GPU failures at 2-5% annually mean a 10,000-GPU fleet needs constant triage &mdash; detecting degraded GPUs, migrating workloads, RMA processing. This is where <span class="term" data-term="opex">OpEx</span> quietly compounds.</p>
                 </div>
               </div>
+              <div class="sub-topic">
+                <div class="sub-topic-header" onclick="toggleSubTopic(this)">
+                  <span class="sub-topic-name">GPU Power Draw &amp; Facility Cost</span>
+                  <span class="sub-topic-icon">+</span>
+                </div>
+                <div class="sub-topic-preview">The single number that bridges infrastructure to GPU economics</div>
+                <div class="sub-topic-detail">
+                  <p><strong>Important distinction:</strong> GPU TDP is just the chip. A server slot includes CPU, system memory, NICs, NVSwitches, fans, and power supply losses. Facility power adds <span class="term" data-term="pue">PUE</span> overhead. Always use <strong>facility power per GPU slot</strong> for cost calculations.</p>
+                  <table class="data-table">
+                    <thead><tr><th>GPU</th><th>TDP/GPU</th><th>Server Config</th><th>Server W/GPU</th><th>Facility W/GPU (PUE 1.10)</th></tr></thead>
+                    <tbody>
+                      <tr><td>H100 SXM</td><td>700W</td><td>HGX 8-GPU: ~10.2 kW</td><td>~1,275W</td><td>~1,400W</td></tr>
+                      <tr><td>H200 SXM</td><td>700W</td><td>HGX 8-GPU: ~10.2 kW</td><td>~1,275W</td><td>~1,400W</td></tr>
+                      <tr><td>B200</td><td>1,000W</td><td>HGX 8-GPU: ~14.3 kW</td><td>~1,790W</td><td>~1,970W</td></tr>
+                      <tr><td>GB200 (NVL72)</td><td>~1,200W</td><td>NVL72: ~120 kW / 72</td><td>~1,667W</td><td>~1,833W</td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin-top:0.75rem"><strong>Electricity cost per GPU-hour</strong> = (Facility kW per GPU) &times; $/kWh</p>
+                  <table class="data-table">
+                    <thead><tr><th>GPU</th><th>Facility kW</th><th>At $0.10/kWh (grid)</th><th>At $0.03/kWh (Crusoe)</th><th>Delta</th></tr></thead>
+                    <tbody>
+                      <tr><td>H100</td><td>1.40 kW</td><td>$0.140/hr</td><td>$0.042/hr</td><td>$0.098/hr</td></tr>
+                      <tr><td>B200</td><td>1.97 kW</td><td>$0.197/hr</td><td>$0.059/hr</td><td>$0.138/hr</td></tr>
+                      <tr><td>GB200</td><td>1.83 kW</td><td>$0.183/hr</td><td>$0.055/hr</td><td>$0.128/hr</td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin-top:0.5rem">At 85% utilization over a year (7,446 hrs), electricity per H100: Grid = <strong>$1,042/yr</strong>. Crusoe = <strong>$313/yr</strong>. Delta = <strong>$730/yr per GPU</strong>. At 10,000 GPUs: <strong>$7.3M/year</strong> saved &mdash; just from electricity.</p>
+                </div>
+              </div>
+              <div class="sub-topic">
+                <div class="sub-topic-header" onclick="toggleSubTopic(this)">
+                  <span class="sub-topic-name">Three Ownership Scenarios</span>
+                  <span class="sub-topic-icon">+</span>
+                </div>
+                <div class="sub-topic-preview">Grid competitor vs Crusoe-owned vs Crusoe-renting</div>
+                <div class="sub-topic-detail">
+                  <table class="data-table">
+                    <thead><tr><th>Component</th><th>Grid Competitor (colo)</th><th>Crusoe (owned)</th><th>Crusoe (renting colo)</th></tr></thead>
+                    <tbody>
+                      <tr><td>GPU amortization (3yr)</td><td>$1.07/hr</td><td>$1.07/hr</td><td>$1.07/hr</td></tr>
+                      <tr><td>Electricity</td><td>$0.14/hr</td><td>$0.04/hr</td><td>$0.13/hr</td></tr>
+                      <tr><td>Infrastructure</td><td>$0.35/hr</td><td>$0.15/hr</td><td>$0.41/hr</td></tr>
+                      <tr><td>Networking</td><td>$0.19/hr</td><td>$0.19/hr</td><td>$0.19/hr</td></tr>
+                      <tr><td>Operations</td><td>$0.10/hr</td><td>$0.10/hr</td><td>$0.10/hr</td></tr>
+                      <tr><td><strong>Total cost</strong></td><td><strong>$1.85/hr</strong></td><td><strong>$1.55/hr</strong></td><td><strong>$1.90/hr</strong></td></tr>
+                      <tr><td>Selling price</td><td>$2.50/hr</td><td>$2.20/hr</td><td>$2.50/hr</td></tr>
+                      <tr><td><strong><span class="term" data-term="gross-margin">Gross Margin</span></strong></td><td><strong>26%</strong></td><td><strong>30%</strong></td><td><strong>24%</strong></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin-top:0.75rem"><strong>When Crusoe rents colo, both structural advantages vanish:</strong> electricity ($0.04 &rarr; $0.13) and infrastructure ($0.15 &rarr; $0.41). GPUs, networking, and operations cost the same regardless. Total delta between owned and renting: <strong>$0.35/hr per GPU</strong>. At 100 MW (~78,400 GPUs, 85% util): <strong>~$204M/year</strong> the ownership model saves.</p>
+                  <p><strong>This is the entire argument for vertical integration in one table.</strong> Without ownership, Crusoe competes on the same cost structure as everyone else. The $0.35/hr advantage <em>is</em> the business model.</p>
+                  <p style="margin-top:0.5rem"><strong>When renting makes sense anyway:</strong> Market validation (deploy 500 GPUs to prove demand before committing $500M+ to build), geographic reach (low-latency in Singapore/Frankfurt), and burst overflow (owned at 90%, rent the spike). The blend is what matters &mdash; own 80% base load, rent 20% flex.</p>
+                </div>
+              </div>
+              <div class="sub-topic">
+                <div class="sub-topic-header" onclick="toggleSubTopic(this)">
+                  <span class="sub-topic-name">The Complete Cost Bridge</span>
+                  <span class="sub-topic-icon">+</span>
+                </div>
+                <div class="sub-topic-preview">Converting between $/kWh, $/kW/month, and $/GPU-hour</div>
+                <div class="sub-topic-detail">
+                  <p>Every infrastructure cost can be converted to $/GPU-hour using <strong>facility kW per GPU slot</strong> as the bridge:</p>
+                  <div class="code-block"><span class="kw">Infrastructure</span>              <span class="fn">Conversion</span>                        <span class="kw">GPU metric</span>
+────────────────              ──────────                        ──────────
+<span class="str">$/kWh</span> (electricity)    &times; kW/GPU &times; PUE            &rarr;  $/GPU-hr (power)
+<span class="str">$/kW/month</span> (colo)     &times; kW/GPU &divide; 730 hrs         &rarr;  $/GPU-hr (infra)
+<span class="str">$/GPU</span> (purchase)       &divide; useful life hrs            &rarr;  $/GPU-hr (amort)
+──────────────────────────────────────────────────────────
+Sum of above                                           =  <span class="num">Total $/GPU-hr</span></div>
+                  <p style="margin-top:0.5rem"><strong>Colo rate &rarr; per-GPU:</strong> At US avg $184/kW/mo, an H100 (1.40 kW): $258/mo infra = <strong>$0.35/hr</strong>. At N. Virginia $215/kW/mo: $301/mo = <strong>$0.41/hr</strong>. Infrastructure alone costs $0.35-0.41/hr before GPU amortization, networking, or electricity.</p>
+                </div>
+              </div>
             </div>
 
           </div>
@@ -747,6 +819,91 @@ body, .code-block, .callout-box, .metric, .site-nav, .minimap-phase { transition
                 <div class="sub-topic-detail">
                   <p>Hardware generation creates step-function improvements. B200 with FP4 serves the same model at dramatically higher throughput than H100 at FP16. Blackwell delivers 3-5x performance per dollar vs Hopper.</p>
                   <p>This drives the technology obsolescence risk in GPU ownership &mdash; an H100 purchased today may be economically obsolete before fully depreciated.</p>
+                </div>
+              </div>
+              <div class="sub-topic">
+                <div class="sub-topic-header" onclick="toggleSubTopic(this)">
+                  <span class="sub-topic-name">The Optimization Stack (15-17x)</span>
+                  <span class="sub-topic-icon">+</span>
+                </div>
+                <div class="sub-topic-preview">From ~300 to ~5,000 tokens/sec on identical hardware</div>
+                <div class="sub-topic-detail">
+                  <p>The same model on the same GPU varies <strong>15-17x</strong> in throughput depending on optimization depth. Each layer compounds on the previous:</p>
+                  <table class="data-table">
+                    <thead><tr><th>Layer</th><th>Technique</th><th>Multiplier</th><th>Cumulative tok/s</th></tr></thead>
+                    <tbody>
+                      <tr><td>Baseline</td><td>HuggingFace defaults, FP16, static batching</td><td>1.0x</td><td>~300</td></tr>
+                      <tr><td>1</td><td>Continuous batching (dynamic slot mgmt)</td><td>~2.5x</td><td>~750</td></tr>
+                      <tr><td>2</td><td>PagedAttention (KV cache virtualization)</td><td>~1.7x</td><td>~1,275</td></tr>
+                      <tr><td>3</td><td>FlashAttention (fused ops, SRAM tiling)</td><td>~1.3x</td><td>~1,658</td></tr>
+                      <tr><td>4</td><td>Quantization (FP16 &rarr; FP8/FP4)</td><td>~1.8x</td><td>~2,984</td></tr>
+                      <tr><td>5</td><td>Custom CUDA kernels (fused, arch-specific)</td><td>~1.3x</td><td>~3,879</td></tr>
+                      <tr><td>6</td><td>Speculative decoding (draft + verify)</td><td>~1.3x</td><td>~5,043</td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin-top:0.5rem">Layers 1-3 are table stakes (vLLM, TensorRT-LLM implement them). Layers 4-6 require deep GPU engineering &mdash; custom kernels that outperform open-source take years of accumulated expertise. This is the core moat of inference platforms like Fireworks (FireAttention) and Crusoe (MemoryAlloy).</p>
+                  <p><strong>Why the gap persists:</strong> Each new model architecture (MoE, multi-modal, new attention patterns) requires new kernel development. The optimization target keeps moving.</p>
+                </div>
+              </div>
+              <div class="sub-topic">
+                <div class="sub-topic-header" onclick="toggleSubTopic(this)">
+                  <span class="sub-topic-name">Revenue per GPU-Hour</span>
+                  <span class="sub-topic-icon">+</span>
+                </div>
+                <div class="sub-topic-preview">From $/token to $/GPU-hour &mdash; the punchline of optimization</div>
+                <div class="sub-topic-detail">
+                  <p><strong>Formula:</strong> <code>Revenue/GPU-hr = tok/sec &times; 3,600 &times; $/token</code></p>
+                  <p>Example: Llama 3.1 70B on optimized H100 cluster:</p>
+                  <table class="data-table">
+                    <thead><tr><th>Metric</th><th>Unoptimized</th><th>Fully Optimized</th></tr></thead>
+                    <tbody>
+                      <tr><td>Output throughput</td><td>~200 tok/s</td><td>~1,200 tok/s</td></tr>
+                      <tr><td>Output price ($0.90/M)</td><td><strong>$0.65/hr</strong></td><td><strong>$3.89/hr</strong></td></tr>
+                      <tr><td>Input throughput</td><td>~2,000 tok/s</td><td>~8,000 tok/s</td></tr>
+                      <tr><td>Input price ($0.30/M)</td><td><strong>$2.16/hr</strong></td><td><strong>$8.64/hr</strong></td></tr>
+                      <tr><td>Blended revenue/GPU-hr</td><td><strong>$1.25/hr</strong></td><td><strong>$5.80/hr</strong></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin-top:0.5rem"><strong>The punchline:</strong> At Crusoe&rsquo;s $1.55/hr cost, unoptimized serving barely breaks even ($1.25/hr). Fully optimized yields <strong>~73% gross margin</strong> ($5.80/hr). A 6x throughput improvement is a 6x revenue increase at constant pricing.</p>
+                </div>
+              </div>
+              <div class="sub-topic">
+                <div class="sub-topic-header" onclick="toggleSubTopic(this)">
+                  <span class="sub-topic-name">Revenue per MW &amp; Facility</span>
+                  <span class="sub-topic-icon">+</span>
+                </div>
+                <div class="sub-topic-preview">Scaling from GPU-hour to facility-level economics</div>
+                <div class="sub-topic-detail">
+                  <p><strong>Formula:</strong> <code>GPUs/MW = 1,000,000W &divide; server W/GPU slot</code></p>
+                  <table class="data-table">
+                    <thead><tr><th>GPU</th><th>W/slot</th><th>GPUs/MW</th><th>GPU Rental (85% util)</th><th>Managed Inference (85%)</th></tr></thead>
+                    <tbody>
+                      <tr><td>H100</td><td>1,275W</td><td>~784</td><td><strong>$12.8M/MW/yr</strong></td><td><strong>$33.8M/MW/yr</strong></td></tr>
+                      <tr><td>B200</td><td>1,790W</td><td>~559</td><td><strong>$9.1M/MW/yr</strong></td><td><strong>$24.1M/MW/yr</strong></td></tr>
+                      <tr><td>GB200</td><td>1,667W</td><td>~600</td><td><strong>$9.8M/MW/yr</strong></td><td><strong>$25.9M/MW/yr</strong></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin-top:0.5rem"><strong>100 MW H100 facility (85% util):</strong> GPU rental ~$1.28B/yr. Managed inference ~$3.38B/yr. Industry benchmark: AI facilities generate ~$12.50/watt/year (3x traditional DCs at $4.20/watt). Best operators already exceed $30/watt.</p>
+                  <p><strong>&ldquo;Revenue per watt&rdquo; is the master metric</strong> for AI data centers. It bridges the infrastructure world to the compute world in a single number.</p>
+                </div>
+              </div>
+              <div class="sub-topic">
+                <div class="sub-topic-header" onclick="toggleSubTopic(this)">
+                  <span class="sub-topic-name">Target Margins by Business Model</span>
+                  <span class="sub-topic-icon">+</span>
+                </div>
+                <div class="sub-topic-preview">55-70% managed inference vs 25-35% GPU rental</div>
+                <div class="sub-topic-detail">
+                  <table class="data-table">
+                    <thead><tr><th>Business Model</th><th>Gross Margin</th><th>Why</th></tr></thead>
+                    <tbody>
+                      <tr><td>Managed inference (asset-light)</td><td>55-70%</td><td>Software optimization on popular models; don&rsquo;t own infra</td></tr>
+                      <tr><td>GPU rental (asset-heavy)</td><td>25-35%</td><td>Capital-intensive; GPU amortization is largest cost</td></tr>
+                      <tr><td>Crusoe managed (rental + software)</td><td>40-55%</td><td>MemoryAlloy layer on owned infra; blended product mix</td></tr>
+                      <tr><td>Crusoe energy delta</td><td>+5-6 pts</td><td>$0.03 vs $0.07-0.10/kWh flows to margin or pricing</td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin-top:0.5rem">Every dollar shifted from &ldquo;infrastructure rental revenue&rdquo; to &ldquo;software-delivered managed inference&rdquo; potentially increases valuation multiple. Infrastructure trades at 5-8x revenue; software with recurring revenue at 15-20x.</p>
                 </div>
               </div>
             </div>
@@ -1008,6 +1165,36 @@ body, .code-block, .callout-box, .metric, .site-nav, .minimap-phase { transition
                   <p><strong>Hardware roadmap:</strong> GB200, B200, and MI355X availability signals to customers that the provider won&rsquo;t strand them on last-gen hardware &mdash; critical for multi-year capacity planning.</p>
                 </div>
               </div>
+              <div class="sub-topic">
+                <div class="sub-topic-header" onclick="toggleSubTopic(this)">
+                  <span class="sub-topic-name">Revenue Multiplier: Rental vs Managed</span>
+                  <span class="sub-topic-icon">+</span>
+                </div>
+                <div class="sub-topic-preview">Managed inference generates 1-7x more revenue per GPU-hour on popular models</div>
+                <div class="sub-topic-detail">
+                  <table class="data-table">
+                    <thead><tr><th>Model</th><th>GPU Rental Revenue/hr</th><th>Managed Inference/hr (optimized)</th><th>Multiplier</th></tr></thead>
+                    <tbody>
+                      <tr><td>Llama 3.1 8B</td><td>$2.20 (full H100, overkill)</td><td>$8-15/hr (high throughput, massive volume)</td><td>4-7x</td></tr>
+                      <tr><td>Llama 3.1 70B</td><td>$2.20 &times; 2 GPUs = $4.40</td><td>$5-10/hr (moderate throughput)</td><td>1-2x</td></tr>
+                      <tr><td>Llama 3.1 405B</td><td>$2.20 &times; 8+ GPUs = $17.60+</td><td>$8-15/hr (low throughput, premium price)</td><td>0.5-1x</td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin-top:0.5rem">Managed inference generates more revenue per GPU-hour for <strong>popular small-to-mid models</strong> (where batching and optimization shine). For very large models (405B+), GPU rental can yield comparable revenue because batch sizes are limited and multi-GPU overhead is high.</p>
+                </div>
+              </div>
+              <div class="sub-topic">
+                <div class="sub-topic-header" onclick="toggleSubTopic(this)">
+                  <span class="sub-topic-name">The IPO Lens</span>
+                  <span class="sub-topic-icon">+</span>
+                </div>
+                <div class="sub-topic-preview">Product mix directly affects valuation multiples</div>
+                <div class="sub-topic-detail">
+                  <p><strong>CapEx-heavy companies trade at lower revenue multiples.</strong> Pure SaaS growing 50% trades at 15-20x revenue. Infrastructure company growing 50% with 60% CapEx intensity trades at 5-8x.</p>
+                  <p><strong>But recurring infrastructure revenue has its own premium.</strong> Long-term contracted data center revenue is valued almost like a bond. Digital Realty and Equinix trade at 20-30x AFFO because revenue is contracted and recurring.</p>
+                  <p><strong>Crusoe&rsquo;s IPO narrative:</strong> If positioned as &ldquo;we spend billions on data centers&rdquo; &rarr; infrastructure multiples. If positioned as &ldquo;we have $1.5B in contracted cloud ARR growing 5x with managed inference software on top&rdquo; &rarr; blended multiples. Product mix decisions directly affect how the market values the entire company.</p>
+                </div>
+              </div>
             </div>
 
           </div>
@@ -1211,6 +1398,98 @@ body, .code-block, .callout-box, .metric, .site-nav, .minimap-phase { transition
                   <p>This is why the metric is $/kW/month: it captures the actual scarce resource (power capacity) rather than the abundant one (floor space).</p>
                 </div>
               </div>
+              <div class="sub-topic">
+                <div class="sub-topic-header" onclick="toggleSubTopic(this)">
+                  <span class="sub-topic-name">CapEx Breakdown by Component</span>
+                  <span class="sub-topic-icon">+</span>
+                </div>
+                <div class="sub-topic-preview">$35-45M/MW all-in &mdash; GPUs are 55-65% of total</div>
+                <div class="sub-topic-detail">
+                  <table class="data-table">
+                    <thead><tr><th>Component</th><th>Industry $/MW</th><th>Crusoe $/MW</th><th>Advantage?</th></tr></thead>
+                    <tbody>
+                      <tr><td>Shell &amp; core construction</td><td>$9-15M</td><td>$8-12M</td><td>Modest (cheap land, modular build)</td></tr>
+                      <tr><td>AI fit-out (GPUs, networking)</td><td>$20-25M</td><td>$20-25M</td><td>None &mdash; GPU cost is GPU cost</td></tr>
+                      <tr><td><strong>Total all-in per MW</strong></td><td><strong>$35-45M</strong></td><td><strong>$28-37M</strong></td><td>&mdash;</td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin-top:0.5rem"><strong>Shell &amp; core components:</strong> Land ($100-500/kW, 1-3% of total), power infrastructure ($2-4.5K/kW, 20-30% &mdash; Crusoe saves on grid interconnection via behind-the-meter), cooling ($1.5-3K/kW, 15-20% &mdash; cold-climate sites save on heat rejection), building ($600-1.2K/kW, 5-10%), networking ($350-900/kW, 3-7%).</p>
+                  <p><strong>GPU depreciation mismatch is the biggest financial risk.</strong> Accounting: 3-5 years. Economic life: 2-3 years. Crusoe&rsquo;s cheap power extends viability of older GPUs for batch workloads &mdash; converting a liability (aging GPUs) into an asset (cheap compute).</p>
+                </div>
+              </div>
+              <div class="sub-topic">
+                <div class="sub-topic-header" onclick="toggleSubTopic(this)">
+                  <span class="sub-topic-name">OpEx Breakdown &amp; Crusoe Advantage</span>
+                  <span class="sub-topic-icon">+</span>
+                </div>
+                <div class="sub-topic-preview">$50-80M/year savings at 100 MW &mdash; almost all electricity &amp; cooling</div>
+                <div class="sub-topic-detail">
+                  <table class="data-table">
+                    <thead><tr><th>Component</th><th>Industry $/MW/yr</th><th>Crusoe $/MW/yr</th><th>Advantage?</th></tr></thead>
+                    <tbody>
+                      <tr><td>Electricity</td><td>$675K-1,050K</td><td>$190-440K</td><td><strong>Yes &mdash; structural</strong></td></tr>
+                      <tr><td>Cooling operations</td><td>$150-400K</td><td>$50-150K</td><td><strong>Yes &mdash; partial</strong></td></tr>
+                      <tr><td>Personnel</td><td>$200-400K</td><td>$200-450K</td><td>No &mdash; possibly higher (rural premiums)</td></tr>
+                      <tr><td>Hardware maintenance</td><td>$150-350K</td><td>$150-350K</td><td>No &mdash; GPU failure rates are physics</td></tr>
+                      <tr><td>Networking &amp; connectivity</td><td>$50-120K</td><td>$60-150K</td><td>No &mdash; dark fiber to rural costs more</td></tr>
+                      <tr><td>Other (insurance, software, etc.)</td><td>$80-280K</td><td>$80-280K</td><td>No</td></tr>
+                      <tr><td><strong>Total OpEx</strong></td><td><strong>$1.3-2.7M</strong></td><td><strong>$810K-1.9M</strong></td><td>&mdash;</td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin-top:0.5rem"><strong>Critical honesty:</strong> The $50-80M/year advantage at 100 MW is <em>almost entirely electricity and cooling</em> (~$48-75M of total). Personnel, maintenance, networking, and compliance run at industry rates or slightly higher due to remote locations. The energy advantage is large enough to dominate total OpEx regardless.</p>
+                  <p><strong>The math that defines the moat:</strong> 1 kW &times; 730 hrs/mo at $0.10/kWh = $73/kW/mo. At $0.03/kWh = $22/kW/mo. Delta: <strong>$51/kW/mo = $612/kW/yr</strong>. At 1.2 GW (Abilene full scale): <strong>$735M/year</strong> structural advantage.</p>
+                </div>
+              </div>
+              <div class="sub-topic">
+                <div class="sub-topic-header" onclick="toggleSubTopic(this)">
+                  <span class="sub-topic-name">Colocation Lease Benchmarks</span>
+                  <span class="sub-topic-icon">+</span>
+                </div>
+                <div class="sub-topic-preview">$120-450/kW/month by market &mdash; seller&rsquo;s market</div>
+                <div class="sub-topic-detail">
+                  <table class="data-table">
+                    <thead><tr><th>Market</th><th>$/kW/month (2025)</th><th>Notes</th></tr></thead>
+                    <tbody>
+                      <tr><td>US wholesale average</td><td>$163-184</td><td>CBRE H1 2025: $184/kW/mo</td></tr>
+                      <tr><td>Northern Virginia (Ashburn)</td><td>$200-215+</td><td>Record highs, &lt;2% vacancy</td></tr>
+                      <tr><td>Silicon Valley</td><td>$200-250+</td><td>Highest US cost market</td></tr>
+                      <tr><td>Phoenix</td><td>~$190</td><td>Rapid growth, 1.7% vacancy</td></tr>
+                      <tr><td>Dallas/Texas</td><td>$140-170</td><td>Business-friendly regulatory</td></tr>
+                      <tr><td>Atlanta</td><td>$120-150</td><td>Cheapest major US market</td></tr>
+                      <tr><td>AI-optimized high-density</td><td>$180-300+</td><td>Premium for liquid cooling, 100+ kW/rack</td></tr>
+                      <tr><td>Iceland/Nordics</td><td>$80-130</td><td>Cheap hydro/geothermal; higher connectivity</td></tr>
+                      <tr><td>Singapore</td><td>$350-450+</td><td>Most expensive globally</td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin-top:0.5rem"><strong>Key trend:</strong> Nearly 75% of the 5,242 MW under construction in North America is pre-leased. Some commitments extend to capacity not delivering until 2027+. This is a seller&rsquo;s market &mdash; every MW of operational capacity commands premium pricing.</p>
+                  <p><strong>Crusoe as competitor:</strong> Energy advantage means Crusoe can price at $100-140/kW/mo and still achieve superior margins vs competitors at $160-200/kW/mo.</p>
+                </div>
+              </div>
+              <div class="sub-topic">
+                <div class="sub-topic-header" onclick="toggleSubTopic(this)">
+                  <span class="sub-topic-name">100 MW Reference Model</span>
+                  <span class="sub-topic-icon">+</span>
+                </div>
+                <div class="sub-topic-preview">Total economics for a facility at scale</div>
+                <div class="sub-topic-detail">
+                  <table class="data-table">
+                    <thead><tr><th>Category</th><th>Industry All-In</th><th>Crusoe Estimated</th></tr></thead>
+                    <tbody>
+                      <tr><td><strong>Total CapEx</strong></td><td><strong>$3.0-4.0B</strong></td><td><strong>$2.8-3.7B</strong></td></tr>
+                      <tr><td>&nbsp;&nbsp;Shell &amp; core</td><td>$900M-1.5B</td><td>$800M-1.2B</td></tr>
+                      <tr><td>&nbsp;&nbsp;AI fit-out (GPUs, networking)</td><td>$2.0-2.5B</td><td>$2.0-2.5B</td></tr>
+                      <tr><td><strong>Annual OpEx</strong></td><td><strong>$130-250M</strong></td><td><strong>$75-175M</strong></td></tr>
+                      <tr><td>&nbsp;&nbsp;Electricity</td><td>$67-105M</td><td>$19-44M</td></tr>
+                      <tr><td>&nbsp;&nbsp;Cooling</td><td>$15-40M</td><td>$5-15M</td></tr>
+                      <tr><td>&nbsp;&nbsp;Personnel</td><td>$20-40M</td><td>$20-45M</td></tr>
+                      <tr><td>&nbsp;&nbsp;Hardware maintenance</td><td>$15-35M</td><td>$15-35M</td></tr>
+                      <tr><td><strong>Revenue (85% util)</strong></td><td><strong>$200-350M</strong></td><td><strong>$200-350M</strong></td></tr>
+                      <tr><td><strong>Target Gross Margin</strong></td><td><strong>35-50%</strong></td><td><strong>40-55%</strong></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin-top:0.5rem">The CapEx savings ($100-300M) are real but limited to shell &amp; core &mdash; NVIDIA prices GPUs the same for everyone. The margin improvement (5-10 points) comes from OpEx: $50-80M/year in electricity and cooling savings on $200-350M revenue. Over a 15-year facility life, ~$65M/year average advantage compounds to nearly <strong>$1B in cumulative savings</strong>.</p>
+                </div>
+              </div>
             </div>
 
           </div>
@@ -1381,6 +1660,28 @@ body, .code-block, .callout-box, .metric, .site-nav, .minimap-phase { transition
               </div>
               <div class="sub-topic">
                 <div class="sub-topic-header" onclick="toggleSubTopic(this)">
+                  <span class="sub-topic-name">Longer Tenor = Competitive Weapon</span>
+                  <span class="sub-topic-icon">+</span>
+                </div>
+                <div class="sub-topic-preview">$127M/year less debt service on $1B &mdash; 12yr vs 5yr</div>
+                <div class="sub-topic-detail">
+                  <p>15-year contracted revenue supports 10-12 year debt. Uncontracted supports only 3-5 years. The math on identical $1B borrowed:</p>
+                  <table class="data-table">
+                    <thead><tr><th>Metric</th><th>5-year at 8%</th><th>12-year at 7%</th><th>Difference</th></tr></thead>
+                    <tbody>
+                      <tr><td>Annual principal</td><td>$200M</td><td>~$83M</td><td>&mdash;</td></tr>
+                      <tr><td>Year 1 interest</td><td>~$80M</td><td>~$70M</td><td>&mdash;</td></tr>
+                      <tr><td><strong>Total Year 1 debt service</strong></td><td><strong>~$280M</strong></td><td><strong>~$153M</strong></td><td><strong>$127M freed</strong></td></tr>
+                      <tr><td><span class="term" data-term="dscr">DSCR</span> on $400M FCF</td><td>1.43x (tight)</td><td>2.61x (comfortable)</td><td>&mdash;</td></tr>
+                      <tr><td>Revenue decline before breach</td><td>9%</td><td>45%</td><td>&mdash;</td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin-top:0.5rem"><strong>$127M/year less</strong> in debt service to reinvest, build capacity, or weather downturns. A competitor with shorter-tenor debt has higher fixed obligations and less room to cut prices during a price war. Debt structure becomes a competitive weapon.</p>
+                  <p><strong>The Abilene example:</strong> $9.6B JPMorgan facility secured against 15-year Oracle/Stargate lease. On 5-year debt, annual principal alone = ~$1.92B vs ~$800M on 12-year. The difference ($1.1B/year) would make the project borderline unfinanceable.</p>
+                </div>
+              </div>
+              <div class="sub-topic">
+                <div class="sub-topic-header" onclick="toggleSubTopic(this)">
                   <span class="sub-topic-name">The Virtuous Cycle</span>
                   <span class="sub-topic-icon">+</span>
                 </div>
@@ -1388,6 +1689,7 @@ body, .code-block, .callout-box, .metric, .site-nav, .minimap-phase { transition
                 <div class="sub-topic-detail">
                   <p>Every 1-year or 3-year GPU reservation contract signed makes the debt package more attractive to lenders &rarr; cheaper debt &rarr; lower <span class="term" data-term="wacc">WACC</span> &rarr; more competitive pricing &rarr; more customers &rarr; more contracts &rarr; even more debt capacity.</p>
                   <p>This is why commitment discounts aren&rsquo;t just about revenue: they&rsquo;re a capital structure optimization. The PM must model the full-cycle NPV, not just the direct pricing impact.</p>
+                  <p style="margin-top:0.5rem"><strong>Reserved pricing on owned infrastructure:</strong> At Crusoe&rsquo;s $1.55/hr cost, a 40% reserved discount yields $1.32/hr &mdash; a <strong>-15% GPU-hour margin</strong>. But the contracted revenue enables debt at <span class="term" data-term="sofr">SOFR</span> + 250bps instead of + 400bps and extends tenor from 5yr to 12yr. The capital structure benefit (lower <span class="term" data-term="wacc">WACC</span>, $127M/yr less debt service per $1B) often <em>exceeds</em> the margin given away. The correct analysis is NPV of the entire capital structure impact, not P&amp;L on the individual GPU-hour.</p>
                 </div>
               </div>
             </div>
@@ -1471,6 +1773,42 @@ body, .code-block, .callout-box, .metric, .site-nav, .minimap-phase { transition
                   <p>The PM must understand which investments belong to which bucket. Managed inference feature ($20M) &rarr; equity-funded, needs venture-scale returns. Data center with signed contract &rarr; leverage cheap debt, lower hurdle rate.</p>
                 </div>
               </div>
+              <div class="sub-topic">
+                <div class="sub-topic-header" onclick="toggleSubTopic(this)">
+                  <span class="sub-topic-name">CapEx in Supply-Constrained Markets</span>
+                  <span class="sub-topic-icon">+</span>
+                </div>
+                <div class="sub-topic-preview">Operational facilities worth more than construction cost</div>
+                <div class="sub-topic-detail">
+                  <p><strong>The default mental model is wrong right now.</strong> Normally: spend $100 on an asset, it depreciates, worth less than $100 immediately. AI data center infrastructure breaks this because of extreme supply-demand imbalance.</p>
+                  <p><strong>Supply side &mdash; a cascade of sequential bottlenecks:</strong></p>
+                  <p><strong>1. Power interconnection</strong> (3-5 year queue) &mdash; can&rsquo;t buy your way to the front. <strong>2. Permitting</strong> (12-18 months) &mdash; single legal challenge adds a year. <strong>3. Skilled labor</strong> (fully booked) &mdash; 140 kW/rack facilities need specialized contractors. <strong>4. Equipment</strong> (12-24 months) &mdash; switchgear up 50%, generators up 45% since 2021. <strong>5. GPUs</strong> (allocation-constrained).</p>
+                  <p><strong>Total: 2-4 years</strong> from &ldquo;decide to build&rdquo; to &ldquo;serving customers.&rdquo; A completed facility represents the crystallized result of navigating every bottleneck. The real estate parallel: a house costs $400K to build but sells for $1.2M &mdash; the delta is the embedded scarcity of entitled, permitted, connected land.</p>
+                  <p><strong>When this reverses:</strong> Supply catches up (hyperscaler buildouts complete), demand plateaus (AI scaling hits diminishing returns), or technology shifts (inference efficiency, on-device inference). Crusoe&rsquo;s energy advantage persists even if scarcity fades &mdash; cheap power remains valuable regardless.</p>
+                </div>
+              </div>
+              <div class="sub-topic">
+                <div class="sub-topic-header" onclick="toggleSubTopic(this)">
+                  <span class="sub-topic-name">The Barbell Approach</span>
+                  <span class="sub-topic-icon">+</span>
+                </div>
+                <div class="sub-topic-preview">Go heavy on both extremes, avoid the expensive middle</div>
+                <div class="sub-topic-detail">
+                  <p><strong>Core principle:</strong> Commit heavily where certainty is high. Maintain cheap optionality where it isn&rsquo;t. Avoid the expensive middle of moderate commitment with moderate flexibility.</p>
+                  <table class="data-table">
+                    <thead><tr><th>Domain</th><th>Owned Extreme (~80%)</th><th>Flex Extreme (~20%)</th><th>Middle to Avoid</th></tr></thead>
+                    <tbody>
+                      <tr><td>GPU Fleet</td><td>Owned GPUs for contracted customers; equipment-backed debt</td><td>Rented spot/on-demand for spikes</td><td>Buying on speculation without revenue certainty</td></tr>
+                      <tr><td>Data Centers</td><td>Owned facilities with 15yr leases (Abilene)</td><td>Leased colo in new markets to validate demand</td><td>Building 500 MW with only 100 MW contracted</td></tr>
+                      <tr><td>Power</td><td>Stranded gas/hydro/geothermal; long-term PPAs</td><td>Spot grid for peaks</td><td>Building 200 MW turbine for uncertain demand</td></tr>
+                      <tr><td>Model Catalog</td><td>Deep optimization on top 10-15 models (80%+ revenue)</td><td>vLLM defaults on 80+ long-tail models</td><td>Moderate optimization across 50 models</td></tr>
+                      <tr><td>Customers</td><td>Enterprise ($500K-5M+ contracts, high touch)</td><td>Self-serve developers (near-zero CAC)</td><td>Mid-market ($50-200K, significant sales effort, poor LTV/CAC)</td></tr>
+                      <tr><td>Pricing</td><td>Aggressive serverless (acquisition, below cost)</td><td>Premium enterprise (40-60% margin)</td><td>Moderate pricing that attracts neither segment</td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin-top:0.5rem"><strong>Why barbell works in AI:</strong> Extreme demand uncertainty (single model release shifts demand by orders of magnitude), rapid technology obsolescence (GPU generations every 18-24 months), and power law economics (small number of models/customers drive vast majority of revenue). Invest heavily in winners, maintain cheap options on everything else.</p>
+                </div>
+              </div>
             </div>
 
             <a href="training-economics.html#model-funding" class="cross-link">&rarr; Foundation model funding &amp; mega-rounds</a>
@@ -1515,7 +1853,9 @@ body, .code-block, .callout-box, .metric, .site-nav, .minimap-phase { transition
     'reasoning-effort': 'API control for how much internal reasoning to use before/during answer generation.',
     'reasoning-history': 'Policy control for prior reasoning carry-forward across turns (for example preserved/compact/clear/none behaviors).',
     'thinking-budget': 'A token budget cap for reasoning streams to bound latency and cost.',
-    'rdma': 'Remote Direct Memory Access — lets GPUs read/write each other\'s memory directly, bypassing the CPU. Used for cluster-wide KV cache sharing in systems like MemoryAlloy.'
+    'rdma': 'Remote Direct Memory Access — lets GPUs read/write each other\'s memory directly, bypassing the CPU. Used for cluster-wide KV cache sharing in systems like MemoryAlloy.',
+    'revenue-per-watt': 'Revenue per watt — the master metric for AI data centers. Industry benchmark: ~$12.50/watt/year for AI (3x traditional at $4.20/watt). Best operators exceed $30/watt with optimized managed inference.',
+    'barbell-strategy': 'Resource allocation principle: go heavy on both extremes (own base-load at low cost, rent flex at high cost), avoid the expensive middle ground of moderate commitment with moderate flexibility.'
   };
 
   /* ─── TERM-TO-SECTION NAVIGATION MAP ─── */
@@ -1538,7 +1878,9 @@ body, .code-block, .callout-box, .metric, .site-nav, .minimap-phase { transition
     'reasoning-effort': { id: 'pricing', label: 'D3 Pricing' },
     'reasoning-history': { id: 'pricing', label: 'D3 Pricing' },
     'thinking-budget': { id: 'pricing', label: 'D3 Pricing' },
-    'rdma': { id: 'managed-vs-rental', label: 'E1 Managed vs Rental' }
+    'rdma': { id: 'managed-vs-rental', label: 'E1 Managed vs Rental' },
+    'revenue-per-watt': { id: 'throughput', label: 'D2 Throughput' },
+    'barbell-strategy': { id: 'stage-by-stage', label: 'F3 Stage by Stage' }
   };
 
   /* ─── THEME TOGGLE ─── */
